@@ -1,0 +1,85 @@
+### Quiz Test API Endpoints
+
+### Database Health Check
+GET http://localhost:8080/api/v1/test/db/health
+
+### List Database Tables
+GET http://localhost:8080/api/v1/test/db/tables
+
+### Check Quiz Table Structure
+GET http://localhost:8080/api/v1/test/db/quiz-table
+
+### Quiz API Health Check
+GET http://localhost:8080/api/v1/test/quiz/health
+
+### Test Ultra Simple Quiz (Recommended to test first)
+POST http://localhost:8080/api/v1/test/quiz/test-ultra-simple
+Content-Type: application/json
+
+### Test Simple Quiz
+POST http://localhost:8080/api/v1/test/quiz/test-simple
+Content-Type: application/json
+
+### Test Minimal Quiz
+POST http://localhost:8080/api/v1/test/quiz/test-minimal
+Content-Type: application/json
+
+### Create Math Quiz
+POST http://localhost:8080/api/v1/test/quiz/create-math-quiz
+Content-Type: application/json
+
+### Create Geography Quiz
+POST http://localhost:8080/api/v1/test/quiz/test-geography
+Content-Type: application/json
+
+### Create Sample Quiz
+POST http://localhost:8080/api/v1/test/quiz/create-sample
+Content-Type: application/json
+
+### Get Sample Data (GET request to see the structure)
+GET http://localhost:8080/api/v1/test/quiz/sample-data
+
+### Create Custom Quiz
+POST http://localhost:8080/api/v1/test/quiz/create
+Content-Type: application/json
+
+{
+  "title": "Custom Test Quiz",
+  "description": "A custom quiz for testing",
+  "visibility": true,
+  "total": 1,
+  "topic": "Custom",
+  "quizCreationType": "MANUAL",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "What is 1 + 1?",
+      "type": "MULTIPLE_CHOICE",
+      "difficulty": "EASY",
+      "bloom_level": "REMEMBER",
+      "points": 1,
+      "order_index": 1,
+      "explanation": "Basic arithmetic: 1 + 1 = 2",
+      "answers": [
+        {
+          "id": "a1",
+          "text": "1",
+          "correct": false,
+          "order_index": 1
+        },
+        {
+          "id": "a2",
+          "text": "2",
+          "correct": true,
+          "order_index": 2
+        },
+        {
+          "id": "a3",
+          "text": "3",
+          "correct": false,
+          "order_index": 3
+        }
+      ]
+    }
+  ]
+} 

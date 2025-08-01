@@ -10,8 +10,13 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class QuestionData {
-    private Long id;
+    private String id;
     private String question;
-    private QuestionType questionType;
-    private List<Option> options;
+    private QuestionType type;
+    private String difficulty;
+    private String bloom_level;
+    private Integer points;
+    private Integer order_index;
+    private String explanation;
+    private List<Answer> answers;
 }

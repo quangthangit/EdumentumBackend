@@ -1,6 +1,7 @@
 package com.EdumentumBackend.EdumentumBackend.entity;
 
 public enum SourceType {
+    MANUAL,      // Tạo thủ công
     FILE,       // File upload
     TEXT,       // Văn bản
     LINK,       // Link

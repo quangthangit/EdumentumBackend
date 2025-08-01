@@ -6,6 +6,7 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import com.EdumentumBackend.EdumentumBackend.commom.model.QuizData;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -89,12 +90,14 @@ public class QuizEntity {
 
     // Quiz data (JSONB)
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "quiz_data", columnDefinition = "jsonb", nullable = false)
-    private Object quizData;
+    @Column(name = "quiz_data", columnDefinition = "jsonb", nullable = true)
+    private QuizData quizData;
 
     // Metadata
-    @Column(columnDefinition = "TEXT[]")
-    private List<String> tags;
+    // Temporarily commented out tags field to isolate the issue
+    // @JdbcTypeCode(SqlTypes.JSON)
+    // @Column(name = "tags", columnDefinition = "jsonb", nullable = true)
+    // private List<String> tags;
 
     @Min(value = 1, message = "Estimated time must be at least 1 minute")
     @Column(name = "estimated_time")
