@@ -35,7 +35,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+            CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfig()))
@@ -45,8 +46,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/guest/**").hasRole("GUEST")
                         .requestMatchers("/api/v1/student/**").hasAnyRole("STUDENT")
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                ).exceptionHandling(ex ->ex.accessDeniedHandler(customAccessDeniedHandler))
+                        .requestMatchers("/api/v1/notes/**").authenticated()
+                        .requestMatchers("/api/v1/mindmap/**").authenticated()
+                        .anyRequest().authenticated())
+                .exceptionHandling(ex -> ex.accessDeniedHandler(customAccessDeniedHandler))
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .userDetailsService(userDetailsService)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
@@ -58,8 +61,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
                 "http://localhost:3000",
-                "https://edumentum.vercel.app"
-        ));
+                "https://edumentum.vercel.app"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
