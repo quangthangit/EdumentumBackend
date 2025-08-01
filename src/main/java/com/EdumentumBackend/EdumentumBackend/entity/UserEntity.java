@@ -3,6 +3,8 @@ package com.EdumentumBackend.EdumentumBackend.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity
@@ -50,4 +52,12 @@ public class UserEntity {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<RoleEntity> roles;
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 }
