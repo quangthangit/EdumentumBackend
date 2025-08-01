@@ -43,6 +43,7 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 	implementation 'com.google.api-client:google-api-client:2.3.0'
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.0'
 }
 
 tasks.named('test') {

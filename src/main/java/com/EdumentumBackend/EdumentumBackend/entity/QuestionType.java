@@ -1,11 +1,9 @@
 package com.EdumentumBackend.EdumentumBackend.entity;
 
 public enum QuestionType {
-    MULTIPLE_CHOICE,
-    TRUE_FALSE,
-    FILL_IN_THE_BLANK,
-    SHORT_ANSWER,
-    ESSAY,
-    MATCHING,
-    ORDERING
+    MIXED,              // Hỗn hợp các loại
+    MULTIPLE_CHOICE,    // Trắc nghiệm
+    TRUE_FALSE,         // Đúng/Sai
+    FILL_BLANK,         // Điền vào chỗ trống
+    FREE_RESPONSE       // Tự luận
 }
