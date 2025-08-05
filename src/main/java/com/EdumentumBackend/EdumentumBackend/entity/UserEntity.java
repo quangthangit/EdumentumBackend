@@ -36,12 +36,6 @@ public class UserEntity {
     @Column(nullable = false)
     private String password;
 
-    @Column
-    private String googleId;
-
-    @Column
-    private String facebookId;
-
     @Column(nullable = false)
     private Boolean isActive = true;
 

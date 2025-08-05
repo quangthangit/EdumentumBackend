@@ -1,7 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.dtos;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +17,7 @@ import java.util.List;
 public class FlashcardDto {
     @NotBlank(message = "Question is required")
     private String question;
-    
+
     private List<String> choices;
     
     private Integer correctAnswer;
