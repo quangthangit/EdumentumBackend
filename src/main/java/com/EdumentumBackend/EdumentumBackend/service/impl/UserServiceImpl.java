@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService {
     public UserResponseDto createUser(UserRequestDto userRequestDto) {
         Optional<UserEntity> userCheck = userRepository.findByEmail(userRequestDto.getEmail());
         if (userCheck.isPresent()) {
-            throw new AlreadyExistsException("User with gmail " + userRequestDto.getEmail() + " already exists");
+            throw new AlreadyExistsException("User with Email " + userRequestDto.getEmail() + " already exists");
         }
         RoleEntity role = roleService.findByName("ROLE_GUEST");
         UserEntity user = UserEntity.builder()
@@ -56,9 +56,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponseDto findByEmail(String email) {
+    public UserResponseDto getUserByEmail(String email) {
         UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("User with gmail " + email + " not found"));
+                .orElseThrow(() -> new NotFoundException("User with Email " + email + " not found"));
         return UserResponseDto.builder()
                 .userId(user.getUserId())
                 .email(user.getEmail())
@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void setUserRole(Long userId, String roleName) {
+    public void assignRoleToUser(Long userId, String roleName) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with UserId " + userId + " not found"));
 
@@ -90,7 +90,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void deleteById(Long id) {
+    public void deleteUserById(Long id) {
         Optional<UserEntity> userEntity = userRepository.findById(id);
         if (userEntity.isPresent()) {
             userRepository.delete(userEntity.get());
@@ -100,7 +100,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponseDto findById(Long userId) {
+    public UserResponseDto getUserById(Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with UserId " + userId + " not found"));
         return UserResponseDto.builder()
@@ -111,10 +111,4 @@ public class UserServiceImpl implements UserService {
                 .roles(user.getRoles())
                 .build();
     }
-
-    private boolean hasOnlyGuestRole(Set<RoleEntity> roles) {
-        if (roles == null || roles.size() != 1) return false;
-        return roles.iterator().next().getName().equals("ROLE_GUEST");
-    }
-
 }
