@@ -4,6 +4,7 @@ import com.EdumentumBackend.EdumentumBackend.entity.RoleEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
 import com.EdumentumBackend.EdumentumBackend.repository.RoleRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,12 @@ public class DataInitializer implements CommandLineRunner {
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Value("${admin.email}")
+    private String adminEmail;
+
+    @Value("${admin.password}")
+    private String adminPassword;
+
     @Override
     public void run(String... args) {
         if (roleRepository.count() == 0) {
@@ -32,7 +39,7 @@ public class DataInitializer implements CommandLineRunner {
             roleRepository.save(RoleEntity.builder().name("ROLE_STUDENT").build());
             roleRepository.save(RoleEntity.builder().name("ROLE_TEACHER").build());
         }
-        Optional<UserEntity> optionalUser = userRepository.findByEmail("admin@gmail.com");
+        Optional<UserEntity> optionalUser = userRepository.findByEmail(adminEmail);
 
         if (optionalUser.isEmpty()) {
             RoleEntity adminRole = roleRepository.findByName("ROLE_ADMIN")
@@ -40,8 +47,8 @@ public class DataInitializer implements CommandLineRunner {
 
             UserEntity adminUser = UserEntity.builder()
                     .username("Admin")
-                    .email("admin@gmail.com")
-                    .password(passwordEncoder.encode("admin123"))
+                    .email(adminEmail)
+                    .password(passwordEncoder.encode(adminPassword))
                     .roles(Collections.singleton(adminRole))
                     .isActive(true)
                     .build();
