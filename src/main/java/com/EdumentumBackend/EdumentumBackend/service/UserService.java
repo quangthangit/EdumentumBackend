@@ -5,8 +5,8 @@ import com.EdumentumBackend.EdumentumBackend.dtos.UserResponseDto;
 
 public interface UserService {
     UserResponseDto createUser(UserRequestDto userRequestDto);
-    UserResponseDto findByEmail(String email);
-    void setUserRole(Long userId, String roleName);
-    void deleteById(Long id);
-    UserResponseDto findById(Long userId);
+    UserResponseDto getUserByEmail(String email);
+    void assignRoleToUser(Long userId, String roleName);
+    void deleteUserById(Long id);
+    UserResponseDto getUserById(Long userId);
 }

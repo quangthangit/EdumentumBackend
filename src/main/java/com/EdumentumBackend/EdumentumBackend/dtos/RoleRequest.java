@@ -1,7 +1,5 @@
 package com.EdumentumBackend.EdumentumBackend.dtos;
 
-import jakarta.persistence.Column;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
 

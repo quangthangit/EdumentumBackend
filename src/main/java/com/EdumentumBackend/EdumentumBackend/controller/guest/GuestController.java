@@ -7,7 +7,6 @@ import com.EdumentumBackend.EdumentumBackend.jwt.JwtService;
 import com.EdumentumBackend.EdumentumBackend.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,7 +23,9 @@ public class GuestController {
     private final JwtService jwtService;
     private final CustomUserDetailsService customUserDetailsService;
 
-    public GuestController(UserService userService, JwtService jwtService, CustomUserDetailsService customUserDetailsService) {
+    public GuestController(UserService userService,
+                           JwtService jwtService,
+                           CustomUserDetailsService customUserDetailsService) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.customUserDetailsService = customUserDetailsService;
@@ -33,12 +34,13 @@ public class GuestController {
     @PostMapping("/set-user-role")
     public ResponseEntity<?> setUserRole(
             @Valid @RequestBody RoleRequest roleRequest,
-            @RequestHeader("Authorization") String authHeader) {
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(401).body(Map.of(
                     "status", "error",
-                    "error", "Missing or invalid Authorization header"));
+                    "message", "Missing or invalid Authorization header"
+            ));
         }
 
         String token = authHeader.substring(7);
@@ -49,17 +51,21 @@ public class GuestController {
         } catch (Exception e) {
             return ResponseEntity.status(401).body(Map.of(
                     "status", "error",
-                    "error", "Invalid or expired token"
+                    "message", "Invalid or expired token"
             ));
         }
 
-        userService.setUserRole(userId, roleRequest.getRoleName());
-        UserResponseDto userResponseDto = userService.findById(userId);
-        UserDetails userDetails = customUserDetailsService.loadUserByUsername(userResponseDto.getEmail());
-        return getResponseEntity(userResponseDto, userDetails, jwtService);
+        userService.assignRoleToUser(userId, roleRequest.getRoleName());
+
+        UserResponseDto user = userService.getUserById(userId);
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(user.getEmail());
+
+        return buildAuthResponse(user, userDetails, jwtService);
     }
 
-    public static ResponseEntity<?> getResponseEntity(UserResponseDto userResponseDto, UserDetails userDetails, JwtService jwtService) {
+    // ------------------- PRIVATE METHOD -------------------
+
+    private ResponseEntity<?> buildAuthResponse(UserResponseDto user, UserDetails userDetails, JwtService jwtService) {
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 userDetails, null, userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -69,10 +75,12 @@ public class GuestController {
 
         return ResponseEntity.ok(Map.of(
                 "status", "success",
-                "message", "Login with Google successful",
-                "data", Map.of("user", userResponseDto,
+                "message", "User role updated and login successful",
+                "data", Map.of(
+                        "user", user,
                         "accessToken", accessToken,
-                        "refreshToken", refreshToken)
+                        "refreshToken", refreshToken
+                )
         ));
     }
 }

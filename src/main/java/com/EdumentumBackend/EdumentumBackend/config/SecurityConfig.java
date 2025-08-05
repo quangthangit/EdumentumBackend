@@ -3,7 +3,6 @@ package com.EdumentumBackend.EdumentumBackend.config;
 import com.EdumentumBackend.EdumentumBackend.exception.CustomAccessDeniedHandler;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetailsService;
 import com.EdumentumBackend.EdumentumBackend.jwt.JwtAuthenticationFilter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
