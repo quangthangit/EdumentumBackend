@@ -1,6 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.service;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.FileProps;
+import com.EdumentumBackend.EdumentumBackend.dtos.FilePropsDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.MindMapDto;
 
 import java.util.List;
@@ -17,13 +17,13 @@ public interface MindMapService {
     void deleteMindMap(Long id);
 
     // File-based operations
-    List<FileProps> getFilesByUserId(Long userId);
+    List<FilePropsDto> getFilesByUserId(Long userId);
 
-    FileProps createFile(String name, String data, Long userId);
+    FilePropsDto createFile(String name, String data, Long userId);
 
-    FileProps updateFile(String id, String data, Long userId);
+    FilePropsDto updateFile(String id, String data, Long userId);
 
     void deleteFile(String id, Long userId);
 
-    FileProps getFileById(String id, Long userId);
+    FilePropsDto getFileById(String id, Long userId);
 }

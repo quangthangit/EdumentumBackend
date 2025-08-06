@@ -1,6 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.FileProps;
+import com.EdumentumBackend.EdumentumBackend.dtos.FilePropsDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.MindMapDto;
 import com.EdumentumBackend.EdumentumBackend.entity.MindMapEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
@@ -74,15 +74,15 @@ public class MindMapServiceImpl implements MindMapService {
 
     // File-based operations
     @Override
-    public List<FileProps> getFilesByUserId(Long userId) {
+    public List<FilePropsDto> getFilesByUserId(Long userId) {
         List<MindMapEntity> mindMaps = mindMapRepository.findByUserUserIdOrderByCreatedAtDesc(userId);
         return mindMaps.stream()
-                .map(this::convertToFileProps)
+                .map(this::convertToFilePropsDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public FileProps createFile(String name, String data, Long userId) {
+    public FilePropsDto createFile(String name, String data, Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
@@ -93,11 +93,11 @@ public class MindMapServiceImpl implements MindMapService {
                 .build();
 
         MindMapEntity savedMindMap = mindMapRepository.save(mindMap);
-        return convertToFileProps(savedMindMap);
+        return convertToFilePropsDto(savedMindMap);
     }
 
     @Override
-    public FileProps updateFile(String id, String data, Long userId) {
+    public FilePropsDto updateFile(String id, String data, Long userId) {
         MindMapEntity mindMap = mindMapRepository.findById(Long.parseLong(id))
                 .orElseThrow(() -> new NotFoundException("File not found"));
 
@@ -108,7 +108,7 @@ public class MindMapServiceImpl implements MindMapService {
 
         mindMap.setData(data);
         MindMapEntity updatedMindMap = mindMapRepository.save(mindMap);
-        return convertToFileProps(updatedMindMap);
+        return convertToFilePropsDto(updatedMindMap);
     }
 
     @Override
@@ -125,7 +125,7 @@ public class MindMapServiceImpl implements MindMapService {
     }
 
     @Override
-    public FileProps getFileById(String id, Long userId) {
+    public FilePropsDto getFileById(String id, Long userId) {
         MindMapEntity mindMap = mindMapRepository.findById(Long.parseLong(id))
                 .orElseThrow(() -> new NotFoundException("File not found"));
 
@@ -134,7 +134,7 @@ public class MindMapServiceImpl implements MindMapService {
             throw new NotFoundException("File not found");
         }
 
-        return convertToFileProps(mindMap);
+        return convertToFilePropsDto(mindMap);
     }
 
     private MindMapDto convertToDto(MindMapEntity mindMap) {
@@ -148,8 +148,8 @@ public class MindMapServiceImpl implements MindMapService {
                 .build();
     }
 
-    private FileProps convertToFileProps(MindMapEntity mindMap) {
-        return FileProps.builder()
+    private FilePropsDto convertToFilePropsDto(MindMapEntity mindMap) {
+        return FilePropsDto.builder()
                 .id(mindMap.getId().toString())
                 .name(mindMap.getName())
                 .data(mindMap.getData())

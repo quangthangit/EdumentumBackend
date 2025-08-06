@@ -1,6 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.controller.student;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.FileProps;
+import com.EdumentumBackend.EdumentumBackend.dtos.FilePropsDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.MindMapDto;
 import com.EdumentumBackend.EdumentumBackend.jwt.JwtService;
 import com.EdumentumBackend.EdumentumBackend.service.MindMapService;
@@ -32,7 +32,7 @@ public class StudentMindMapController {
                 String token = authHeader.substring(7);
                 Long userId = jwtService.extractUserId(token);
 
-                List<FileProps> files = mindMapService.getFilesByUserId(userId);
+                List<FilePropsDto> files = mindMapService.getFilesByUserId(userId);
                 return ResponseEntity.ok(Map.of(
                                 "status", "success",
                                 "message", "Files retrieved successfully",
@@ -62,7 +62,7 @@ public class StudentMindMapController {
                                         "error", "Name and data are required"));
                 }
 
-                FileProps createdFile = mindMapService.createFile(name, data, userId);
+                FilePropsDto createdFile = mindMapService.createFile(name, data, userId);
                 return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                                 "status", "success",
                                 "message", "File created successfully",
@@ -91,7 +91,7 @@ public class StudentMindMapController {
                                         "error", "Data is required"));
                 }
 
-                FileProps updatedFile = mindMapService.updateFile(id, data, userId);
+                FilePropsDto updatedFile = mindMapService.updateFile(id, data, userId);
                 return ResponseEntity.ok(Map.of(
                                 "status", "success",
                                 "message", "File updated successfully",
@@ -132,7 +132,7 @@ public class StudentMindMapController {
                 String token = authHeader.substring(7);
                 Long userId = jwtService.extractUserId(token);
 
-                FileProps file = mindMapService.getFileById(id, userId);
+                FilePropsDto file = mindMapService.getFileById(id, userId);
                 return ResponseEntity.ok(Map.of(
                                 "status", "success",
                                 "message", "File retrieved successfully",

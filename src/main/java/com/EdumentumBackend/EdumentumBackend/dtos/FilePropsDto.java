@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FileProps {
+public class FilePropsDto {
     private String id;
     private String name;
     private String data;
