@@ -49,8 +49,6 @@ public class StudentFlashcardController {
                     "data", createdSet
             ));
         } catch (Exception e) {
-            System.err.println("Error in createFlashcardSet: " + e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", "error",
                     "error", "Internal server error: " + e.getMessage()

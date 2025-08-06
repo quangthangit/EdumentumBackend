@@ -19,15 +19,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 import java.util.UUID;
-
-import static com.EdumentumBackend.EdumentumBackend.controller.guest.GuestController.getResponseEntity;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -39,29 +34,27 @@ public class AuthController {
     private final CustomUserDetailsService customUserDetailsService;
     private final GoogleTokenVerifierService googleTokenVerifierService;
 
-    public AuthController(AuthenticationManager authManager, JwtService jwtService, UserService userService, CustomUserDetailsService customUserDetailsService, GoogleTokenVerifierService googleTokenVerifierService) {
+    public AuthController(AuthenticationManager authManager,
+                          JwtService jwtService,
+                          UserService userService,
+                          CustomUserDetailsService customUserDetailsService,
+                          GoogleTokenVerifierService googleTokenVerifierService) {
         this.authManager = authManager;
         this.jwtService = jwtService;
         this.userService = userService;
-        this.googleTokenVerifierService = googleTokenVerifierService;
         this.customUserDetailsService = customUserDetailsService;
+        this.googleTokenVerifierService = googleTokenVerifierService;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody UserRequestLoginDto userRequestLoginDto) {
+    public ResponseEntity<?> login(@Valid @RequestBody UserRequestLoginDto loginDto) {
         try {
-            Authentication authentication = authManager.authenticate(new UsernamePasswordAuthenticationToken(userRequestLoginDto.getEmail(), userRequestLoginDto.getPassword()));
+            Authentication authentication = authManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword())
+            );
 
-            String token = jwtService.generateToken(authentication);
-            String tokenRefresh = jwtService.generateRefreshToken(authentication);
-            UserResponseDto user = userService.findByEmail(userRequestLoginDto.getEmail());
-
-            return ResponseEntity.ok(Map.of(
-                    "status", "success",
-                    "message", "User login successfully",
-                    "data", Map.of("user", user,
-                            "accessToken", token,
-                            "refreshToken", tokenRefresh)));
+            UserResponseDto user = userService.getUserByEmail(loginDto.getEmail());
+            return ResponseEntity.ok(buildAuthResponse(user, authentication, "User login successfully"));
 
         } catch (BadCredentialsException ex) {
             throw new AuthenticationFailedException("Invalid username or password");
@@ -71,25 +64,27 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody UserRequestDto userRequestDto) {
-        UserResponseDto createdUser = userService.createUser(userRequestDto);
-        Authentication authentication = authManager.authenticate(new UsernamePasswordAuthenticationToken(userRequestDto.getEmail(), userRequestDto.getPassword()));
-        String token = jwtService.generateToken(authentication);
-        String tokenRefresh = jwtService.generateRefreshToken(authentication);
+    public ResponseEntity<?> register(@Valid @RequestBody UserRequestDto registerDto) {
+        UserResponseDto user = userService.createUser(registerDto);
+        Authentication authentication = authManager.authenticate(
+                new UsernamePasswordAuthenticationToken(registerDto.getEmail(), registerDto.getPassword())
+        );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                "status", "success",
-                "message", "User registered successfully",
-                "data", Map.of("user", createdUser,
-                        "accessToken", token,
-                        "refreshToken", tokenRefresh)));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(buildAuthResponse(user, authentication, "User registered successfully"));
     }
+
+    // ------------------- LOGIN GOOGLE -------------------
 
     @PostMapping("/google")
     public ResponseEntity<?> loginWithGoogle(@RequestBody Map<String, String> request) {
         String token = request.get("token");
+
         if (token == null || token.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Missing Google token"));
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "error",
+                    "message", "Missing Google token"
+            ));
         }
 
         try {
@@ -97,19 +92,24 @@ public class AuthController {
             String email = payload.getEmail();
             String username = (String) payload.get("name");
 
-            UserResponseDto userResponseDto;
+            UserResponseDto user;
             try {
-                userResponseDto = userService.findByEmail(email);
+                user = userService.getUserByEmail(email);
             } catch (NotFoundException e) {
-                UserRequestDto requestDto = new UserRequestDto();
-                requestDto.setEmail(email);
-                requestDto.setPassword(UUID.randomUUID().toString());
-                requestDto.setUsername(username);
-                userResponseDto = userService.createUser(requestDto);
+                UserRequestDto newUser = new UserRequestDto();
+                newUser.setEmail(email);
+                newUser.setPassword(UUID.randomUUID().toString());
+                newUser.setUsername(username);
+                user = userService.createUser(newUser);
             }
 
             UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
-            return getResponseEntity(userResponseDto, userDetails, jwtService);
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    userDetails, null, userDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            return ResponseEntity.ok(buildAuthResponse(user, authentication, "Login with Google successful"));
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "status", "error",
@@ -118,4 +118,20 @@ public class AuthController {
         }
     }
 
+    // ------------------- PRIVATE METHOD -------------------
+
+    private Map<String, Object> buildAuthResponse(UserResponseDto user, Authentication auth, String message) {
+        String accessToken = jwtService.generateToken(auth);
+        String refreshToken = jwtService.generateRefreshToken(auth);
+
+        return Map.of(
+                "status", "success",
+                "message", message,
+                "data", Map.of(
+                        "user", user,
+                        "accessToken", accessToken,
+                        "refreshToken", refreshToken
+                )
+        );
+    }
 }
