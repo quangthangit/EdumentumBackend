@@ -7,12 +7,17 @@ import com.EdumentumBackend.EdumentumBackend.dtos.GroupResponseDto;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
 import com.EdumentumBackend.EdumentumBackend.service.GroupService;
 import jakarta.validation.Valid;
+import org.apache.coyote.BadRequestException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -60,6 +65,29 @@ public class StudentGroupController {
         } catch (Exception e) {
             return buildServerError(e);
         }
+    }
+
+    @GetMapping("/public")
+    public ResponseEntity<?> getPublicGroups(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Group updated successfully");
+        response.put("data", groupService.findAllPublicGroups(pageable).getData());
+        response.put("pagination", groupService.findAllPublicGroups(pageable).getPagination());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{groupId}/join")
+    public ResponseEntity<?> joinGroup(@PathVariable Long groupId) throws BadRequestException {
+        Long userId = getCurrentUserId();
+        groupService.joinGroup(groupId, userId);
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Join Group successfully"
+        ));
     }
 
     private Long getCurrentUserId() {
