@@ -21,6 +21,10 @@ public class CustomUserDetails implements UserDetails {
         this.authorities = authorities;
     }
 
+    public Long getUserId() {
+        return id;
+    }
+
     @Override public Collection<? extends GrantedAuthority> getAuthorities() { return authorities; }
     @Override public String getPassword() { return password; }
     @Override public String getUsername() { return email; }
