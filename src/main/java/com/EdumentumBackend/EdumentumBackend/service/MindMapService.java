@@ -16,8 +16,11 @@ public interface MindMapService {
 
     void deleteMindMap(Long id);
 
+
     // File-based operations
     List<FilePropsDto> getFilesByUserId(Long userId);
+
+    FilePropsDto updateFileName(String id, String newName, Long userId);
 
     FilePropsDto createFile(String name, String data, Long userId);
 

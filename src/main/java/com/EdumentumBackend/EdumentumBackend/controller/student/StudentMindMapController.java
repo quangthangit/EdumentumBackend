@@ -139,13 +139,44 @@ public class StudentMindMapController {
                                 "data", file));
         }
 
+        @PutMapping("/files/{id}/name")
+        public ResponseEntity<?> updateFileName(
+                @PathVariable String id,
+                @RequestBody Map<String, String> request,
+                @RequestHeader("Authorization") String authHeader) {
+
+                if ((authHeader == null || !authHeader.startsWith("Bearer "))) {
+                        return ResponseEntity.status(401).body(Map.of(
+                                "status", "error",
+                                "error", "Missing or invalid Authorization header"));
+                }
+
+                String token = authHeader.substring(7);
+                Long userId = jwtService.extractUserId(token);
+
+                String newName = request.get("name");
+                if (newName == null || newName.trim().isEmpty()) {
+                        return ResponseEntity.badRequest().body(Map.of(
+                                "status", "error",
+                                "error", "File name is required"));
+                }
+
+                FilePropsDto updatedFile = mindMapService.updateFileName(id, newName, userId);
+
+                return ResponseEntity.ok(Map.of(
+                        "status", "success",
+                        "message", "File name updated successfully",
+                        "data", updatedFile));
+        }
+
+
         // Legacy endpoints for backward compatibility
         @PostMapping
         public ResponseEntity<?> createMindMap(
                         @RequestBody MindMapDto mindMapDto,
                         @RequestHeader("Authorization") String authHeader) {
 
-                if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                if ((authHeader == null) || !authHeader.startsWith("Bearer ")) {
                         return ResponseEntity.status(401).body(Map.of(
                                         "status", "error",
                                         "error", "Missing or invalid Authorization header"));

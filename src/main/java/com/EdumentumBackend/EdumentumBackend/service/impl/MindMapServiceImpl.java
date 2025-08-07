@@ -24,6 +24,24 @@ public class MindMapServiceImpl implements MindMapService {
     private final UserRepository userRepository;
 
     @Override
+    public FilePropsDto updateFileName(String id, String newName, Long userId) {
+        MindMapEntity mindMap = mindMapRepository.findById(Long.parseLong(id))
+                .orElseThrow(() -> new NotFoundException("File not found"));
+
+        // Kiểm tra quyền sở hữu file
+        if (!mindMap.getUser().getUserId().equals(userId)) {
+            throw new NotFoundException("File not found or not accessible");
+        }
+
+        mindMap.setName(newName);
+        mindMap.setUpdatedAt(LocalDateTime.now()); // cập nhật thời gian chỉnh sửa
+        MindMapEntity updatedMindMap = mindMapRepository.save(mindMap);
+
+        return convertToFilePropsDto(updatedMindMap);
+    }
+
+
+    @Override
     public MindMapDto createMindMap(MindMapDto mindMapDto) {
         UserEntity user = userRepository.findById(mindMapDto.getUserId())
                 .orElseThrow(() -> new NotFoundException("User not found"));
@@ -37,6 +55,7 @@ public class MindMapServiceImpl implements MindMapService {
         MindMapEntity savedMindMap = mindMapRepository.save(mindMap);
         return convertToDto(savedMindMap);
     }
+
 
     @Override
     public MindMapDto getMindMapById(Long id) {
@@ -157,4 +176,6 @@ public class MindMapServiceImpl implements MindMapService {
                 .updatedAt(mindMap.getUpdatedAt())
                 .build();
     }
+
+
 }
