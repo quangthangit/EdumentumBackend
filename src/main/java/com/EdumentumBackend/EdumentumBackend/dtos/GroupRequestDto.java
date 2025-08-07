@@ -18,10 +18,10 @@ public class GroupRequestDto {
     @Size(max = 255, message = "Description must be at most 255 characters")
     private String description;
 
-    @Column()
     @Min(value = 1, message = "Group must have at least 1 member")
     @Max(value = 50, message = "Group cannot have more than 50 members")
     private int memberCount;
 
-    private boolean isPublic = true;
+    @NotNull
+    private boolean isPublic;
 }
