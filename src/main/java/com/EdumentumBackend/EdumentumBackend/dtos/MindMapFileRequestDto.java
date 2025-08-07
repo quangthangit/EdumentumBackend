@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.dtos;
 
+import com.EdumentumBackend.EdumentumBackend.entity.MindMapType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -22,4 +23,7 @@ public class MindMapFileRequestDto {
     
     @NotNull(message = "File data is required")
     private String data;
+    
+    @NotNull(message = "Mind map type is required")
+    private MindMapType type;
 }

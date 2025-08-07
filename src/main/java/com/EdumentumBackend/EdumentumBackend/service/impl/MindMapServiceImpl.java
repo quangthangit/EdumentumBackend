@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import com.EdumentumBackend.EdumentumBackend.dtos.MindMapDataDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileRequestDto;
+import com.EdumentumBackend.EdumentumBackend.entity.MindMapType;
 
 @Service
 @RequiredArgsConstructor
@@ -63,6 +64,7 @@ public class MindMapServiceImpl implements MindMapService {
         MindMapEntity mindMap = MindMapEntity.builder()
                 .name(mindMapRequestDto.getName())
                 .data(dataJson)
+                .type(mindMapRequestDto.getType())
                 .user(user)
                 .build();
 
@@ -81,6 +83,22 @@ public class MindMapServiceImpl implements MindMapService {
     @Override
     public List<MindMapResponseDto> getAllMindMapsByUserId(Long userId) {
         List<MindMapEntity> mindMaps = mindMapRepository.findByUserUserIdOrderByCreatedAtDesc(userId);
+        return mindMaps.stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
+    }
+    
+    @Override
+    public List<MindMapResponseDto> getMindMapsByUserIdAndType(Long userId, MindMapType type) {
+        List<MindMapEntity> mindMaps = mindMapRepository.findByUserUserIdAndTypeOrderByCreatedAtDesc(userId, type);
+        return mindMaps.stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
+    }
+    
+    @Override
+    public List<MindMapResponseDto> getMindMapsByType(MindMapType type) {
+        List<MindMapEntity> mindMaps = mindMapRepository.findByTypeOrderByCreatedAtDesc(type);
         return mindMaps.stream()
                 .map(this::convertToResponseDto)
                 .collect(Collectors.toList());
@@ -106,6 +124,7 @@ public class MindMapServiceImpl implements MindMapService {
 
         mindMap.setName(mindMapRequestDto.getName());
         mindMap.setData(dataJson);
+        mindMap.setType(mindMapRequestDto.getType());
         MindMapEntity updatedMindMap = mindMapRepository.save(mindMap);
         return convertToResponseDto(updatedMindMap);
     }
@@ -126,6 +145,14 @@ public class MindMapServiceImpl implements MindMapService {
                 .map(this::convertToMindMapFileResponseDto)
                 .collect(Collectors.toList());
     }
+    
+    @Override
+    public List<MindMapFileResponseDto> getFilesByUserIdAndType(Long userId, MindMapType type) {
+        List<MindMapEntity> mindMaps = mindMapRepository.findByUserUserIdAndTypeOrderByCreatedAtDesc(userId, type);
+        return mindMaps.stream()
+                .map(this::convertToMindMapFileResponseDto)
+                .collect(Collectors.toList());
+    }
 
     @Override
     public MindMapFileResponseDto createFile(MindMapFileRequestDto mindMapFileRequestDto, Long userId) {
@@ -135,6 +162,7 @@ public class MindMapServiceImpl implements MindMapService {
         MindMapEntity mindMap = MindMapEntity.builder()
                 .name(mindMapFileRequestDto.getName())
                 .data(mindMapFileRequestDto.getData())
+                .type(mindMapFileRequestDto.getType())
                 .user(user)
                 .build();
 
@@ -153,6 +181,7 @@ public class MindMapServiceImpl implements MindMapService {
         }
 
         mindMap.setData(mindMapFileRequestDto.getData());
+        mindMap.setType(mindMapFileRequestDto.getType());
         MindMapEntity updatedMindMap = mindMapRepository.save(mindMap);
         return convertToMindMapFileResponseDto(updatedMindMap);
     }
@@ -197,6 +226,7 @@ public class MindMapServiceImpl implements MindMapService {
                 .name(mindMap.getName())
                 .userId(mindMap.getUser().getUserId())
                 .data(dataDto)
+                .type(mindMap.getType())
                 .createdAt(mindMap.getCreatedAt())
                 .updatedAt(mindMap.getUpdatedAt())
                 .build();
@@ -207,6 +237,7 @@ public class MindMapServiceImpl implements MindMapService {
                 .id(mindMap.getId().toString())
                 .name(mindMap.getName())
                 .data(mindMap.getData())
+                .type(mindMap.getType())
                 .createdAt(mindMap.getCreatedAt())
                 .updatedAt(mindMap.getUpdatedAt())
                 .build();

@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.dtos;
 
+import com.EdumentumBackend.EdumentumBackend.entity.MindMapType;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ public class MindMapFileResponseDto {
     private String id;
     private String name;
     private String data;
+    private MindMapType type;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

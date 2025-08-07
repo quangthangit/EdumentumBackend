@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.dtos;
 
+import com.EdumentumBackend.EdumentumBackend.entity.MindMapType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,6 +19,7 @@ public class MindMapResponseDto {
     private String name;
     private Long userId;
     private MindMapDataDto data;
+    private MindMapType type;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

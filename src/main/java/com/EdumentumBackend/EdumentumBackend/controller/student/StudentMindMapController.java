@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import com.EdumentumBackend.EdumentumBackend.entity.MindMapType;
 
 @RestController
 @RequestMapping("/api/v1/student/mindmaps")
@@ -204,6 +205,76 @@ public class StudentMindMapController {
                                 "status", "success",
                                 "message", "Mind maps retrieved successfully",
                                 "data", mindMaps));
+        }
+        
+        @GetMapping("/user/type/{type}")
+        public ResponseEntity<?> getMindMapsByUserIdAndType(
+                @PathVariable String type,
+                @RequestHeader("Authorization") String authHeader) {
+                if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                        return ResponseEntity.status(401).body(Map.of(
+                                        "status", "error",
+                                        "error", "Missing or invalid Authorization header"));
+                }
+
+                String token = authHeader.substring(7);
+                Long userId = jwtService.extractUserId(token);
+
+                try {
+                        MindMapType mindMapType = MindMapType.valueOf(type.toUpperCase());
+                        List<MindMapResponseDto> mindMaps = mindMapService.getMindMapsByUserIdAndType(userId, mindMapType);
+                        return ResponseEntity.ok(Map.of(
+                                        "status", "success",
+                                        "message", "Mind maps retrieved successfully",
+                                        "data", mindMaps));
+                } catch (IllegalArgumentException e) {
+                        return ResponseEntity.badRequest().body(Map.of(
+                                        "status", "error",
+                                        "error", "Invalid mind map type"));
+                }
+        }
+        
+        @GetMapping("/type/{type}")
+        public ResponseEntity<?> getMindMapsByType(@PathVariable String type) {
+                try {
+                        MindMapType mindMapType = MindMapType.valueOf(type.toUpperCase());
+                        List<MindMapResponseDto> mindMaps = mindMapService.getMindMapsByType(mindMapType);
+                        return ResponseEntity.ok(Map.of(
+                                        "status", "success",
+                                        "message", "Mind maps retrieved successfully",
+                                        "data", mindMaps));
+                } catch (IllegalArgumentException e) {
+                        return ResponseEntity.badRequest().body(Map.of(
+                                        "status", "error",
+                                        "error", "Invalid mind map type"));
+                }
+        }
+        
+        @GetMapping("/files/type/{type}")
+        public ResponseEntity<?> getFilesByType(
+                @PathVariable String type,
+                @RequestHeader("Authorization") String authHeader) {
+                if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                        return ResponseEntity.status(401).body(Map.of(
+                                        "status", "error",
+                                        "error", "Missing or invalid Authorization header"));
+                }
+
+                String token = authHeader.substring(7);
+                Long userId = jwtService.extractUserId(token);
+
+                try {
+                        MindMapType mindMapType = MindMapType.valueOf(type.toUpperCase());
+                        List<MindMapFileResponseDto> files = mindMapService.getFilesByUserIdAndType(userId, mindMapType);
+                        return ResponseEntity.ok(Map.of(
+                                        "status", "success",
+                                        "message", "Files retrieved successfully",
+                                        "data", files));
+                } catch (IllegalArgumentException e) {
+                        return ResponseEntity.badRequest().body(Map.of(
+                                        "status", "error",
+                                        "error", "Invalid mind map type"));
+                }
         }
 
         @PutMapping("/{id}")

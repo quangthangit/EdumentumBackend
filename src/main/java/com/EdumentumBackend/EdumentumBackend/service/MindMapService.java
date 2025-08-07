@@ -4,6 +4,7 @@ import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.MindMapRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.MindMapResponseDto;
+import com.EdumentumBackend.EdumentumBackend.entity.MindMapType;
 
 import java.util.List;
 
@@ -13,6 +14,10 @@ public interface MindMapService {
     MindMapResponseDto getMindMapById(Long id);
 
     List<MindMapResponseDto> getAllMindMapsByUserId(Long userId);
+    
+    List<MindMapResponseDto> getMindMapsByUserIdAndType(Long userId, MindMapType type);
+    
+    List<MindMapResponseDto> getMindMapsByType(MindMapType type);
 
     MindMapResponseDto updateMindMap(Long id, MindMapRequestDto mindMapRequestDto, Long userId);
 
@@ -21,6 +26,8 @@ public interface MindMapService {
 
     // File-based operations
     List<MindMapFileResponseDto> getFilesByUserId(Long userId);
+    
+    List<MindMapFileResponseDto> getFilesByUserIdAndType(Long userId, MindMapType type);
 
     MindMapFileResponseDto updateFileName(String id, String newName, Long userId);
 
