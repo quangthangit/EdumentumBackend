@@ -1,4 +1,4 @@
-package com.EdumentumBackend.EdumentumBackend.entity;
+package com.EdumentumBackend.EdumentumBackend.enums;
 
 public enum QuestionType {
     MULTIPLE_CHOICE,     // Câu hỏi nhiều lựa chọn

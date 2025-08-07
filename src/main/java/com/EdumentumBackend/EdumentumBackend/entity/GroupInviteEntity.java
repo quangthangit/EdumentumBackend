@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.entity;
 
+import com.EdumentumBackend.EdumentumBackend.enums.InviteStatus;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
