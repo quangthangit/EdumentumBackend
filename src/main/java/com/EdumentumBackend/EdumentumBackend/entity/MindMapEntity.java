@@ -1,6 +1,7 @@
 package com.EdumentumBackend.EdumentumBackend.entity;
 
 
+import com.EdumentumBackend.EdumentumBackend.enums.MindMapType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

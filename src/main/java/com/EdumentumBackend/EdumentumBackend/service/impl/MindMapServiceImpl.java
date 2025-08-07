@@ -10,37 +10,39 @@ import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
 import com.EdumentumBackend.EdumentumBackend.service.MindMapService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import com.EdumentumBackend.EdumentumBackend.dtos.MindMapDataDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileRequestDto;
 
 @Service
-@RequiredArgsConstructor
 public class MindMapServiceImpl implements MindMapService {
 
     private final MindMapRepository mindMapRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
+    public MindMapServiceImpl(MindMapRepository mindMapRepository,UserRepository userRepository,ObjectMapper objectMapper) {
+        this.mindMapRepository = mindMapRepository;
+        this.objectMapper = objectMapper;
+        this.userRepository = userRepository;
+    }
+
     @Override
     public MindMapFileResponseDto updateFileName(String id, String newName, Long userId) {
         MindMapEntity mindMap = mindMapRepository.findById(Long.parseLong(id))
                 .orElseThrow(() -> new NotFoundException("File not found"));
 
-        // Kiểm tra quyền sở hữu file
         if (!mindMap.getUser().getUserId().equals(userId)) {
             throw new NotFoundException("File not found or not accessible");
         }
 
         mindMap.setName(newName);
-        mindMap.setUpdatedAt(LocalDateTime.now()); // cập nhật thời gian chỉnh sửa
+        mindMap.setUpdatedAt(LocalDateTime.now());
         MindMapEntity updatedMindMap = mindMapRepository.save(mindMap);
 
         return convertToMindMapFileResponseDto(updatedMindMap);
@@ -211,6 +213,4 @@ public class MindMapServiceImpl implements MindMapService {
                 .updatedAt(mindMap.getUpdatedAt())
                 .build();
     }
-
-
 }

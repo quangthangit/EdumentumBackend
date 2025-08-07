@@ -9,6 +9,5 @@ import java.util.List;
 @Repository
 public interface MindMapRepository extends JpaRepository<MindMapEntity, Long> {
     List<MindMapEntity> findByUserUserId(Long userId);
-
     List<MindMapEntity> findByUserUserIdOrderByCreatedAtDesc(Long userId);
 }

@@ -2,7 +2,6 @@ package com.EdumentumBackend.EdumentumBackend.service.impl;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.GroupRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.GroupResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.UserResponseDto;
 import com.EdumentumBackend.EdumentumBackend.entity.GroupEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
 import com.EdumentumBackend.EdumentumBackend.exception.NotFoundException;
@@ -11,8 +10,6 @@ import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
 import com.EdumentumBackend.EdumentumBackend.service.GroupService;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 public class GroupServiceImpl implements GroupService {
