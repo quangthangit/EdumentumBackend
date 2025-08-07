@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FilePropsDto {
+public class MindMapFileResponseDto {
     private String id;
     private String name;
     private String data;

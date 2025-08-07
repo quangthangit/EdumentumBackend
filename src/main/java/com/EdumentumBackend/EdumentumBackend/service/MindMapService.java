@@ -1,32 +1,34 @@
 package com.EdumentumBackend.EdumentumBackend.service;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.FilePropsDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.MindMapRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.MindMapResponseDto;
 
 import java.util.List;
 
 public interface MindMapService {
-    MindMapDto createMindMap(MindMapDto mindMapDto);
+    MindMapResponseDto createMindMap(MindMapRequestDto mindMapRequestDto, Long userId);
 
-    MindMapDto getMindMapById(Long id);
+    MindMapResponseDto getMindMapById(Long id);
 
-    List<MindMapDto> getAllMindMapsByUserId(Long userId);
+    List<MindMapResponseDto> getAllMindMapsByUserId(Long userId);
 
-    MindMapDto updateMindMap(Long id, MindMapDto mindMapDto);
+    MindMapResponseDto updateMindMap(Long id, MindMapRequestDto mindMapRequestDto, Long userId);
 
     void deleteMindMap(Long id);
 
 
     // File-based operations
-    List<FilePropsDto> getFilesByUserId(Long userId);
+    List<MindMapFileResponseDto> getFilesByUserId(Long userId);
 
-    FilePropsDto updateFileName(String id, String newName, Long userId);
+    MindMapFileResponseDto updateFileName(String id, String newName, Long userId);
 
-    FilePropsDto createFile(String name, String data, Long userId);
+    MindMapFileResponseDto createFile(MindMapFileRequestDto mindMapFileRequestDto, Long userId);
 
-    FilePropsDto updateFile(String id, String data, Long userId);
+    MindMapFileResponseDto updateFile(String id, MindMapFileRequestDto mindMapFileRequestDto, Long userId);
 
     void deleteFile(String id, Long userId);
 
-    FilePropsDto getFileById(String id, Long userId);
+    MindMapFileResponseDto getFileById(String id, Long userId);
 }

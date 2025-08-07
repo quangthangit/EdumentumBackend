@@ -1,13 +1,15 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.FilePropsDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.MindMapRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.MindMapResponseDto;
 import com.EdumentumBackend.EdumentumBackend.entity.MindMapEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
 import com.EdumentumBackend.EdumentumBackend.exception.NotFoundException;
 import com.EdumentumBackend.EdumentumBackend.repository.MindMapRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
 import com.EdumentumBackend.EdumentumBackend.service.MindMapService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.EdumentumBackend.EdumentumBackend.dtos.MindMapDataDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileRequestDto;
 
 @Service
 @RequiredArgsConstructor
@@ -22,9 +27,10 @@ public class MindMapServiceImpl implements MindMapService {
 
     private final MindMapRepository mindMapRepository;
     private final UserRepository userRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
-    public FilePropsDto updateFileName(String id, String newName, Long userId) {
+    public MindMapFileResponseDto updateFileName(String id, String newName, Long userId) {
         MindMapEntity mindMap = mindMapRepository.findById(Long.parseLong(id))
                 .orElseThrow(() -> new NotFoundException("File not found"));
 
@@ -37,50 +43,71 @@ public class MindMapServiceImpl implements MindMapService {
         mindMap.setUpdatedAt(LocalDateTime.now()); // cập nhật thời gian chỉnh sửa
         MindMapEntity updatedMindMap = mindMapRepository.save(mindMap);
 
-        return convertToFilePropsDto(updatedMindMap);
+        return convertToMindMapFileResponseDto(updatedMindMap);
     }
 
 
     @Override
-    public MindMapDto createMindMap(MindMapDto mindMapDto) {
-        UserEntity user = userRepository.findById(mindMapDto.getUserId())
+    public MindMapResponseDto createMindMap(MindMapRequestDto mindMapRequestDto, Long userId) {
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
+        // Convert MindMapDataDto to JSON string
+        String dataJson;
+        try {
+            dataJson = objectMapper.writeValueAsString(mindMapRequestDto.getData());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize mind map data", e);
+        }
+
         MindMapEntity mindMap = MindMapEntity.builder()
-                .name(mindMapDto.getName())
-                .data(mindMapDto.getData())
+                .name(mindMapRequestDto.getName())
+                .data(dataJson)
                 .user(user)
                 .build();
 
         MindMapEntity savedMindMap = mindMapRepository.save(mindMap);
-        return convertToDto(savedMindMap);
+        return convertToResponseDto(savedMindMap);
     }
 
 
     @Override
-    public MindMapDto getMindMapById(Long id) {
+    public MindMapResponseDto getMindMapById(Long id) {
         MindMapEntity mindMap = mindMapRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Mind map not found"));
-        return convertToDto(mindMap);
+        return convertToResponseDto(mindMap);
     }
 
     @Override
-    public List<MindMapDto> getAllMindMapsByUserId(Long userId) {
+    public List<MindMapResponseDto> getAllMindMapsByUserId(Long userId) {
         List<MindMapEntity> mindMaps = mindMapRepository.findByUserUserIdOrderByCreatedAtDesc(userId);
         return mindMaps.stream()
-                .map(this::convertToDto)
+                .map(this::convertToResponseDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public MindMapDto updateMindMap(Long id, MindMapDto mindMapDto) {
+    public MindMapResponseDto updateMindMap(Long id, MindMapRequestDto mindMapRequestDto, Long userId) {
         MindMapEntity mindMap = mindMapRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Mind map not found"));
 
-        mindMap.setName(mindMapDto.getName());
-        mindMap.setData(mindMapDto.getData());
+        // Check if user owns this mind map
+        if (!mindMap.getUser().getUserId().equals(userId)) {
+            throw new NotFoundException("Mind map not found or not accessible");
+        }
+
+        // Convert MindMapDataDto to JSON string
+        String dataJson;
+        try {
+            dataJson = objectMapper.writeValueAsString(mindMapRequestDto.getData());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize mind map data", e);
+        }
+
+        mindMap.setName(mindMapRequestDto.getName());
+        mindMap.setData(dataJson);
         MindMapEntity updatedMindMap = mindMapRepository.save(mindMap);
-        return convertToDto(updatedMindMap);
+        return convertToResponseDto(updatedMindMap);
     }
 
     @Override
@@ -93,30 +120,30 @@ public class MindMapServiceImpl implements MindMapService {
 
     // File-based operations
     @Override
-    public List<FilePropsDto> getFilesByUserId(Long userId) {
+    public List<MindMapFileResponseDto> getFilesByUserId(Long userId) {
         List<MindMapEntity> mindMaps = mindMapRepository.findByUserUserIdOrderByCreatedAtDesc(userId);
         return mindMaps.stream()
-                .map(this::convertToFilePropsDto)
+                .map(this::convertToMindMapFileResponseDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public FilePropsDto createFile(String name, String data, Long userId) {
+    public MindMapFileResponseDto createFile(MindMapFileRequestDto mindMapFileRequestDto, Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         MindMapEntity mindMap = MindMapEntity.builder()
-                .name(name)
-                .data(data)
+                .name(mindMapFileRequestDto.getName())
+                .data(mindMapFileRequestDto.getData())
                 .user(user)
                 .build();
 
         MindMapEntity savedMindMap = mindMapRepository.save(mindMap);
-        return convertToFilePropsDto(savedMindMap);
+        return convertToMindMapFileResponseDto(savedMindMap);
     }
 
     @Override
-    public FilePropsDto updateFile(String id, String data, Long userId) {
+    public MindMapFileResponseDto updateFile(String id, MindMapFileRequestDto mindMapFileRequestDto, Long userId) {
         MindMapEntity mindMap = mindMapRepository.findById(Long.parseLong(id))
                 .orElseThrow(() -> new NotFoundException("File not found"));
 
@@ -125,9 +152,9 @@ public class MindMapServiceImpl implements MindMapService {
             throw new NotFoundException("File not found");
         }
 
-        mindMap.setData(data);
+        mindMap.setData(mindMapFileRequestDto.getData());
         MindMapEntity updatedMindMap = mindMapRepository.save(mindMap);
-        return convertToFilePropsDto(updatedMindMap);
+        return convertToMindMapFileResponseDto(updatedMindMap);
     }
 
     @Override
@@ -144,7 +171,7 @@ public class MindMapServiceImpl implements MindMapService {
     }
 
     @Override
-    public FilePropsDto getFileById(String id, Long userId) {
+    public MindMapFileResponseDto getFileById(String id, Long userId) {
         MindMapEntity mindMap = mindMapRepository.findById(Long.parseLong(id))
                 .orElseThrow(() -> new NotFoundException("File not found"));
 
@@ -153,22 +180,30 @@ public class MindMapServiceImpl implements MindMapService {
             throw new NotFoundException("File not found");
         }
 
-        return convertToFilePropsDto(mindMap);
+        return convertToMindMapFileResponseDto(mindMap);
     }
 
-    private MindMapDto convertToDto(MindMapEntity mindMap) {
-        return MindMapDto.builder()
+    private MindMapResponseDto convertToResponseDto(MindMapEntity mindMap) {
+        // Convert JSON string back to MindMapDataDto
+        MindMapDataDto dataDto;
+        try {
+            dataDto = objectMapper.readValue(mindMap.getData(), MindMapDataDto.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to deserialize mind map data", e);
+        }
+
+        return MindMapResponseDto.builder()
                 .id(mindMap.getId())
                 .name(mindMap.getName())
-                .data(mindMap.getData())
                 .userId(mindMap.getUser().getUserId())
+                .data(dataDto)
                 .createdAt(mindMap.getCreatedAt())
                 .updatedAt(mindMap.getUpdatedAt())
                 .build();
     }
 
-    private FilePropsDto convertToFilePropsDto(MindMapEntity mindMap) {
-        return FilePropsDto.builder()
+    private MindMapFileResponseDto convertToMindMapFileResponseDto(MindMapEntity mindMap) {
+        return MindMapFileResponseDto.builder()
                 .id(mindMap.getId().toString())
                 .name(mindMap.getName())
                 .data(mindMap.getData())

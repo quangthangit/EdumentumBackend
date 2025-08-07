@@ -1,7 +1,9 @@
 package com.EdumentumBackend.EdumentumBackend.controller.student;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.FilePropsDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.MindMapRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.MindMapResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileRequestDto;
 import com.EdumentumBackend.EdumentumBackend.jwt.JwtService;
 import com.EdumentumBackend.EdumentumBackend.service.MindMapService;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +34,7 @@ public class StudentMindMapController {
                 String token = authHeader.substring(7);
                 Long userId = jwtService.extractUserId(token);
 
-                List<FilePropsDto> files = mindMapService.getFilesByUserId(userId);
+                List<MindMapFileResponseDto> files = mindMapService.getFilesByUserId(userId);
                 return ResponseEntity.ok(Map.of(
                                 "status", "success",
                                 "message", "Files retrieved successfully",
@@ -41,7 +43,7 @@ public class StudentMindMapController {
 
         @PostMapping("/files")
         public ResponseEntity<?> createFile(
-                        @RequestBody Map<String, String> request,
+                        @RequestBody MindMapFileRequestDto mindMapFileRequestDto,
                         @RequestHeader("Authorization") String authHeader) {
 
                 if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -53,16 +55,7 @@ public class StudentMindMapController {
                 String token = authHeader.substring(7);
                 Long userId = jwtService.extractUserId(token);
 
-                String name = request.get("name");
-                String data = request.get("data");
-
-                if (name == null || data == null) {
-                        return ResponseEntity.badRequest().body(Map.of(
-                                        "status", "error",
-                                        "error", "Name and data are required"));
-                }
-
-                FilePropsDto createdFile = mindMapService.createFile(name, data, userId);
+                MindMapFileResponseDto createdFile = mindMapService.createFile(mindMapFileRequestDto, userId);
                 return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                                 "status", "success",
                                 "message", "File created successfully",
@@ -72,7 +65,7 @@ public class StudentMindMapController {
         @PutMapping("/files/{id}")
         public ResponseEntity<?> updateFile(
                         @PathVariable String id,
-                        @RequestBody Map<String, String> request,
+                        @RequestBody MindMapFileRequestDto mindMapFileRequestDto,
                         @RequestHeader("Authorization") String authHeader) {
 
                 if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -84,14 +77,7 @@ public class StudentMindMapController {
                 String token = authHeader.substring(7);
                 Long userId = jwtService.extractUserId(token);
 
-                String data = request.get("data");
-                if (data == null) {
-                        return ResponseEntity.badRequest().body(Map.of(
-                                        "status", "error",
-                                        "error", "Data is required"));
-                }
-
-                FilePropsDto updatedFile = mindMapService.updateFile(id, data, userId);
+                MindMapFileResponseDto updatedFile = mindMapService.updateFile(id, mindMapFileRequestDto, userId);
                 return ResponseEntity.ok(Map.of(
                                 "status", "success",
                                 "message", "File updated successfully",
@@ -132,7 +118,7 @@ public class StudentMindMapController {
                 String token = authHeader.substring(7);
                 Long userId = jwtService.extractUserId(token);
 
-                FilePropsDto file = mindMapService.getFileById(id, userId);
+                MindMapFileResponseDto file = mindMapService.getFileById(id, userId);
                 return ResponseEntity.ok(Map.of(
                                 "status", "success",
                                 "message", "File retrieved successfully",
@@ -161,7 +147,7 @@ public class StudentMindMapController {
                                 "error", "File name is required"));
                 }
 
-                FilePropsDto updatedFile = mindMapService.updateFileName(id, newName, userId);
+                MindMapFileResponseDto updatedFile = mindMapService.updateFileName(id, newName, userId);
 
                 return ResponseEntity.ok(Map.of(
                         "status", "success",
@@ -173,7 +159,7 @@ public class StudentMindMapController {
         // Legacy endpoints for backward compatibility
         @PostMapping
         public ResponseEntity<?> createMindMap(
-                        @RequestBody MindMapDto mindMapDto,
+                        @RequestBody MindMapRequestDto mindMapRequestDto,
                         @RequestHeader("Authorization") String authHeader) {
 
                 if ((authHeader == null) || !authHeader.startsWith("Bearer ")) {
@@ -185,9 +171,7 @@ public class StudentMindMapController {
                 String token = authHeader.substring(7);
                 Long userId = jwtService.extractUserId(token);
 
-                // Set userId from token instead of from request body
-                mindMapDto.setUserId(userId);
-                MindMapDto createdMindMap = mindMapService.createMindMap(mindMapDto);
+                MindMapResponseDto createdMindMap = mindMapService.createMindMap(mindMapRequestDto, userId);
 
                 return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                                 "status", "success",
@@ -197,7 +181,7 @@ public class StudentMindMapController {
 
         @GetMapping("/{id}")
         public ResponseEntity<?> getMindMapById(@PathVariable Long id) {
-                MindMapDto mindMap = mindMapService.getMindMapById(id);
+                MindMapResponseDto mindMap = mindMapService.getMindMapById(id);
                 return ResponseEntity.ok(Map.of(
                                 "status", "success",
                                 "message", "Mind map retrieved successfully",
@@ -215,7 +199,7 @@ public class StudentMindMapController {
                 String token = authHeader.substring(7);
                 Long userId = jwtService.extractUserId(token);
 
-                List<MindMapDto> mindMaps = mindMapService.getAllMindMapsByUserId(userId);
+                List<MindMapResponseDto> mindMaps = mindMapService.getAllMindMapsByUserId(userId);
                 return ResponseEntity.ok(Map.of(
                                 "status", "success",
                                 "message", "Mind maps retrieved successfully",
@@ -225,7 +209,7 @@ public class StudentMindMapController {
         @PutMapping("/{id}")
         public ResponseEntity<?> updateMindMap(
                         @PathVariable Long id,
-                        @RequestBody MindMapDto mindMapDto,
+                        @RequestBody MindMapRequestDto mindMapRequestDto,
                         @RequestHeader("Authorization") String authHeader) {
 
                 if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -237,9 +221,7 @@ public class StudentMindMapController {
                 String token = authHeader.substring(7);
                 Long userId = jwtService.extractUserId(token);
 
-                // Set userId from token instead of from request body
-                mindMapDto.setUserId(userId);
-                MindMapDto updatedMindMap = mindMapService.updateMindMap(id, mindMapDto);
+                MindMapResponseDto updatedMindMap = mindMapService.updateMindMap(id, mindMapRequestDto, userId);
 
                 return ResponseEntity.ok(Map.of(
                                 "status", "success",

@@ -1,18 +1,23 @@
 package com.EdumentumBackend.EdumentumBackend.dtos;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Data
-@Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MindMapDto {
+@Builder
+public class MindMapResponseDto {
     private Long id;
     private String name;
     private Long userId;
-    private String data; // JSON string containing nodes and edges
+    private MindMapDataDto data;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

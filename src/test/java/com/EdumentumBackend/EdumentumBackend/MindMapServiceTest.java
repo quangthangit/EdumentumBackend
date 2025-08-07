@@ -1,6 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.MindMapRequestDto;
 import com.EdumentumBackend.EdumentumBackend.service.MindMapService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
