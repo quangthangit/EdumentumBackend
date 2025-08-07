@@ -1,4 +1,8 @@
 package com.EdumentumBackend.EdumentumBackend.entity;
 
-public class MindMapType {
+public enum MindMapType {
+    DEFAULT,
+    EDUCATION,
+    BUSINESS,
+    PERSONAL
 }

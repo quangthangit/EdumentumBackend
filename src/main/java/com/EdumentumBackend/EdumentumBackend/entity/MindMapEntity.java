@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.entity;
 
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -33,6 +34,10 @@ public class MindMapEntity {
 
     @Column(name = "data", columnDefinition = "TEXT")
     private String data; // JSON string containing nodes and edges
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
+    private MindMapType type = MindMapType.DEFAULT;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
