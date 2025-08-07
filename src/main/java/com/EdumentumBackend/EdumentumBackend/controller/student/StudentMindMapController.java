@@ -230,7 +230,7 @@ public class StudentMindMapController {
                 } catch (IllegalArgumentException e) {
                         return ResponseEntity.badRequest().body(Map.of(
                                         "status", "error",
-                                        "error", "Invalid mind map type"));
+                                        "error", "Invalid mind map type. Valid types: STUDY_NOTES, PROJECT_PLANNING, CONCEPT_MAPPING, BRAINSTORMING, LESSON_PLAN, RESEARCH, PRESENTATION, PERSONAL"));
                 }
         }
         
@@ -246,7 +246,7 @@ public class StudentMindMapController {
                 } catch (IllegalArgumentException e) {
                         return ResponseEntity.badRequest().body(Map.of(
                                         "status", "error",
-                                        "error", "Invalid mind map type"));
+                                        "error", "Invalid mind map type. Valid types: STUDY_NOTES, PROJECT_PLANNING, CONCEPT_MAPPING, BRAINSTORMING, LESSON_PLAN, RESEARCH, PRESENTATION, PERSONAL"));
                 }
         }
         
@@ -273,7 +273,7 @@ public class StudentMindMapController {
                 } catch (IllegalArgumentException e) {
                         return ResponseEntity.badRequest().body(Map.of(
                                         "status", "error",
-                                        "error", "Invalid mind map type"));
+                                        "error", "Invalid mind map type. Valid types: STUDY_NOTES, PROJECT_PLANNING, CONCEPT_MAPPING, BRAINSTORMING, LESSON_PLAN, RESEARCH, PRESENTATION, PERSONAL"));
                 }
         }
 

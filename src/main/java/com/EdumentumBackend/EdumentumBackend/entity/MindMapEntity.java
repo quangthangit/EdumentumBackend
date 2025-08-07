@@ -37,7 +37,7 @@ public class MindMapEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
-    private MindMapType type = MindMapType.DEFAULT;
+    private MindMapType type = MindMapType.STUDY_NOTES;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

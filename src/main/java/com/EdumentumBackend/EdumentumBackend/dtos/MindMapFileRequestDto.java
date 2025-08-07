@@ -26,4 +26,16 @@ public class MindMapFileRequestDto {
     
     @NotNull(message = "Mind map type is required")
     private MindMapType type;
+    
+    // Custom validation method
+    public boolean isValidType() {
+        return type != null && (type == MindMapType.STUDY_NOTES || 
+                               type == MindMapType.PROJECT_PLANNING || 
+                               type == MindMapType.CONCEPT_MAPPING || 
+                               type == MindMapType.BRAINSTORMING || 
+                               type == MindMapType.LESSON_PLAN || 
+                               type == MindMapType.RESEARCH || 
+                               type == MindMapType.PRESENTATION || 
+                               type == MindMapType.PERSONAL);
+    }
 }
