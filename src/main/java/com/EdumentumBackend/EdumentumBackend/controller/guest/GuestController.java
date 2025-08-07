@@ -2,6 +2,7 @@ package com.EdumentumBackend.EdumentumBackend.controller.guest;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.RoleRequest;
 import com.EdumentumBackend.EdumentumBackend.dtos.UserResponseDto;
+import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetailsService;
 import com.EdumentumBackend.EdumentumBackend.jwt.JwtService;
 import com.EdumentumBackend.EdumentumBackend.service.UserService;
@@ -32,36 +33,26 @@ public class GuestController {
     }
 
     @PostMapping("/set-user-role")
-    public ResponseEntity<?> setUserRole(
-            @Valid @RequestBody RoleRequest roleRequest,
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<?> setUserRole(@Valid @RequestBody RoleRequest roleRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
             return ResponseEntity.status(401).body(Map.of(
                     "status", "error",
-                    "message", "Missing or invalid Authorization header"
+                    "message", "Unauthorized"
             ));
         }
 
-        String token = authHeader.substring(7);
-        Long userId;
-
-        try {
-            userId = jwtService.extractUserId(token);
-        } catch (Exception e) {
-            return ResponseEntity.status(401).body(Map.of(
-                    "status", "error",
-                    "message", "Invalid or expired token"
-            ));
-        }
+        Long userId = userDetails.getUserId();
 
         userService.assignRoleToUser(userId, roleRequest.getRoleName());
 
         UserResponseDto user = userService.getUserById(userId);
-        UserDetails userDetails = customUserDetailsService.loadUserByUsername(user.getEmail());
+        UserDetails updatedUserDetails = customUserDetailsService.loadUserByUsername(user.getEmail());
 
-        return buildAuthResponse(user, userDetails, jwtService);
+        return buildAuthResponse(user, updatedUserDetails, jwtService);
     }
+
 
     // ------------------- PRIVATE METHOD -------------------
 

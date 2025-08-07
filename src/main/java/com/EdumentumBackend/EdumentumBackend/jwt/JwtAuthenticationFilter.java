@@ -18,7 +18,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
 
-    public JwtAuthenticationFilter(JwtService jwtService,CustomUserDetailsService userDetailsService) {
+    public JwtAuthenticationFilter(JwtService jwtService, CustomUserDetailsService userDetailsService) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
     }
@@ -29,10 +29,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         String token = null;
         String username = null;
+        Long userId = null;
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
             username = jwtService.extractUsername(token);
+            userId = jwtService.extractUserId(token);
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -40,8 +42,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwtService.validateToken(token)) {
                 var authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
+
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                // Gợi ý: đưa userId vào request attribute nếu bạn cần dùng lại
+                request.setAttribute("userId", userId);
             }
         }
 
