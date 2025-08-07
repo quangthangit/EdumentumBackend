@@ -19,7 +19,7 @@ public class TaskEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotBlank(message = "Title cannot be blank")
+    @NotBlank()
     private String title;
     @Column(columnDefinition = "TEXT")
     private String description;
