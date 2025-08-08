@@ -1,6 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.dtos;
 
-import com.EdumentumBackend.EdumentumBackend.entity.MindMapType;
+import com.EdumentumBackend.EdumentumBackend.enums.MindMapType;
 import lombok.*;
 
 import java.time.LocalDateTime;

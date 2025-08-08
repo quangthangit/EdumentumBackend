@@ -1,9 +1,12 @@
 package com.EdumentumBackend.EdumentumBackend.entity;
 
+import com.EdumentumBackend.EdumentumBackend.enums.RoleGroup;
 import jakarta.persistence.*;
+import lombok.Data;
 
 import java.time.LocalDateTime;
 
+@Data
 @Entity
 @Table(name = "group_members", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"group_id", "user_id"})

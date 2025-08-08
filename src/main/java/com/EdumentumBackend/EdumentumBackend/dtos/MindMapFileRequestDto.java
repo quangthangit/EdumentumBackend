@@ -1,6 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.dtos;
 
-import com.EdumentumBackend.EdumentumBackend.entity.MindMapType;
+import com.EdumentumBackend.EdumentumBackend.enums.MindMapType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -16,26 +16,26 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class MindMapFileRequestDto {
-    
+
     @NotBlank(message = "File name is required")
     @Size(min = 1, max = 255, message = "File name must be between 1 and 255 characters")
     private String name;
-    
+
     @NotNull(message = "File data is required")
     private String data;
-    
+
     @NotNull(message = "Mind map type is required")
     private MindMapType type;
-    
+
     // Custom validation method
     public boolean isValidType() {
-        return type != null && (type == MindMapType.STUDY_NOTES || 
-                               type == MindMapType.PROJECT_PLANNING || 
-                               type == MindMapType.CONCEPT_MAPPING || 
-                               type == MindMapType.BRAINSTORMING || 
-                               type == MindMapType.LESSON_PLAN || 
-                               type == MindMapType.RESEARCH || 
-                               type == MindMapType.PRESENTATION || 
-                               type == MindMapType.PERSONAL);
+        return type != null && (type == MindMapType.STUDY_NOTES ||
+                type == MindMapType.PROJECT_PLANNING ||
+                type == MindMapType.CONCEPT_MAPPING ||
+                type == MindMapType.BRAINSTORMING ||
+                type == MindMapType.LESSON_PLAN ||
+                type == MindMapType.RESEARCH ||
+                type == MindMapType.PRESENTATION ||
+                type == MindMapType.PERSONAL);
     }
 }
