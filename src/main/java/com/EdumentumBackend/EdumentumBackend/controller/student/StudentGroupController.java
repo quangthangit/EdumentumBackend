@@ -90,6 +90,16 @@ public class StudentGroupController {
         ));
     }
 
+    @GetMapping("/my-group")
+    public ResponseEntity<?> getMyGroupByIdUser() {
+        Long userId = getCurrentUserId();
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Get My Group successfully",
+                "data", groupService.findByUEntities(userId)
+        ));
+    }
+
     private Long getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 

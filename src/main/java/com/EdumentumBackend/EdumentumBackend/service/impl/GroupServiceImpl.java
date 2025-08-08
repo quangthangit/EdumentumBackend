@@ -19,6 +19,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class GroupServiceImpl implements GroupService {
 
@@ -142,4 +146,29 @@ public class GroupServiceImpl implements GroupService {
         member.setRoleGroup(RoleGroup.MEMBER);
         groupMemberRepository.save(member);
     }
+
+    @Override
+    public List<GroupResponseDto> findByUEntities(Long userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        List<GroupMemberEntity> groupMemberEntities = groupMemberRepository.findAllByUser(user);
+
+        return groupMemberEntities.stream()
+                .map(member -> {
+                    GroupEntity group = member.getGroup();
+                    GroupResponseDto dto = new GroupResponseDto();
+                    dto.setId(group.getId());
+                    dto.setName(group.getName());
+                    dto.setDescription(group.getDescription());
+                    dto.setPublic(group.isPublic());
+                    dto.setOwnerId(group.getOwner().getUserId());
+                    dto.setMemberCount(group.getMemberCount());
+                    dto.setCreatedAt(group.getCreatedAt());
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
 }
