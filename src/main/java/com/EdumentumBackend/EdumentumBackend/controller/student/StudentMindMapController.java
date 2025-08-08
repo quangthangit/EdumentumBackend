@@ -44,7 +44,7 @@ public class StudentMindMapController {
 
         @PostMapping("/files")
         public ResponseEntity<?> createFile(
-                        @RequestBody MindMapFileRequestDto mindMapFileRequestDto,
+                        @jakarta.validation.Valid @RequestBody MindMapFileRequestDto mindMapFileRequestDto,
                         @RequestHeader("Authorization") String authHeader) {
 
                 if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -66,7 +66,7 @@ public class StudentMindMapController {
         @PutMapping("/files/{id}")
         public ResponseEntity<?> updateFile(
                         @PathVariable String id,
-                        @RequestBody MindMapFileRequestDto mindMapFileRequestDto,
+                        @jakarta.validation.Valid @RequestBody MindMapFileRequestDto mindMapFileRequestDto,
                         @RequestHeader("Authorization") String authHeader) {
 
                 if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -160,7 +160,7 @@ public class StudentMindMapController {
         // Legacy endpoints for backward compatibility
         @PostMapping
         public ResponseEntity<?> createMindMap(
-                        @RequestBody MindMapRequestDto mindMapRequestDto,
+                        @jakarta.validation.Valid @RequestBody MindMapRequestDto mindMapRequestDto,
                         @RequestHeader("Authorization") String authHeader) {
 
                 if ((authHeader == null) || !authHeader.startsWith("Bearer ")) {
@@ -280,7 +280,7 @@ public class StudentMindMapController {
         @PutMapping("/{id}")
         public ResponseEntity<?> updateMindMap(
                         @PathVariable Long id,
-                        @RequestBody MindMapRequestDto mindMapRequestDto,
+                        @jakarta.validation.Valid @RequestBody MindMapRequestDto mindMapRequestDto,
                         @RequestHeader("Authorization") String authHeader) {
 
                 if (authHeader == null || !authHeader.startsWith("Bearer ")) {

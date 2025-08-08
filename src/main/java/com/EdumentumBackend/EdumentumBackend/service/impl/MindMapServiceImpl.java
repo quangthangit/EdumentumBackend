@@ -64,7 +64,7 @@ public class MindMapServiceImpl implements MindMapService {
         MindMapEntity mindMap = MindMapEntity.builder()
                 .name(mindMapRequestDto.getName())
                 .data(dataJson)
-                .type(mindMapRequestDto.getType())
+                .type(mindMapRequestDto.getType() != null ? mindMapRequestDto.getType() : MindMapType.STUDY_NOTES)
                 .user(user)
                 .build();
 
@@ -124,7 +124,7 @@ public class MindMapServiceImpl implements MindMapService {
 
         mindMap.setName(mindMapRequestDto.getName());
         mindMap.setData(dataJson);
-        mindMap.setType(mindMapRequestDto.getType());
+        mindMap.setType(mindMapRequestDto.getType() != null ? mindMapRequestDto.getType() : mindMap.getType());
         MindMapEntity updatedMindMap = mindMapRepository.save(mindMap);
         return convertToResponseDto(updatedMindMap);
     }
@@ -162,7 +162,7 @@ public class MindMapServiceImpl implements MindMapService {
         MindMapEntity mindMap = MindMapEntity.builder()
                 .name(mindMapFileRequestDto.getName())
                 .data(mindMapFileRequestDto.getData())
-                .type(mindMapFileRequestDto.getType())
+                .type(mindMapFileRequestDto.getType() != null ? mindMapFileRequestDto.getType() : MindMapType.STUDY_NOTES)
                 .user(user)
                 .build();
 
@@ -181,7 +181,7 @@ public class MindMapServiceImpl implements MindMapService {
         }
 
         mindMap.setData(mindMapFileRequestDto.getData());
-        mindMap.setType(mindMapFileRequestDto.getType());
+        mindMap.setType(mindMapFileRequestDto.getType() != null ? mindMapFileRequestDto.getType() : mindMap.getType());
         MindMapEntity updatedMindMap = mindMapRepository.save(mindMap);
         return convertToMindMapFileResponseDto(updatedMindMap);
     }
