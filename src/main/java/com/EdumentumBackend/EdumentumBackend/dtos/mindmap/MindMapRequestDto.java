@@ -1,4 +1,4 @@
-package com.EdumentumBackend.EdumentumBackend.dtos;
+package com.EdumentumBackend.EdumentumBackend.dtos.mindmap;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -8,9 +8,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.List;
-import java.util.Map;
 
 @Getter
 @Setter

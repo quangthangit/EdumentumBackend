@@ -1,7 +1,7 @@
 package com.EdumentumBackend.EdumentumBackend.controller.student;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.TaskRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.TaskResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.task.TaskRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.task.TaskResponseDto;
 import com.EdumentumBackend.EdumentumBackend.exception.InvalidInputException;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
 import com.EdumentumBackend.EdumentumBackend.service.TaskService;

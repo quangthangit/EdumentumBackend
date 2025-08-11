@@ -1,4 +1,4 @@
-package com.EdumentumBackend.EdumentumBackend.dtos;
+package com.EdumentumBackend.EdumentumBackend.dtos.mindmap;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

@@ -1,4 +1,4 @@
-package com.EdumentumBackend.EdumentumBackend.dtos;
+package com.EdumentumBackend.EdumentumBackend.dtos.role;
 
 import jakarta.validation.constraints.*;
 import lombok.*;

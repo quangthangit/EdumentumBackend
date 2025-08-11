@@ -1,4 +1,4 @@
-package com.EdumentumBackend.EdumentumBackend.dtos;
+package com.EdumentumBackend.EdumentumBackend.dtos.auth;
 
 import com.EdumentumBackend.EdumentumBackend.entity.RoleEntity;
 import lombok.*;

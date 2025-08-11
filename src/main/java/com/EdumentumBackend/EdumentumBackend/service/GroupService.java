@@ -1,10 +1,9 @@
 package com.EdumentumBackend.EdumentumBackend.service;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.GroupDetailResponse;
-import com.EdumentumBackend.EdumentumBackend.dtos.GroupRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.GroupResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupDetailResponse;
+import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.PaginatedResponse;
-import com.EdumentumBackend.EdumentumBackend.entity.GroupMemberEntity;
 import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Pageable;
 

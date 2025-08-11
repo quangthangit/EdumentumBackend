@@ -1,6 +1,10 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.*;
+import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupDetailResponse;
+import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.group.UserGroupResponse;
 import com.EdumentumBackend.EdumentumBackend.entity.GroupEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.GroupMemberEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;

@@ -1,7 +1,7 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapResponseDto;
 import com.EdumentumBackend.EdumentumBackend.entity.MindMapEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
 import com.EdumentumBackend.EdumentumBackend.exception.NotFoundException;
@@ -15,9 +15,9 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapDataDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapDataDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapFileResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapFileRequestDto;
 
 @Service
 public class MindMapServiceImpl implements MindMapService {

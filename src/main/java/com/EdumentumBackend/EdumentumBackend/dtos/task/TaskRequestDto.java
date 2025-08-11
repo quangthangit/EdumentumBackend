@@ -1,4 +1,4 @@
-package com.EdumentumBackend.EdumentumBackend.dtos;
+package com.EdumentumBackend.EdumentumBackend.dtos.task;
 
 import com.EdumentumBackend.EdumentumBackend.enums.TaskStatus;
 import jakarta.validation.constraints.NotBlank;
