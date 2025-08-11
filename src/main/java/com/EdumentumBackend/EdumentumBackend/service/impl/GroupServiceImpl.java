@@ -1,12 +1,11 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.GroupRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.GroupResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.PaginatedResponse;
+import com.EdumentumBackend.EdumentumBackend.dtos.*;
 import com.EdumentumBackend.EdumentumBackend.entity.GroupEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.GroupMemberEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
 import com.EdumentumBackend.EdumentumBackend.enums.RoleGroup;
+import com.EdumentumBackend.EdumentumBackend.exception.AuthenticationFailedException;
 import com.EdumentumBackend.EdumentumBackend.exception.BadRequestException;
 import com.EdumentumBackend.EdumentumBackend.exception.NotFoundException;
 import com.EdumentumBackend.EdumentumBackend.repository.GroupMemberRepository;
@@ -19,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -169,6 +167,44 @@ public class GroupServiceImpl implements GroupService {
                     return dto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public GroupDetailResponse findGroupById(Long groupId, Long userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        GroupEntity group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new NotFoundException("Group not found"));
+
+        GroupMemberEntity groupMemberEntity = groupMemberRepository.findByGroupAndUser(group, user);
+        if (groupMemberEntity == null) {
+            throw new AuthenticationFailedException("You are not a member of this group");
+        }
+
+        List<UserEntity> userEntities = groupMemberRepository.findAllUsersByGroup(group);
+
+        List<UserGroupResponse> userGroupResponses = userEntities.stream()
+                .map(member -> {
+                    UserGroupResponse dto = new UserGroupResponse();
+                    dto.setId(member.getUserId());
+                    dto.setUsername(member.getUsername());
+                    return dto;
+                })
+                .toList();
+
+        GroupDetailResponse response = new GroupDetailResponse();
+        response.setId(group.getId());
+        response.setMember(userGroupResponses.size());
+        response.setMemberCount(group.getMemberCount());
+        response.setKey(group.getKey());
+        response.setOwnerName(group.getOwner().getUsername());
+        response.setOwnerId(group.getOwner().getUserId());
+        response.setName(group.getName());
+        response.setDescription(group.getDescription());
+        response.setUserGroupResponseList(userGroupResponses);
+
+        return response;
     }
 
 }
