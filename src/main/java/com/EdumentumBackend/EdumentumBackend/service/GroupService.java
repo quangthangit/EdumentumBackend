@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.service;
 
+import com.EdumentumBackend.EdumentumBackend.dtos.GroupDetailResponse;
 import com.EdumentumBackend.EdumentumBackend.dtos.GroupRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.GroupResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.PaginatedResponse;
@@ -15,4 +16,5 @@ public interface GroupService {
     PaginatedResponse<GroupResponseDto> findAllPublicGroups(Pageable pageable);
     void joinGroup(Long groupId, Long userId) throws BadRequestException;
     List<GroupResponseDto> findByUEntities(Long userId);
+    GroupDetailResponse findGroupById(Long groupId, Long userId);
 }

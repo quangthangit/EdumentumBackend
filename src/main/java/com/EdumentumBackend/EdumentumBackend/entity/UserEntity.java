@@ -39,6 +39,9 @@ public class UserEntity {
     @Column(nullable = false)
     private Boolean isActive = true;
 
+    @Column(nullable = true)
+    private String imageUrl;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
