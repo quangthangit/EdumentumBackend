@@ -1,4 +1,4 @@
-package com.EdumentumBackend.EdumentumBackend.dtos;
+package com.EdumentumBackend.EdumentumBackend.dtos.flashcard;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Min;

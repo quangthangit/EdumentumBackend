@@ -1,7 +1,7 @@
 package com.EdumentumBackend.EdumentumBackend.service;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.FlashcardSetRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.FlashcardSetResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardSetRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardSetResponseDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.util.List;

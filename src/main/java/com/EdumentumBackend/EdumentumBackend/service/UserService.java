@@ -1,7 +1,7 @@
 package com.EdumentumBackend.EdumentumBackend.service;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.UserRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.UserResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
 
 public interface UserService {
     UserResponseDto createUser(UserRequestDto userRequestDto);

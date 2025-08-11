@@ -1,10 +1,9 @@
 package com.EdumentumBackend.EdumentumBackend.controller.student;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.FlashcardSetRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.FlashcardSetResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardSetRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardSetResponseDto;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
 import com.EdumentumBackend.EdumentumBackend.service.FlashcardService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,9 +1,9 @@
 package com.EdumentumBackend.EdumentumBackend.controller.student;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapFileResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapFileRequestDto;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
 import com.EdumentumBackend.EdumentumBackend.service.MindMapService;
 import jakarta.validation.Valid;

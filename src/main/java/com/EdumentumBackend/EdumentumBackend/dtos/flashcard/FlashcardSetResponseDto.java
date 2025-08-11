@@ -1,5 +1,6 @@
-package com.EdumentumBackend.EdumentumBackend.dtos;
+package com.EdumentumBackend.EdumentumBackend.dtos.flashcard;
 
+import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

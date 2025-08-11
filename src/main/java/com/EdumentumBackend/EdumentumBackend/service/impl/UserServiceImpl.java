@@ -1,7 +1,7 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.UserRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.UserResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
 import com.EdumentumBackend.EdumentumBackend.entity.RoleEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
 import com.EdumentumBackend.EdumentumBackend.exception.AlreadyExistsException;

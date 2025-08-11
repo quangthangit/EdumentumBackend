@@ -1,6 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.ChatMessageDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.chat.ChatMessageDto;
 import com.EdumentumBackend.EdumentumBackend.entity.GroupEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
 import com.EdumentumBackend.EdumentumBackend.exception.NotFoundException;
