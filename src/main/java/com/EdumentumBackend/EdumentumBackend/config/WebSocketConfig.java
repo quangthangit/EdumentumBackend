@@ -15,7 +15,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-chat")
-                .setAllowedOriginPatterns(String.valueOf(List.of("http://localhost:3000","https://edumentum.vercel.app")))
+                .setAllowedOriginPatterns("http://localhost:3000", "https://edumentum.vercel.app")
                 .withSockJS();
     }
 
