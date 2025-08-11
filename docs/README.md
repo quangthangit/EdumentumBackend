@@ -73,4 +73,14 @@ Còn Update thêm
 | PUT       | `/api/v1/student/mindmaps/{id}`              | Cập nhật mind map theo ID               | Path: id, JSON: MindMapRequestDto     | (Done)      |
 | DELETE    | `/api/v1/student/mindmaps/{id}`              | Xóa mind map theo ID                    | Path: id                              | (Done)      |
 
+## 7 Task
+
+| Method  | URL                          | Mô tả                              | Request Body / Params           | Trạng thái |
+|---------|------------------------------|------------------------------------|---------------------------------|------------|
+| POST    | `/api/v1/student/tasks`      | Tạo Task mới                       | JSON: TaskRequestDto            | (Done)     |
+| GET     | `/api/v1/student/tasks`      | Lấy tất cả Task của user           | -                               | (Done)     |
+| GET     | `/api/v1/student/tasks/{id}` | Lấy Task theo ID                   | Path: id                        | (Done)     |
+| PUT     | `/api/v1/student/tasks/{id}` | Cập nhật Task theo ID              | Path: id, JSON: TaskRequestDto  | (Done)     |
+| DELETE  | `/api/v1/student/tasks/{id}` | Xóa Task theo ID                   | Path: id                        | (Done)     |
+
 ## Hoàn thiện 25%
