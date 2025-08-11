@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import com.EdumentumBackend.EdumentumBackend.enums.MindMapType;
 
 @RestController
 @RequestMapping("/api/v1/student/mindmaps")
@@ -32,10 +33,9 @@ public class StudentMindMapController {
                         Long userId = getCurrentUserId();
                         List<MindMapFileResponseDto> files = mindMapService.getFilesByUserId(userId);
                         return ResponseEntity.ok(Map.of(
-                                "status", "success",
-                                "message", "Files retrieved successfully",
-                                "data", files
-                        ));
+                                        "status", "success",
+                                        "message", "Files retrieved successfully",
+                                        "data", files));
                 } catch (Exception e) {
                         return buildServerError(e);
                 }
@@ -47,25 +47,25 @@ public class StudentMindMapController {
                         Long userId = getCurrentUserId();
                         MindMapFileResponseDto createdFile = mindMapService.createFile(mindMapFileRequestDto, userId);
                         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                                "status", "success",
-                                "message", "File created successfully",
-                                "data", createdFile
-                        ));
+                                        "status", "success",
+                                        "message", "File created successfully",
+                                        "data", createdFile));
                 } catch (Exception e) {
                         return buildServerError(e);
                 }
         }
 
         @PutMapping("/files/{id}")
-        public ResponseEntity<?> updateFile(@PathVariable String id, @Valid @RequestBody MindMapFileRequestDto mindMapFileRequestDto) {
+        public ResponseEntity<?> updateFile(@PathVariable String id,
+                        @Valid @RequestBody MindMapFileRequestDto mindMapFileRequestDto) {
                 try {
                         Long userId = getCurrentUserId();
-                        MindMapFileResponseDto updatedFile = mindMapService.updateFile(id, mindMapFileRequestDto, userId);
+                        MindMapFileResponseDto updatedFile = mindMapService.updateFile(id, mindMapFileRequestDto,
+                                        userId);
                         return ResponseEntity.ok(Map.of(
-                                "status", "success",
-                                "message", "File updated successfully",
-                                "data", updatedFile
-                        ));
+                                        "status", "success",
+                                        "message", "File updated successfully",
+                                        "data", updatedFile));
                 } catch (Exception e) {
                         return buildServerError(e);
                 }
@@ -77,9 +77,8 @@ public class StudentMindMapController {
                         Long userId = getCurrentUserId();
                         mindMapService.deleteFile(id, userId);
                         return ResponseEntity.ok(Map.of(
-                                "status", "success",
-                                "message", "File deleted successfully"
-                        ));
+                                        "status", "success",
+                                        "message", "File deleted successfully"));
                 } catch (Exception e) {
                         return buildServerError(e);
                 }
@@ -91,10 +90,9 @@ public class StudentMindMapController {
                         Long userId = getCurrentUserId();
                         MindMapFileResponseDto file = mindMapService.getFileById(id, userId);
                         return ResponseEntity.ok(Map.of(
-                                "status", "success",
-                                "message", "File retrieved successfully",
-                                "data", file
-                        ));
+                                        "status", "success",
+                                        "message", "File retrieved successfully",
+                                        "data", file));
                 } catch (Exception e) {
                         return buildServerError(e);
                 }
@@ -107,16 +105,14 @@ public class StudentMindMapController {
                         String newName = request.get("name");
                         if (newName == null || newName.trim().isEmpty()) {
                                 return ResponseEntity.badRequest().body(Map.of(
-                                        "status", "error",
-                                        "error", "File name is required"
-                                ));
+                                                "status", "error",
+                                                "error", "File name is required"));
                         }
                         MindMapFileResponseDto updatedFile = mindMapService.updateFileName(id, newName, userId);
                         return ResponseEntity.ok(Map.of(
-                                "status", "success",
-                                "message", "File name updated successfully",
-                                "data", updatedFile
-                        ));
+                                        "status", "success",
+                                        "message", "File name updated successfully",
+                                        "data", updatedFile));
                 } catch (Exception e) {
                         return buildServerError(e);
                 }
@@ -128,10 +124,9 @@ public class StudentMindMapController {
                         Long userId = getCurrentUserId();
                         MindMapResponseDto createdMindMap = mindMapService.createMindMap(mindMapRequestDto, userId);
                         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                                "status", "success",
-                                "message", "Mind map created successfully",
-                                "data", createdMindMap
-                        ));
+                                        "status", "success",
+                                        "message", "Mind map created successfully",
+                                        "data", createdMindMap));
                 } catch (Exception e) {
                         return buildServerError(e);
                 }
@@ -140,12 +135,12 @@ public class StudentMindMapController {
         @GetMapping("/{id}")
         public ResponseEntity<?> getMindMapById(@PathVariable Long id) {
                 try {
-                        MindMapResponseDto mindMap = mindMapService.getMindMapById(id);
+                        Long userId = getCurrentUserId();
+                        MindMapResponseDto mindMap = mindMapService.getMindMapById(id, userId);
                         return ResponseEntity.ok(Map.of(
-                                "status", "success",
-                                "message", "Mind map retrieved successfully",
-                                "data", mindMap
-                        ));
+                                        "status", "success",
+                                        "message", "Mind map retrieved successfully",
+                                        "data", mindMap));
                 } catch (Exception e) {
                         return buildServerError(e);
                 }
@@ -157,25 +152,83 @@ public class StudentMindMapController {
                         Long userId = getCurrentUserId();
                         List<MindMapResponseDto> mindMaps = mindMapService.getAllMindMapsByUserId(userId);
                         return ResponseEntity.ok(Map.of(
-                                "status", "success",
-                                "message", "Mind maps retrieved successfully",
-                                "data", mindMaps
-                        ));
+                                        "status", "success",
+                                        "message", "Mind maps retrieved successfully",
+                                        "data", mindMaps));
+                } catch (Exception e) {
+                        return buildServerError(e);
+                }
+        }
+
+        @GetMapping("/user/type/{type}")
+        public ResponseEntity<?> getMindMapsByUserIdAndType(@PathVariable String type) {
+                try {
+                        Long userId = getCurrentUserId();
+                        MindMapType mindMapType = MindMapType.valueOf(type.toUpperCase());
+                        List<MindMapResponseDto> mindMaps = mindMapService.getMindMapsByUserIdAndType(userId,
+                                        mindMapType);
+                        return ResponseEntity.ok(Map.of(
+                                        "status", "success",
+                                        "message", "Mind maps retrieved successfully",
+                                        "data", mindMaps));
+                } catch (IllegalArgumentException e) {
+                        return ResponseEntity.badRequest().body(Map.of(
+                                        "status", "error",
+                                        "error",
+                                        "Invalid mind map type. Valid types: STUDY_NOTES, PROJECT_PLANNING, CONCEPT_MAPPING, BRAINSTORMING, LESSON_PLAN, RESEARCH, PRESENTATION, PERSONAL"));
+                } catch (Exception e) {
+                        return buildServerError(e);
+                }
+        }
+
+        @GetMapping("/type/{type}")
+        public ResponseEntity<?> getMindMapsByType(@PathVariable String type) {
+                try {
+                        MindMapType mindMapType = MindMapType.valueOf(type.toUpperCase());
+                        List<MindMapResponseDto> mindMaps = mindMapService.getMindMapsByType(mindMapType);
+                        return ResponseEntity.ok(Map.of(
+                                        "status", "success",
+                                        "message", "Mind maps retrieved successfully",
+                                        "data", mindMaps));
+                } catch (IllegalArgumentException e) {
+                        return ResponseEntity.badRequest().body(Map.of(
+                                        "status", "error",
+                                        "error",
+                                        "Invalid mind map type. Valid types: STUDY_NOTES, PROJECT_PLANNING, CONCEPT_MAPPING, BRAINSTORMING, LESSON_PLAN, RESEARCH, PRESENTATION, PERSONAL"));
+                }
+        }
+
+        @GetMapping("/files/type/{type}")
+        public ResponseEntity<?> getFilesByType(@PathVariable String type) {
+                try {
+                        Long userId = getCurrentUserId();
+                        MindMapType mindMapType = MindMapType.valueOf(type.toUpperCase());
+                        List<MindMapFileResponseDto> files = mindMapService.getFilesByUserIdAndType(userId,
+                                        mindMapType);
+                        return ResponseEntity.ok(Map.of(
+                                        "status", "success",
+                                        "message", "Files retrieved successfully",
+                                        "data", files));
+                } catch (IllegalArgumentException e) {
+                        return ResponseEntity.badRequest().body(Map.of(
+                                        "status", "error",
+                                        "error",
+                                        "Invalid mind map type. Valid types: STUDY_NOTES, PROJECT_PLANNING, CONCEPT_MAPPING, BRAINSTORMING, LESSON_PLAN, RESEARCH, PRESENTATION, PERSONAL"));
                 } catch (Exception e) {
                         return buildServerError(e);
                 }
         }
 
         @PutMapping("/{id}")
-        public ResponseEntity<?> updateMindMap(@PathVariable Long id, @Valid @RequestBody MindMapRequestDto mindMapRequestDto) {
+        public ResponseEntity<?> updateMindMap(@PathVariable Long id,
+                        @Valid @RequestBody MindMapRequestDto mindMapRequestDto) {
                 try {
                         Long userId = getCurrentUserId();
                         MindMapResponseDto updatedMindMap = mindMapService.updateMindMap(id, mindMapRequestDto, userId);
                         return ResponseEntity.ok(Map.of(
-                                "status", "success",
-                                "message", "Mind map updated successfully",
-                                "data", updatedMindMap
-                        ));
+                                        "status", "success",
+                                        "message", "Mind map updated successfully",
+                                        "data", updatedMindMap));
                 } catch (Exception e) {
                         return buildServerError(e);
                 }
@@ -185,11 +238,10 @@ public class StudentMindMapController {
         public ResponseEntity<?> deleteMindMap(@PathVariable Long id) {
                 try {
                         Long userId = getCurrentUserId();
-                        mindMapService.deleteMindMap(id);
+                        mindMapService.deleteMindMap(id, userId);
                         return ResponseEntity.ok(Map.of(
-                                "status", "success",
-                                "message", "Mind map deleted successfully"
-                        ));
+                                        "status", "success",
+                                        "message", "Mind map deleted successfully"));
                 } catch (Exception e) {
                         return buildServerError(e);
                 }
@@ -197,7 +249,8 @@ public class StudentMindMapController {
 
         private Long getCurrentUserId() {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-                if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
+                if (authentication == null
+                                || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
                         throw new RuntimeException("Unauthorized");
                 }
                 return userDetails.getId();
@@ -205,8 +258,7 @@ public class StudentMindMapController {
 
         private ResponseEntity<?> buildServerError(Exception e) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                        "status", "error",
-                        "error", "Internal server error: " + e.getMessage()
-                ));
+                                "status", "error",
+                                "error", "Internal server error: " + e.getMessage()));
         }
 }
