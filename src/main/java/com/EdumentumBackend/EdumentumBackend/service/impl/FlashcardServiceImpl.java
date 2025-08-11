@@ -1,10 +1,10 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.FlashcardRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.FlashcardResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.FlashcardSetRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.FlashcardSetResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.UserResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardSetRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardSetResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
 import com.EdumentumBackend.EdumentumBackend.entity.FlashcardEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.FlashcardSetEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;

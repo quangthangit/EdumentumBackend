@@ -1,11 +1,12 @@
 package com.EdumentumBackend.EdumentumBackend.controller.student;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.*;
+import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupDetailResponse;
+import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupResponseDto;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
 import com.EdumentumBackend.EdumentumBackend.service.GroupService;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;

@@ -1,8 +1,7 @@
 package com.EdumentumBackend.EdumentumBackend.controller.chat;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.ChatMessageDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.chat.ChatMessageDto;
 import com.EdumentumBackend.EdumentumBackend.service.ChatRedisService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;

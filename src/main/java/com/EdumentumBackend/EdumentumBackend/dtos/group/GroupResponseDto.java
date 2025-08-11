@@ -1,4 +1,4 @@
-package com.EdumentumBackend.EdumentumBackend.dtos;
+package com.EdumentumBackend.EdumentumBackend.dtos.group;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

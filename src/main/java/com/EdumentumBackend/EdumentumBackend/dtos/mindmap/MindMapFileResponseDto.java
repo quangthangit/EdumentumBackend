@@ -1,4 +1,4 @@
-package com.EdumentumBackend.EdumentumBackend.dtos;
+package com.EdumentumBackend.EdumentumBackend.dtos.mindmap;
 
 import com.EdumentumBackend.EdumentumBackend.enums.MindMapType;
 import lombok.*;

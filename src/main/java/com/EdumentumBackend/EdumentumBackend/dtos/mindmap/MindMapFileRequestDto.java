@@ -1,4 +1,4 @@
-package com.EdumentumBackend.EdumentumBackend.dtos;
+package com.EdumentumBackend.EdumentumBackend.dtos.mindmap;
 
 import com.EdumentumBackend.EdumentumBackend.enums.MindMapType;
 import jakarta.validation.constraints.NotBlank;
@@ -15,14 +15,14 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MindMapRequestDto {
+public class MindMapFileRequestDto {
 
-    @NotBlank(message = "Mind map name is required")
-    @Size(min = 1, max = 255, message = "Mind map name must be between 1 and 255 characters")
+    @NotBlank(message = "File name is required")
+    @Size(min = 1, max = 255, message = "File name must be between 1 and 255 characters")
     private String name;
 
-    @NotNull(message = "Mind map data is required")
-    private MindMapDataDto data;
+    @NotNull(message = "File data is required")
+    private String data;
 
     @NotNull(message = "Mind map type is required")
     private MindMapType type;

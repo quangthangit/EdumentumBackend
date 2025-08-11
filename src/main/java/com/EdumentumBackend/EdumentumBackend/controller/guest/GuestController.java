@@ -1,7 +1,7 @@
 package com.EdumentumBackend.EdumentumBackend.controller.guest;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.RoleRequest;
-import com.EdumentumBackend.EdumentumBackend.dtos.UserResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.role.RoleRequest;
+import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetailsService;
 import com.EdumentumBackend.EdumentumBackend.jwt.JwtService;

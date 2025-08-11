@@ -1,14 +1,13 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.TaskRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.TaskResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.task.TaskRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.task.TaskResponseDto;
 import com.EdumentumBackend.EdumentumBackend.entity.TaskEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
 import com.EdumentumBackend.EdumentumBackend.exception.NotFoundException;
 import com.EdumentumBackend.EdumentumBackend.repository.TaskRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
 import com.EdumentumBackend.EdumentumBackend.service.TaskService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.service;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.ChatMessageDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.chat.ChatMessageDto;
 
 import java.util.List;
 

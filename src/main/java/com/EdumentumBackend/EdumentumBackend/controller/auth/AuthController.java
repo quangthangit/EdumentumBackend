@@ -1,8 +1,8 @@
 package com.EdumentumBackend.EdumentumBackend.controller.auth;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.UserRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.UserRequestLoginDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.UserResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserRequestLoginDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
 import com.EdumentumBackend.EdumentumBackend.exception.AuthenticationFailedException;
 import com.EdumentumBackend.EdumentumBackend.exception.NotFoundException;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetailsService;

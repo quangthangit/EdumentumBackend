@@ -1,7 +1,7 @@
 package com.EdumentumBackend.EdumentumBackend.service;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.TaskRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.TaskResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.task.TaskRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.task.TaskResponseDto;
 import java.util.List;
 
 public interface TaskService {
