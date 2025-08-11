@@ -1,9 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.controller.student;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.FlashcardSetRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.FlashcardSetResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.GroupRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.GroupResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.*;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
 import com.EdumentumBackend.EdumentumBackend.service.GroupService;
 import jakarta.validation.Valid;
@@ -61,6 +58,25 @@ public class StudentGroupController {
                     "status", "success",
                     "message", "Group updated successfully",
                     "data", groupResponseDto
+            ));
+        } catch (Exception e) {
+            return buildServerError(e);
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getGroupById(
+            @PathVariable Long id
+    ) {
+        try {
+            Long userId = getCurrentUserId();
+
+            GroupDetailResponse groupDetailResponse = groupService.findGroupById(id, userId);
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "success",
+                    "message", "Get Group Detail successfully",
+                    "data", groupDetailResponse
             ));
         } catch (Exception e) {
             return buildServerError(e);
