@@ -1,11 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.chat.ChatMessageDto;
-import com.EdumentumBackend.EdumentumBackend.entity.GroupEntity;
-import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
-import com.EdumentumBackend.EdumentumBackend.exception.NotFoundException;
-import com.EdumentumBackend.EdumentumBackend.repository.GroupRepository;
-import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
 import com.EdumentumBackend.EdumentumBackend.service.ChatRedisService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -25,14 +20,9 @@ public class ChatMessageServiceImpl implements ChatRedisService {
     private static final String CHAT_KEY_PREFIX = "chat:group:";
     private static final int MAX_MESSAGES_PER_GROUP = 200;
 
-    private final UserRepository userRepository;
-    private final GroupRepository groupRepository;
-
-    public ChatMessageServiceImpl(RedisTemplate<String, String> redisTemplate,ObjectMapper objectMapper,UserRepository userRepository,GroupRepository groupRepository) {
+    public ChatMessageServiceImpl(RedisTemplate<String, String> redisTemplate,ObjectMapper objectMapper) {
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
-        this.groupRepository = groupRepository;
-        this.userRepository = userRepository;
     }
 
     private String getKey(Long groupId) {
@@ -40,13 +30,6 @@ public class ChatMessageServiceImpl implements ChatRedisService {
     }
 
     public void saveMessage(Long groupId, ChatMessageDto message) {
-
-        UserEntity user = userRepository.findById(message.getSenderId())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        GroupEntity group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new NotFoundException("Group not found"));
-
         message.setTimestamp(LocalDateTime.now().toString());
         try {
             String json = objectMapper.writeValueAsString(message);
@@ -58,10 +41,17 @@ public class ChatMessageServiceImpl implements ChatRedisService {
         }
     }
 
-    public List<ChatMessageDto> getRecentMessages(Long groupId, int count) {
+    @Override
+    public List<ChatMessageDto> getRecentMessages(Long groupId, int page, int size) {
         String key = getKey(groupId);
-        List<String> jsonMessages = redisTemplate.opsForList().range(key, 0, count - 1);
-        if (jsonMessages == null || jsonMessages.isEmpty()) return List.of();
+
+        int start = page * size;
+        int end = start + size - 1;
+
+        List<String> jsonMessages = redisTemplate.opsForList().range(key, start, end);
+        if (jsonMessages == null || jsonMessages.isEmpty()) {
+            return List.of();
+        }
 
         return jsonMessages.stream()
                 .map(json -> {

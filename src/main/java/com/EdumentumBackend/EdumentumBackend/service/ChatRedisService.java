@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface ChatRedisService {
     void saveMessage(Long groupId, ChatMessageDto message);
-    List<ChatMessageDto> getRecentMessages(Long groupId, int count);
+    List<ChatMessageDto> getRecentMessages(Long groupId, int page, int size);
 }
