@@ -1,17 +1,10 @@
 package com.EdumentumBackend.EdumentumBackend.service;
 
-<<<<<<< HEAD
 import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapFileRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapFileResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapResponseDto;
-=======
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapFileResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.MindMapResponseDto;
 import com.EdumentumBackend.EdumentumBackend.enums.MindMapType;
->>>>>>> 10b38ecee888f965814a6e22ef45f13be12f5b02
 
 import java.util.List;
 
