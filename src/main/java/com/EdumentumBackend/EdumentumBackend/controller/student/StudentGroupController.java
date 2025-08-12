@@ -88,12 +88,18 @@ public class StudentGroupController {
     public ResponseEntity<?> getPublicGroups(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
+
+        Long userId = getCurrentUserId();
         Pageable pageable = PageRequest.of(page, size);
+
+        var result = groupService.findAllPublicGroups(userId, pageable);
+
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");
         response.put("message", "Group updated successfully");
-        response.put("data", groupService.findAllPublicGroups(pageable).getData());
-        response.put("pagination", groupService.findAllPublicGroups(pageable).getPagination());
+        response.put("data", result.getData());
+        response.put("pagination", result.getPagination());
+
         return ResponseEntity.ok(response);
     }
 
