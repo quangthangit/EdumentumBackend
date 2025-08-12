@@ -2,6 +2,7 @@ package com.EdumentumBackend.EdumentumBackend.controller.chat;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.chat.ChatMessageDto;
 import com.EdumentumBackend.EdumentumBackend.service.ChatRedisService;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,8 +18,10 @@ import java.util.Map;
 public class ChatHistoryController {
 
     private final ChatRedisService chatRedisService;
+    private final RedisTemplate<String, String> redisTemplate;
 
-    public ChatHistoryController(ChatRedisService chatRedisService) {
+    public ChatHistoryController(ChatRedisService chatRedisService,RedisTemplate<String, String> redisTemplate) {
+        this.redisTemplate = redisTemplate;
         this.chatRedisService = chatRedisService;
     }
 
@@ -28,23 +31,19 @@ public class ChatHistoryController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
 
-        List<ChatMessageDto> allMessages = chatRedisService.getRecentMessages(groupId, 1000);
-        int totalRecords = allMessages.size();
+        List<ChatMessageDto> pagedMessages = chatRedisService.getRecentMessages(groupId, page, size);
+
+        Long totalRecords = redisTemplate.opsForList().size("chat:group:" + groupId);
         int totalPage = (int) Math.ceil((double) totalRecords / size);
-
-        int fromIndex = page * size;
-        int toIndex = Math.min(fromIndex + size, totalRecords);
-
-        List<ChatMessageDto> pagedMessages = allMessages.subList(fromIndex, toIndex);
 
         return ResponseEntity.ok(Map.of(
                 "data", pagedMessages,
                 "pageSize", size,
                 "pageNumber", page,
-                "totalRecords" , totalRecords,
+                "totalRecords", totalRecords,
                 "totalPage", totalPage,
                 "hasNext", page < totalPage - 1,
-                "hasPrevious" , page > 0
+                "hasPrevious", page > 0
         ));
     }
 }
