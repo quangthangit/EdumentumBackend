@@ -104,7 +104,7 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public PaginatedResponse<GroupResponseDto> findAllPublicGroups(Pageable pageable) {
-        Page<GroupResponseDto> page = groupRepository.findAllByIsPublicTrue(pageable)
+        Page<GroupResponseDto> page = groupRepository.findGroupsWithoutUsers(pageable)
                 .map(group -> GroupResponseDto.builder()
                         .id(group.getId())
                         .name(group.getName())
