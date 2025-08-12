@@ -12,7 +12,7 @@ import java.util.List;
 public interface GroupService {
     GroupResponseDto createGroup(GroupRequestDto groupRequestDto, Long ownerId);
     GroupResponseDto updateGroup(GroupRequestDto groupRequestDto, Long groupId, Long ownerId);
-    PaginatedResponse<GroupResponseDto> findAllPublicGroups(Pageable pageable);
+    PaginatedResponse<GroupResponseDto> findAllPublicGroups(Long userId,Pageable pageable);
     void joinGroup(Long groupId, Long userId) throws BadRequestException;
     List<GroupResponseDto> findByUEntities(Long userId);
     GroupDetailResponse findGroupById(Long groupId, Long userId);
