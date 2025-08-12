@@ -33,10 +33,13 @@ public class GroupEntity {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "member_count",nullable = false)
+    private int memberCount;
+
     @Min(1)
     @Max(50)
-    @Column
-    private int memberCount;
+    @Column(name = "member_limit")
+    private int memberLimit;
 
     @Column(unique = true, nullable = false)
     @NotNull

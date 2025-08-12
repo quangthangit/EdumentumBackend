@@ -49,7 +49,8 @@ public class GroupServiceImpl implements GroupService {
         group.setDescription(groupRequestDto.getDescription());
         group.setPublic(groupRequestDto.isPublic());
         group.setOwner(owner);
-        group.setMemberCount(groupRequestDto.getMemberCount());
+        group.setMemberCount(1);
+        group.setMemberLimit(groupRequestDto.getMemberLimit());
 
         group = groupRepository.save(group);
 
@@ -87,7 +88,7 @@ public class GroupServiceImpl implements GroupService {
         group.setName(groupRequestDto.getName());
         group.setDescription(groupRequestDto.getDescription());
         group.setPublic(groupRequestDto.isPublic());
-        group.setMemberCount(groupRequestDto.getMemberCount());
+        group.setMemberLimit(groupRequestDto.getMemberLimit());
 
         groupRepository.save(group);
 
@@ -97,6 +98,7 @@ public class GroupServiceImpl implements GroupService {
                 .description(group.getDescription())
                 .isPublic(group.isPublic())
                 .memberCount(group.getMemberCount())
+                .memberLimit(group.getMemberLimit())
                 .key(group.getKey())
                 .createdAt(group.getCreatedAt())
                 .build();
@@ -114,6 +116,7 @@ public class GroupServiceImpl implements GroupService {
                         .key(group.getKey())
                         .isPublic(group.isPublic())
                         .memberCount(group.getMemberCount())
+                        .memberLimit(group.getMemberLimit())
                         .build());
         return PaginatedResponse.fromPage(page);
     }
@@ -136,9 +139,7 @@ public class GroupServiceImpl implements GroupService {
             throw new AccessDeniedException("Cannot join a private group");
         }
 
-        int currentMemberCount = groupMemberRepository.countByGroup(group);
-        System.out.println(currentMemberCount);
-        if (currentMemberCount >= group.getMemberCount()) {
+        if (group.getMemberCount() >= group.getMemberLimit()) {
             throw new BadRequestException("Group is full");
         }
 
@@ -146,6 +147,8 @@ public class GroupServiceImpl implements GroupService {
         member.setGroup(group);
         member.setUser(user);
         member.setRoleGroup(RoleGroup.MEMBER);
+        group.setMemberCount(group.getMemberCount()+1);
+        groupRepository.save(group);
         groupMemberRepository.save(member);
     }
 
@@ -167,7 +170,7 @@ public class GroupServiceImpl implements GroupService {
                     dto.setOwnerId(group.getOwner().getUserId());
                     dto.setMemberCount(group.getMemberCount());
                     dto.setCreatedAt(group.getCreatedAt());
-
+                    dto.setMemberLimit(group.getMemberLimit());
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -199,15 +202,14 @@ public class GroupServiceImpl implements GroupService {
 
         GroupDetailResponse response = new GroupDetailResponse();
         response.setId(group.getId());
-        response.setMember(userGroupResponses.size());
         response.setMemberCount(group.getMemberCount());
         response.setKey(group.getKey());
         response.setOwnerName(group.getOwner().getUsername());
         response.setOwnerId(group.getOwner().getUserId());
         response.setName(group.getName());
         response.setDescription(group.getDescription());
+        response.setMemberLimit(group.getMemberLimit());
         response.setUserGroupResponseList(userGroupResponses);
-
         return response;
     }
 

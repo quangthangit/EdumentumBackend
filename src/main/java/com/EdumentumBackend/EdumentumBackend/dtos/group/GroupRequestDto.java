@@ -19,7 +19,7 @@ public class GroupRequestDto {
 
     @Min(value = 1, message = "Group must have at least 1 member")
     @Max(value = 50, message = "Group cannot have more than 50 members")
-    private int memberCount;
+    private int memberLimit;
 
     @NotNull
     private boolean isPublic;

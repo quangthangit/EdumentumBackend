@@ -19,6 +19,7 @@ public class GroupResponseDto {
     private Long ownerId;
     private String ownerName;
     private int memberCount;
+    private int memberLimit;
     private String key;
     private LocalDateTime createdAt;
 }
