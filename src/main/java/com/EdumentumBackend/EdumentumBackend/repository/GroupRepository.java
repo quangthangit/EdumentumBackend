@@ -14,11 +14,12 @@ public interface GroupRepository extends JpaRepository<GroupEntity, Long> {
     @Query("""
                 SELECT g
                 FROM GroupEntity g
-                WHERE g.id NOT IN (
-                    SELECT gm.group.id
-                    FROM GroupMemberEntity gm
-                    WHERE gm.user.id = :userId
-                )
+                WHERE g.isPublic = true
+                  AND g.id NOT IN (
+                      SELECT gm.group.id
+                      FROM GroupMemberEntity gm
+                      WHERE gm.user.id = :userId
+                  )
             """)
     Page<GroupEntity> findGroupsNotContainingUser(Long userId, Pageable pageable);
 
