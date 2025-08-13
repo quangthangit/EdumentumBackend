@@ -3,35 +3,39 @@ FROM gradle:8.5-jdk21 AS build
 
 WORKDIR /app
 
-# Copy Gradle config for layer caching
-COPY gradle gradle
+# Copy Gradle wrapper & config first to cache dependencies
 COPY gradlew .
+COPY gradle gradle
 COPY build.gradle .
 COPY settings.gradle .
 
 # Make gradlew executable
 RUN chmod +x gradlew
 
-# Download dependencies only (faster rebuild later)
-RUN ./gradlew build -x test || return 0
+# Download dependencies only to cache layer
+RUN ./gradlew build -x test --parallel --no-daemon || true
 
-# Copy source code and re-build
+# Copy source code
 COPY src src
-RUN ./gradlew bootJar -x test
+
+# Build the Spring Boot jar
+RUN ./gradlew bootJar -x test --parallel --no-daemon
 
 # ====================== RUNTIME STAGE ======================
-FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:21-jre-jammy AS runtime
 
 WORKDIR /app
 
-# Copy the generated JAR
+# Copy the built jar from build stage
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# Set Spring profile to production
+# Set Spring profile
 ENV SPRING_PROFILES_ACTIVE=production
 
 # Expose app port
 EXPOSE 8080
 
-# Start Spring Boot
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Use tini to handle PID 1 properly (prevents zombie processes)
+RUN apt-get update && apt-get install -y tini && rm -rf /var/lib/apt/lists/*
+
+ENTRYPOINT ["tini", "--", "java", "-jar", "app.jar"]
