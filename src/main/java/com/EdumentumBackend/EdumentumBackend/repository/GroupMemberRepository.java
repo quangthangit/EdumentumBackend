@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.repository;
 
+import com.EdumentumBackend.EdumentumBackend.dtos.group.UserGroupResponse;
 import com.EdumentumBackend.EdumentumBackend.entity.GroupEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.GroupMemberEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
@@ -11,9 +12,13 @@ import java.util.List;
 
 public interface GroupMemberRepository extends JpaRepository<GroupMemberEntity, Long> {
     boolean existsByGroupAndUser(GroupEntity group, UserEntity user);
-    int countByGroup(GroupEntity group);
+
     List<GroupMemberEntity> findAllByUser(UserEntity user);
+
     GroupMemberEntity findByGroupAndUser(GroupEntity groupEntity, UserEntity userEntity);
-    @Query("SELECT gm.user FROM GroupMemberEntity gm WHERE gm.group = :group")
-    List<UserEntity> findAllUsersByGroup(@Param("group") GroupEntity group);
+
+    @Query("SELECT new com.EdumentumBackend.EdumentumBackend.dtos.group.UserGroupResponse(gm.user.userId, gm.user.username, gm.user.imageUrl) " +
+            "FROM GroupMemberEntity gm WHERE gm.group = :group")
+    List<UserGroupResponse> findAllUsersByGroupDto(@Param("group") GroupEntity group);
+
 }
