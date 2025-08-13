@@ -1,20 +1,17 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.*;
+import com.EdumentumBackend.EdumentumBackend.dtos.contribution.ContributionHistoryRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupDetailResponse;
 import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.group.UserGroupResponse;
-import com.EdumentumBackend.EdumentumBackend.entity.GroupEntity;
-import com.EdumentumBackend.EdumentumBackend.entity.GroupMemberEntity;
-import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
+import com.EdumentumBackend.EdumentumBackend.entity.*;
 import com.EdumentumBackend.EdumentumBackend.enums.RoleGroup;
 import com.EdumentumBackend.EdumentumBackend.exception.AuthenticationFailedException;
 import com.EdumentumBackend.EdumentumBackend.exception.BadRequestException;
 import com.EdumentumBackend.EdumentumBackend.exception.NotFoundException;
-import com.EdumentumBackend.EdumentumBackend.repository.GroupMemberRepository;
-import com.EdumentumBackend.EdumentumBackend.repository.GroupRepository;
-import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
+import com.EdumentumBackend.EdumentumBackend.repository.*;
 import com.EdumentumBackend.EdumentumBackend.service.GroupService;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
@@ -31,11 +28,17 @@ public class GroupServiceImpl implements GroupService {
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final RepositoryRepository repositoryRepository;
+    private final ContributionHistoryRepository contributionHistoryRepository;
+    private final PointRepository pointRepository;
 
-    public GroupServiceImpl(GroupRepository groupRepository, UserRepository userRepository, GroupMemberRepository groupMemberRepository) {
+    public GroupServiceImpl(PointRepository pointRepository,ContributionHistoryRepository contributionHistoryRepository,RepositoryRepository repositoryRepository,GroupRepository groupRepository, UserRepository userRepository, GroupMemberRepository groupMemberRepository) {
         this.groupRepository = groupRepository;
         this.userRepository = userRepository;
+        this.repositoryRepository = repositoryRepository;
+        this.contributionHistoryRepository = contributionHistoryRepository;
         this.groupMemberRepository = groupMemberRepository;
+        this.pointRepository = pointRepository;
     }
 
     @Override
@@ -49,9 +52,15 @@ public class GroupServiceImpl implements GroupService {
         group.setDescription(groupRequestDto.getDescription());
         group.setPublic(groupRequestDto.isPublic());
         group.setOwner(owner);
-        group.setMemberCount(groupRequestDto.getMemberCount());
+        group.setMemberCount(1);
+        group.setContributionPoints(0);
+        group.setMemberLimit(groupRequestDto.getMemberLimit());
 
         group = groupRepository.save(group);
+
+        RepositoryEntity repositoryEntity = new RepositoryEntity();
+        repositoryEntity.setGroup(group);
+        repositoryRepository.save(repositoryEntity);
 
         GroupMemberEntity groupMemberEntity = new GroupMemberEntity();
         groupMemberEntity.setGroup(group);
@@ -64,6 +73,8 @@ public class GroupServiceImpl implements GroupService {
                 .name(group.getName())
                 .description(group.getDescription())
                 .isPublic(group.isPublic())
+                .contributionPoints(group.getContributionPoints())
+                .tier(group.getTier())
                 .ownerId(owner.getUserId())
                 .ownerName(owner.getUsername())
                 .memberCount(group.getMemberCount())
@@ -71,6 +82,8 @@ public class GroupServiceImpl implements GroupService {
                 .createdAt(group.getCreatedAt())
                 .build();
     }
+
+
 
     @Override
     public GroupResponseDto updateGroup(GroupRequestDto groupRequestDto, Long groupId, Long ownerId) {
@@ -87,7 +100,7 @@ public class GroupServiceImpl implements GroupService {
         group.setName(groupRequestDto.getName());
         group.setDescription(groupRequestDto.getDescription());
         group.setPublic(groupRequestDto.isPublic());
-        group.setMemberCount(groupRequestDto.getMemberCount());
+        group.setMemberLimit(groupRequestDto.getMemberLimit());
 
         groupRepository.save(group);
 
@@ -96,7 +109,10 @@ public class GroupServiceImpl implements GroupService {
                 .name(group.getName())
                 .description(group.getDescription())
                 .isPublic(group.isPublic())
+                .contributionPoints(group.getContributionPoints())
+                .tier(group.getTier())
                 .memberCount(group.getMemberCount())
+                .memberLimit(group.getMemberLimit())
                 .key(group.getKey())
                 .createdAt(group.getCreatedAt())
                 .build();
@@ -112,8 +128,11 @@ public class GroupServiceImpl implements GroupService {
                         .ownerId(group.getOwner().getUserId())
                         .ownerName(group.getOwner().getUsername())
                         .key(group.getKey())
+                        .contributionPoints(group.getContributionPoints())
+                        .tier(group.getTier())
                         .isPublic(group.isPublic())
                         .memberCount(group.getMemberCount())
+                        .memberLimit(group.getMemberLimit())
                         .build());
         return PaginatedResponse.fromPage(page);
     }
@@ -136,9 +155,7 @@ public class GroupServiceImpl implements GroupService {
             throw new AccessDeniedException("Cannot join a private group");
         }
 
-        int currentMemberCount = groupMemberRepository.countByGroup(group);
-        System.out.println(currentMemberCount);
-        if (currentMemberCount >= group.getMemberCount()) {
+        if (group.getMemberCount() >= group.getMemberLimit()) {
             throw new BadRequestException("Group is full");
         }
 
@@ -146,6 +163,8 @@ public class GroupServiceImpl implements GroupService {
         member.setGroup(group);
         member.setUser(user);
         member.setRoleGroup(RoleGroup.MEMBER);
+        group.setMemberCount(group.getMemberCount()+1);
+        groupRepository.save(group);
         groupMemberRepository.save(member);
     }
 
@@ -167,7 +186,7 @@ public class GroupServiceImpl implements GroupService {
                     dto.setOwnerId(group.getOwner().getUserId());
                     dto.setMemberCount(group.getMemberCount());
                     dto.setCreatedAt(group.getCreatedAt());
-
+                    dto.setMemberLimit(group.getMemberLimit());
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -199,16 +218,47 @@ public class GroupServiceImpl implements GroupService {
 
         GroupDetailResponse response = new GroupDetailResponse();
         response.setId(group.getId());
-        response.setMember(userGroupResponses.size());
         response.setMemberCount(group.getMemberCount());
         response.setKey(group.getKey());
         response.setOwnerName(group.getOwner().getUsername());
         response.setOwnerId(group.getOwner().getUserId());
         response.setName(group.getName());
         response.setDescription(group.getDescription());
+        response.setMemberLimit(group.getMemberLimit());
         response.setUserGroupResponseList(userGroupResponses);
-
         return response;
     }
 
+    @Override
+    @Transactional
+    public void contributeToGroup(ContributionHistoryRequestDto contributionRequestDto, Long userId) {
+        GroupEntity group = groupRepository.findById(contributionRequestDto.getGroupId())
+                .orElseThrow(() -> new NotFoundException("Group not found"));
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        GroupMemberEntity membership = groupMemberRepository.findByGroupAndUser(group, user);
+        if (membership == null) {
+            throw new BadRequestException("User is not a member of this group");
+        }
+
+        PointEntity point = pointRepository.findByUserEntity(user);
+        if (point == null || point.getPoint() < contributionRequestDto.getPoints()) {
+            throw new BadRequestException("User does not have enough points to contribute");
+        }
+
+        point.setPoint(point.getPoint() - contributionRequestDto.getPoints());
+        pointRepository.save(point);
+
+        ContributionHistoryEntity contributionHistoryEntity = new ContributionHistoryEntity();
+        contributionHistoryEntity.setUser(user);
+        contributionHistoryEntity.setGroup(group);
+        contributionHistoryEntity.setPoints(contributionRequestDto.getPoints());
+        contributionHistoryEntity.setMessage(contributionRequestDto.getMessage());
+        contributionHistoryRepository.save(contributionHistoryEntity);
+
+        group.addContributionPoints(contributionRequestDto.getPoints());
+        groupRepository.save(group);
+    }
 }
