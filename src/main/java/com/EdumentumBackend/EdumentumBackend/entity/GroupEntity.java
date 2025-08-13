@@ -71,6 +71,9 @@ public class GroupEntity {
         }
     }
 
+    @Version
+    private Integer version;
+
     private String generateShortUUIDKey() {
         return UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
     }
