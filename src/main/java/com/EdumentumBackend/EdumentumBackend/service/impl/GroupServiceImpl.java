@@ -120,53 +120,39 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public PaginatedResponse<GroupResponseDto> findAllPublicGroups(Long userId,Pageable pageable) {
-        Page<GroupResponseDto> page = groupRepository.findGroupsNotContainingUser(userId,pageable)
-                .map(group -> GroupResponseDto.builder()
-                        .id(group.getId())
-                        .name(group.getName())
-                        .description(group.getDescription())
-                        .ownerId(group.getOwner().getUserId())
-                        .ownerName(group.getOwner().getUsername())
-                        .key(group.getKey())
-                        .contributionPoints(group.getContributionPoints())
-                        .tier(group.getTier())
-                        .isPublic(group.isPublic())
-                        .memberCount(group.getMemberCount())
-                        .memberLimit(group.getMemberLimit())
-                        .build());
+        Page<GroupResponseDto> page = groupRepository.findGroupsNotContainingUserDto(userId,pageable);
         return PaginatedResponse.fromPage(page);
     }
 
     @Override
+    @Transactional
     public void joinGroup(Long groupId, Long userId) {
         GroupEntity group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new NotFoundException("Group not found"));
-
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        boolean alreadyJoined = groupMemberRepository.existsByGroupAndUser(group, user);
-
-        if (alreadyJoined) {
+        if (groupMemberRepository.existsByGroupAndUser(group, user)) {
             throw new BadRequestException("User has already joined the group");
         }
-
         if (!group.isPublic()) {
             throw new AccessDeniedException("Cannot join a private group");
         }
 
-        if (group.getMemberCount() >= group.getMemberLimit()) {
+        int updated = groupRepository.incrementMemberCount(groupId);
+        if (updated == 0) {
             throw new BadRequestException("Group is full");
         }
 
-        GroupMemberEntity member = new GroupMemberEntity();
-        member.setGroup(group);
-        member.setUser(user);
-        member.setRoleGroup(RoleGroup.MEMBER);
-        group.setMemberCount(group.getMemberCount()+1);
-        groupRepository.save(group);
+        GroupMemberEntity member = GroupMemberEntity.builder()
+                .group(group)
+                .user(user)
+                .roleGroup(RoleGroup.MEMBER)
+                .build();
         groupMemberRepository.save(member);
     }
+
+
 
     @Override
     public List<GroupResponseDto> findByUEntities(Long userId) {
@@ -205,17 +191,7 @@ public class GroupServiceImpl implements GroupService {
             throw new AuthenticationFailedException("You are not a member of this group");
         }
 
-        List<UserEntity> userEntities = groupMemberRepository.findAllUsersByGroup(group);
-
-        List<UserGroupResponse> userGroupResponses = userEntities.stream()
-                .map(member -> {
-                    UserGroupResponse dto = new UserGroupResponse();
-                    dto.setId(member.getUserId());
-                    dto.setUsername(member.getUsername());
-                    return dto;
-                })
-                .toList();
-
+        List<UserGroupResponse> userGroupResponses = groupMemberRepository.findAllUsersByGroupDto(group);
         GroupDetailResponse response = new GroupDetailResponse();
         response.setId(group.getId());
         response.setMemberCount(group.getMemberCount());
@@ -231,34 +207,34 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    public void contributeToGroup(ContributionHistoryRequestDto contributionRequestDto, Long userId) {
-        GroupEntity group = groupRepository.findById(contributionRequestDto.getGroupId())
-                .orElseThrow(() -> new NotFoundException("Group not found"));
-
+    public void contributeToGroup(ContributionHistoryRequestDto dto, Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        GroupMemberEntity membership = groupMemberRepository.findByGroupAndUser(group, user);
-        if (membership == null) {
+        GroupEntity group = groupRepository.findById(dto.getGroupId())
+                .orElseThrow(() -> new NotFoundException("Group not found"));
+
+        if (!groupMemberRepository.existsByGroupAndUser(group, user)) {
             throw new BadRequestException("User is not a member of this group");
         }
 
         PointEntity point = pointRepository.findByUserEntity(user);
-        if (point == null || point.getPoint() < contributionRequestDto.getPoints()) {
+        if (point == null || point.getPoint() < dto.getPoints()) {
             throw new BadRequestException("User does not have enough points to contribute");
         }
 
-        point.setPoint(point.getPoint() - contributionRequestDto.getPoints());
-        pointRepository.save(point);
+        point.setPoint(point.getPoint() - dto.getPoints());
+        pointRepository.saveAndFlush(point);
 
-        ContributionHistoryEntity contributionHistoryEntity = new ContributionHistoryEntity();
-        contributionHistoryEntity.setUser(user);
-        contributionHistoryEntity.setGroup(group);
-        contributionHistoryEntity.setPoints(contributionRequestDto.getPoints());
-        contributionHistoryEntity.setMessage(contributionRequestDto.getMessage());
-        contributionHistoryRepository.save(contributionHistoryEntity);
+        ContributionHistoryEntity history = ContributionHistoryEntity.builder()
+                .user(user)
+                .group(group)
+                .points(dto.getPoints())
+                .message(dto.getMessage())
+                .build();
+        contributionHistoryRepository.save(history);
 
-        group.addContributionPoints(contributionRequestDto.getPoints());
-        groupRepository.save(group);
+        groupRepository.addContributionPoints(group.getId(), dto.getPoints());
     }
+
 }
