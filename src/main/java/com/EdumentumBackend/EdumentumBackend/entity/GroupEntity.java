@@ -1,8 +1,10 @@
 package com.EdumentumBackend.EdumentumBackend.entity;
 
+import com.EdumentumBackend.EdumentumBackend.enums.GroupTier;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -45,12 +47,28 @@ public class GroupEntity {
     @NotNull
     private String key;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private GroupTier tier = GroupTier.BRONZE;
+
+    @Column(nullable = false)
+    private int contributionPoints = 0;
+
     @PrePersist
     protected void onCreate() {
         if (this.key == null || this.key.isEmpty()) {
             this.key = generateShortUUIDKey();
         }
         this.createdAt = LocalDateTime.now();
+    }
+
+    public void addContributionPoints(int points) {
+        this.contributionPoints += points;
+        GroupTier newTier = GroupTier.fromPoints(this.contributionPoints);
+        if (newTier != this.tier) {
+            this.tier = newTier;
+            System.out.println("🎉 Update " + this.tier);
+        }
     }
 
     private String generateShortUUIDKey() {

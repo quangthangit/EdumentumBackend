@@ -2,13 +2,16 @@ package com.EdumentumBackend.EdumentumBackend.service.impl;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
+import com.EdumentumBackend.EdumentumBackend.entity.PointEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.RoleEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
 import com.EdumentumBackend.EdumentumBackend.exception.AlreadyExistsException;
 import com.EdumentumBackend.EdumentumBackend.exception.NotFoundException;
+import com.EdumentumBackend.EdumentumBackend.repository.PointRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
 import com.EdumentumBackend.EdumentumBackend.service.RoleService;
 import com.EdumentumBackend.EdumentumBackend.service.UserService;
+import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,13 +25,16 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoleService roleService;
+    private final PointRepository pointRepository;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleServiceImpl roleService) {
+    public UserServiceImpl(PointRepository pointRepository,UserRepository userRepository, PasswordEncoder passwordEncoder, RoleServiceImpl roleService) {
         this.passwordEncoder = passwordEncoder;
         this.roleService = roleService;
+        this.pointRepository = pointRepository;
         this.userRepository = userRepository;
     }
 
+    @Transactional
     @Override
     public UserResponseDto createUser(UserRequestDto userRequestDto) {
         Optional<UserEntity> userCheck = userRepository.findByEmail(userRequestDto.getEmail());
@@ -45,6 +51,10 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         UserEntity savedUser = userRepository.save(user);
+        PointEntity pointEntity = new PointEntity();
+        pointEntity.setUserEntity(savedUser);
+        pointEntity.setPoint(10);
+        pointRepository.save(pointEntity);
 
         return UserResponseDto.builder()
                 .userId(savedUser.getUserId())

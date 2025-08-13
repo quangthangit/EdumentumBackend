@@ -1,5 +1,6 @@
-package com.EdumentumBackend.EdumentumBackend.controller.student;
+package com.EdumentumBackend.EdumentumBackend.controller.user;
 
+import com.EdumentumBackend.EdumentumBackend.dtos.contribution.ContributionHistoryRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupDetailResponse;
 import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupResponseDto;
@@ -19,12 +20,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/student/groups")
-public class StudentGroupController {
+@RequestMapping("/api/v1/user/groups")
+public class UserGroupController {
 
     private final GroupService groupService;
 
-    public StudentGroupController(GroupService groupService) {
+    public UserGroupController(GroupService groupService) {
         this.groupService = groupService;
     }
 
@@ -120,6 +121,18 @@ public class StudentGroupController {
                 "status", "success",
                 "message", "Get My Group successfully",
                 "data", groupService.findByUEntities(userId)
+        ));
+    }
+
+    @PostMapping("/donate-point")
+    public ResponseEntity<?> donatePoint(
+            @Valid @RequestBody ContributionHistoryRequestDto contributionRequestDto
+    ) {
+        Long userId = getCurrentUserId();
+        groupService.contributeToGroup(contributionRequestDto,userId);
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Donate Group successfully"
         ));
     }
 

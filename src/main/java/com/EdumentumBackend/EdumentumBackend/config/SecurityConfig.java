@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/ws-chat/**").permitAll()
                         .requestMatchers("/api/v1/chat/**").hasAnyRole("STUDENT","TEACHER")
+                        .requestMatchers("/api/v1/user/**").hasAnyRole("STUDENT","TEACHER")
                         .requestMatchers("/api/v1/guest/**").hasRole("GUEST")
                         .requestMatchers("/api/v1/student/**").hasAnyRole("STUDENT")
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")

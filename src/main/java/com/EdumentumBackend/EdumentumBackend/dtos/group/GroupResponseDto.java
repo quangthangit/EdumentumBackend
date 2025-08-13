@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.dtos.group;
 
+import com.EdumentumBackend.EdumentumBackend.enums.GroupTier;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,4 +23,6 @@ public class GroupResponseDto {
     private int memberLimit;
     private String key;
     private LocalDateTime createdAt;
+    private int contributionPoints;
+    private GroupTier tier;
 }

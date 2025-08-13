@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.service;
 
+import com.EdumentumBackend.EdumentumBackend.dtos.contribution.ContributionHistoryRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupDetailResponse;
 import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupResponseDto;
@@ -16,4 +17,5 @@ public interface GroupService {
     void joinGroup(Long groupId, Long userId) throws BadRequestException;
     List<GroupResponseDto> findByUEntities(Long userId);
     GroupDetailResponse findGroupById(Long groupId, Long userId);
+    void contributeToGroup(ContributionHistoryRequestDto contributionRequestDto, Long userId);
 }
