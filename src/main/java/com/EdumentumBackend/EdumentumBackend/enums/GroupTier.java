@@ -17,14 +17,4 @@ public enum GroupTier {
         this.minContribution = minContribution;
         this.maxStorageMB = maxStorageMB;
     }
-
-    public static GroupTier fromPoints(int points) {
-        GroupTier result = BRONZE;
-        for (GroupTier tier : GroupTier.values()) {
-            if (points >= tier.getMinContribution()) {
-                result = tier;
-            }
-        }
-        return result;
-    }
 }
