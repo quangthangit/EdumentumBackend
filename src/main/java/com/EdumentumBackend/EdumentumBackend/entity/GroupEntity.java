@@ -62,15 +62,6 @@ public class GroupEntity {
         this.createdAt = LocalDateTime.now();
     }
 
-    public void addContributionPoints(int points) {
-        this.contributionPoints += points;
-        GroupTier newTier = GroupTier.fromPoints(this.contributionPoints);
-        if (newTier != this.tier) {
-            this.tier = newTier;
-            System.out.println("🎉 Update " + this.tier);
-        }
-    }
-
     @Version
     private Integer version;
 
