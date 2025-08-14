@@ -16,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -87,7 +89,11 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new NotFoundException("User with UserId " + userId + " not found"));
 
         RoleEntity newRole = roleService.findByName(roleName);
-        user.setRoles(Collections.singleton(newRole)); // reset role gọn
+
+        Set<RoleEntity> roles = new HashSet<>();
+        roles.add(newRole);
+
+        user.setRoles(roles);
         userRepository.save(user);
     }
 
