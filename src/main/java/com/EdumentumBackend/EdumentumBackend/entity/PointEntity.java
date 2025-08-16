@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.entity;
 
+import com.EdumentumBackend.EdumentumBackend.entity.listener.PointEntityListener;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -9,9 +10,10 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Entity
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@EntityListeners(PointEntityListener.class)
 @Table(name = "points")
 public class PointEntity {
     @Id
@@ -19,7 +21,7 @@ public class PointEntity {
     private Long id;
 
     @Column(nullable = false)
-    private int point = 0;
+    private int point;
 
     @OneToOne
     @JsonIgnore
