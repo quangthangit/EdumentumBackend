@@ -28,14 +28,12 @@ public class GroupServiceImpl implements GroupService {
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
     private final GroupMemberRepository groupMemberRepository;
-    private final RepositoryRepository repositoryRepository;
     private final ContributionHistoryRepository contributionHistoryRepository;
     private final PointRepository pointRepository;
 
-    public GroupServiceImpl(PointRepository pointRepository,ContributionHistoryRepository contributionHistoryRepository,RepositoryRepository repositoryRepository,GroupRepository groupRepository, UserRepository userRepository, GroupMemberRepository groupMemberRepository) {
+    public GroupServiceImpl(PointRepository pointRepository,ContributionHistoryRepository contributionHistoryRepository,GroupRepository groupRepository, UserRepository userRepository, GroupMemberRepository groupMemberRepository) {
         this.groupRepository = groupRepository;
         this.userRepository = userRepository;
-        this.repositoryRepository = repositoryRepository;
         this.contributionHistoryRepository = contributionHistoryRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.pointRepository = pointRepository;
@@ -52,15 +50,9 @@ public class GroupServiceImpl implements GroupService {
         group.setDescription(groupRequestDto.getDescription());
         group.setPublic(groupRequestDto.isPublic());
         group.setOwner(owner);
-        group.setMemberCount(1);
-        group.setContributionPoints(0);
         group.setMemberLimit(groupRequestDto.getMemberLimit());
 
         group = groupRepository.save(group);
-
-        RepositoryEntity repositoryEntity = new RepositoryEntity();
-        repositoryEntity.setGroup(group);
-        repositoryRepository.save(repositoryEntity);
 
         GroupMemberEntity groupMemberEntity = new GroupMemberEntity();
         groupMemberEntity.setGroup(group);
@@ -82,8 +74,6 @@ public class GroupServiceImpl implements GroupService {
                 .createdAt(group.getCreatedAt())
                 .build();
     }
-
-
 
     @Override
     public GroupResponseDto updateGroup(GroupRequestDto groupRequestDto, Long groupId, Long ownerId) {

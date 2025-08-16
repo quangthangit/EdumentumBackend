@@ -2,12 +2,14 @@ package com.EdumentumBackend.EdumentumBackend.entity;
 
 import com.EdumentumBackend.EdumentumBackend.enums.FileType;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "files")
-public class FileEntity {
+public class FileEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

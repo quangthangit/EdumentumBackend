@@ -1,18 +1,18 @@
 package com.EdumentumBackend.EdumentumBackend.entity;
 
+import com.EdumentumBackend.EdumentumBackend.entity.listener.ContributionHistoryEntityListener;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@EntityListeners(ContributionHistoryEntityListener.class)
 @Table(name = "contribution_history")
 public class ContributionHistoryEntity {
     @Id
@@ -29,5 +29,5 @@ public class ContributionHistoryEntity {
 
     private int points;
     private String message;
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 }
