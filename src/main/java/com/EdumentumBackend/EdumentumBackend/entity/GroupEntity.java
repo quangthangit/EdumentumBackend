@@ -1,18 +1,19 @@
 package com.EdumentumBackend.EdumentumBackend.entity;
 
+import com.EdumentumBackend.EdumentumBackend.entity.listener.GroupEntityListener;
 import com.EdumentumBackend.EdumentumBackend.enums.GroupTier;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.Data;
-import org.hibernate.annotations.ColumnDefault;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
-@Data
+@Getter
+@Setter
 @Entity
+@EntityListeners(GroupEntityListener.class)
 @Table(name = "groups")
-public class GroupEntity {
+public class GroupEntity extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -21,30 +22,26 @@ public class GroupEntity {
     @Column(nullable = false)
     private String name;
 
-    @NotNull
     @Size(max = 255)
+    @Column(nullable = false)
     private String description;
 
-    @Column(name = "is_public")
+    @Column(nullable = false)
     private boolean isPublic = true;
 
     @ManyToOne
     @JoinColumn(name = "owner_id", nullable = false)
     private UserEntity owner;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "member_count", nullable = false)
+    private int memberCount = 1;
 
-    @Column(name = "member_count",nullable = false)
-    private int memberCount;
-
+    @Column(name = "member_limit")
     @Min(1)
     @Max(50)
-    @Column(name = "member_limit")
     private int memberLimit;
 
     @Column(unique = true, nullable = false)
-    @NotNull
     private String key;
 
     @Enumerated(EnumType.STRING)
@@ -54,18 +51,6 @@ public class GroupEntity {
     @Column(nullable = false)
     private int contributionPoints = 0;
 
-    @PrePersist
-    protected void onCreate() {
-        if (this.key == null || this.key.isEmpty()) {
-            this.key = generateShortUUIDKey();
-        }
-        this.createdAt = LocalDateTime.now();
-    }
-
     @Version
     private Integer version;
-
-    private String generateShortUUIDKey() {
-        return UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
-    }
 }

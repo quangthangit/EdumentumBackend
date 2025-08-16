@@ -2,14 +2,18 @@ package com.EdumentumBackend.EdumentumBackend.entity;
 
 import com.EdumentumBackend.EdumentumBackend.enums.InviteStatus;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "group_invites", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"group_id", "invited_user_id"})
 })
-public class GroupInviteEntity {
+public class GroupInviteEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

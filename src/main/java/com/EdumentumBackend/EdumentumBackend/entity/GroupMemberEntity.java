@@ -2,22 +2,19 @@ package com.EdumentumBackend.EdumentumBackend.entity;
 
 import com.EdumentumBackend.EdumentumBackend.enums.RoleGroup;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-import java.time.LocalDateTime;
-
-@Data
 @Entity
+@Getter
+@Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
 @Table(name = "group_members", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"group_id", "user_id"})
 })
-public class GroupMemberEntity {
+
+public class GroupMemberEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,14 +29,6 @@ public class GroupMemberEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private RoleGroup roleGroup = RoleGroup.MEMBER;
-
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
+    private RoleGroup roleGroup;
 }
 
