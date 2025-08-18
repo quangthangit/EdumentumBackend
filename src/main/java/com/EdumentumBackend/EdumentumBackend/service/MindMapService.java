@@ -2,26 +2,11 @@ package com.EdumentumBackend.EdumentumBackend.service;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapFileRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapFileResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.mindmap.MindMapResponseDto;
 import com.EdumentumBackend.EdumentumBackend.enums.MindMapType;
 
 import java.util.List;
 
 public interface MindMapService {
-    MindMapResponseDto createMindMap(MindMapRequestDto mindMapRequestDto, Long userId);
-
-    MindMapResponseDto getMindMapById(Long id, Long userId);
-
-    List<MindMapResponseDto> getAllMindMapsByUserId(Long userId);
-
-    List<MindMapResponseDto> getMindMapsByUserIdAndType(Long userId, MindMapType type);
-
-    List<MindMapResponseDto> getMindMapsByType(MindMapType type);
-
-    MindMapResponseDto updateMindMap(Long id, MindMapRequestDto mindMapRequestDto, Long userId);
-
-    void deleteMindMap(Long id, Long userId);
 
     List<MindMapFileResponseDto> getFilesByUserId(Long userId);
 
