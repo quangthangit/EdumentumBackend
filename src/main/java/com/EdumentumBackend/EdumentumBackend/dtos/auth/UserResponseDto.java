@@ -16,4 +16,5 @@ public class UserResponseDto {
     private String email;
     private Set<RoleEntity> roles;
     private Boolean isActive;
+    private String imageUrl;
 }
