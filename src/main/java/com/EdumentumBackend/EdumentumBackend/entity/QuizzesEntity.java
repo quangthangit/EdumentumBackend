@@ -7,6 +7,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Entity
 @Table(name = "quizzes")
@@ -89,7 +90,7 @@ public class QuizzesEntity extends BaseEntity {
 
     @Column(name = "quiz_data", columnDefinition = "jsonb", nullable = false)
     @JdbcTypeCode(SqlTypes.JSON)
-    private String quizData;
+    private Map<String , Object> quizData;
 
     @Column(name = "tags", columnDefinition = "text[]")
     @JdbcTypeCode(SqlTypes.ARRAY)
