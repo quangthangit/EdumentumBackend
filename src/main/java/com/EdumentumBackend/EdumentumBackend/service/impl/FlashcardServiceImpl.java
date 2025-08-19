@@ -44,7 +44,7 @@ public class FlashcardServiceImpl implements FlashcardService {
         FlashcardSetEntity flashcardSet = FlashcardSetEntity.builder()
                 .title(flashcardSetRequestDto.getTitle())
                 .description(flashcardSetRequestDto.getDescription())
-                .isPublic(false) // Set default value for is_public
+                .isPublic(flashcardSetRequestDto.getIsPublic() != null ? flashcardSetRequestDto.getIsPublic() : false)
                 .user(user)
                 .flashcards(new ArrayList<>()) // Initialize empty list
                 .build();
@@ -104,6 +104,11 @@ public class FlashcardServiceImpl implements FlashcardService {
             flashcardSet.setDescription(flashcardSetRequestDto.getDescription());
         }
 
+        // Update isPublic field if provided
+        if (flashcardSetRequestDto.getIsPublic() != null) {
+            flashcardSet.setIsPublic(flashcardSetRequestDto.getIsPublic());
+        }
+
         // Update flashcards only if provided
         if (flashcardSetRequestDto.getFlashcards() != null) {
             // Delete existing flashcards
@@ -150,12 +155,6 @@ public class FlashcardServiceImpl implements FlashcardService {
                     .collect(Collectors.toList());
         }
 
-        UserResponseDto userDto = UserResponseDto.builder()
-                .userId(entity.getUser().getUserId())
-                .username(entity.getUser().getUsername())
-                .email(entity.getUser().getEmail())
-                .build();
-
         return FlashcardSetResponseDto.builder()
                 .id(entity.getId())
                 .title(entity.getTitle())
@@ -197,4 +196,4 @@ public class FlashcardServiceImpl implements FlashcardService {
                 .user(user)
                 .build();
     }
-} 
+}
