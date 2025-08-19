@@ -4,6 +4,9 @@ import com.EdumentumBackend.EdumentumBackend.enums.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.util.Map;
+import java.util.Objects;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -49,7 +52,7 @@ public class QuizRequestDto {
     private FileProcessingMode fileProcessingMode;
 
     @NotNull(message = "Quiz data is required")
-    private String quizData;
+    private Map<String, Object> quizData;
 
     private String[] tags;
 
