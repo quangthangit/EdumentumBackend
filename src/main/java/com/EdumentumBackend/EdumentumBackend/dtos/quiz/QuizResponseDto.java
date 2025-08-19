@@ -5,6 +5,8 @@ import com.EdumentumBackend.EdumentumBackend.enums.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -29,7 +31,7 @@ public class QuizResponseDto {
     private String aiModel;
     private GenerationMode generationMode;
     private FileProcessingMode fileProcessingMode;
-    private String quizData;
+    private Map<String, Object> quizData;
     private String[] tags;
     private Integer estimatedTime;
     private Integer passingScore;
