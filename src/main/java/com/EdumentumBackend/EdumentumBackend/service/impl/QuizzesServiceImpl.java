@@ -73,10 +73,12 @@ public class QuizzesServiceImpl implements QuizzesService {
         // Add user if exists
         if (entity.getUser() != null) {
             UserResponseDto userDto = UserResponseDto.builder()
-                    .userId(entity.getUser().getUserId())
+                    .userId(entity.getUser().getUserId()) 
                     .username(entity.getUser().getUsername())
                     .email(entity.getUser().getEmail())
                     .isActive(entity.getUser().getIsActive())
+                    .imageUrl(entity.getUser().getImageUrl())
+                    .roles(entity.getUser().getRoles())
                     .build();
             builder.user(userDto);
         }
@@ -117,8 +119,8 @@ public class QuizzesServiceImpl implements QuizzesService {
             throw new RuntimeException("Category not found with id: " + quizRequestDto.getCategoryId());
         }
 
-        // Validate user exists
-        Optional<UserEntity> userOpt = userRepository.findById(userId);
+        // Validate user exists - using findByUserId instead of findById
+        Optional<UserEntity> userOpt = userRepository.findByUserId(userId);
         if (userOpt.isEmpty()) {
             throw new RuntimeException("User not found with id: " + userId);
         }

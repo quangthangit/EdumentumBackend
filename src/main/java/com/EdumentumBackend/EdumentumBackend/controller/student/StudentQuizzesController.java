@@ -1,9 +1,12 @@
 package com.EdumentumBackend.EdumentumBackend.controller.student;
 
+import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizResponseDto;
 import com.EdumentumBackend.EdumentumBackend.service.QuizzesService;
+import com.EdumentumBackend.EdumentumBackend.service.UserService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/student/quizzes")
 @CrossOrigin(origins = "*")
@@ -20,19 +24,28 @@ public class StudentQuizzesController {
 
     @Autowired
     private QuizzesService quizzesService;
+    
+    @Autowired
+    private UserService userService;
 
     private Long getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return Long.valueOf(authentication.getName());
+        String email = authentication.getName();
+        UserResponseDto user = userService.getUserByEmail(email);
+        return user.getUserId();
     }
 
     @PostMapping
     public ResponseEntity<QuizResponseDto> createQuiz(@Valid @RequestBody QuizRequestDto quizRequestDto) {
         try {
             Long userId = getCurrentUserId();
+
             QuizResponseDto createdQuiz = quizzesService.createQuiz(quizRequestDto, userId);
+
+
             return ResponseEntity.status(HttpStatus.CREATED).body(createdQuiz);
         } catch (Exception e) {
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }

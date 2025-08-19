@@ -88,6 +88,7 @@ public class QuizzesEntity extends BaseEntity {
     private FileProcessingMode fileProcessingMode;
 
     @Column(name = "quiz_data", columnDefinition = "jsonb", nullable = false)
+    @JdbcTypeCode(SqlTypes.JSON)
     private String quizData;
 
     @Column(name = "tags", columnDefinition = "text[]")
@@ -105,5 +106,4 @@ public class QuizzesEntity extends BaseEntity {
 
     @Column(name = "total_points", insertable = false, updatable = false)
     private Integer totalPoints;
-
 }
