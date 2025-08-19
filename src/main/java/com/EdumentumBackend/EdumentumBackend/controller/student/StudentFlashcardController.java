@@ -59,6 +59,22 @@ public class StudentFlashcardController {
         }
     }
 
+    @GetMapping("/public")
+    public ResponseEntity<?> getPublicFlashcardSets() {
+        try {
+            List<FlashcardSetResponseDto> publicFlashcardSets = flashcardService.getPublicFlashcardSets();
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "success",
+                    "message", "Public flashcard sets retrieved successfully",
+                    "data", publicFlashcardSets,
+                    "total", publicFlashcardSets.size()
+            ));
+        } catch (Exception e) {
+            return buildServerError(e);
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getFlashcardSetById(@PathVariable Long id) {
         try {
