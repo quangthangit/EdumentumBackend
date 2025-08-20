@@ -22,7 +22,7 @@ public class FolderEntity extends BaseEntity {
     private Long id;
 
     @NotNull
-    @Size(max = 20)
+    @Size(max = 100)
     @Column(nullable = false)
     private String name;
 
