@@ -23,7 +23,7 @@ public class FlashcardSetRequestDto {
     private String description;
     
     private Boolean isPublic;
-
+    
     @Valid
     private List<FlashcardRequestDto> flashcards;
 }
