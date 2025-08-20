@@ -9,7 +9,8 @@ import java.util.List;
 public interface FlashcardService {
     FlashcardSetResponseDto createFlashcardSet(FlashcardSetRequestDto flashcardSetRequestDto, Long userId) throws JsonProcessingException;
     List<FlashcardSetResponseDto> getAllFlashcardSets(Long userId);
+    List<FlashcardSetResponseDto> getPublicFlashcardSets();
     FlashcardSetResponseDto getFlashcardSetById(Long flashcardSetId, Long userId);
     FlashcardSetResponseDto updateFlashcardSet(Long flashcardSetId, FlashcardSetRequestDto flashcardSetRequestDto, Long userId);
     void deleteFlashcardSet(Long flashcardSetId, Long userId);
-} 
+}

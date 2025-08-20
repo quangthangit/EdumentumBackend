@@ -76,6 +76,15 @@ public class FlashcardServiceImpl implements FlashcardService {
     }
 
     @Override
+    public List<FlashcardSetResponseDto> getPublicFlashcardSets() {
+        List<FlashcardSetEntity> publicFlashcardSets = flashcardSetRepository.findByIsPublicTrue();
+        
+        return publicFlashcardSets.stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public FlashcardSetResponseDto getFlashcardSetById(Long flashcardSetId, Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
