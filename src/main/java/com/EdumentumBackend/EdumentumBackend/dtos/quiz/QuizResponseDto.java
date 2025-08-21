@@ -26,7 +26,6 @@ public class QuizResponseDto {
     private DifficultyLevel difficulty;
     private ParsingMode parsingMode;
     private SourceType sourceType;
-    private String sourceContent;
     private Boolean isAiGenerated;
     private String aiModel;
     private GenerationMode generationMode;

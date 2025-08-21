@@ -23,7 +23,7 @@ public class QuizRequestDto {
     @NotNull(message = "Category ID is required")
     private Long categoryId;
 
-    private String language = "AUTO";
+    private String language;
 
     private VisibilityType visibility = VisibilityType.PRIVATE;
 

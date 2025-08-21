@@ -43,7 +43,6 @@ public class QuizzesServiceImpl implements QuizzesService {
                 .difficulty(entity.getDifficulty())
                 .parsingMode(entity.getParsingMode())
                 .sourceType(entity.getSourceType())
-                .sourceContent(entity.getSourceContent())
                 .isAiGenerated(entity.getIsAiGenerated())
                 .aiModel(entity.getAiModel())
                 .generationMode(entity.getGenerationMode())
