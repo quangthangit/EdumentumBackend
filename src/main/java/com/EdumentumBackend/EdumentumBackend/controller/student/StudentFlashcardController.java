@@ -5,13 +5,15 @@ import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardSetResponse
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
 import com.EdumentumBackend.EdumentumBackend.service.FlashcardService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -42,34 +44,45 @@ public class StudentFlashcardController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllFlashcardSets() {
+    public ResponseEntity<?> getAllFlashcardSets(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size
+    ) {
         try {
             Long userId = getCurrentUserId();
+            Pageable pageable = PageRequest.of(page, size);
 
-            List<FlashcardSetResponseDto> flashcardSets = flashcardService.getAllFlashcardSets(userId);
+            var result = flashcardService.getAllFlashcardSets(userId, pageable);
 
-            return ResponseEntity.ok(Map.of(
-                    "status", "success",
-                    "message", "Flashcard sets retrieved successfully",
-                    "data", flashcardSets,
-                    "total", flashcardSets.size()
-            ));
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Flashcard sets retrieved successfully");
+            response.put("data", result.getData());
+            response.put("pagination", result.getPagination());
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return buildServerError(e);
         }
     }
 
     @GetMapping("/public")
-    public ResponseEntity<?> getPublicFlashcardSets() {
+    public ResponseEntity<?> getPublicFlashcardSets(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size
+    ) {
         try {
-            List<FlashcardSetResponseDto> publicFlashcardSets = flashcardService.getPublicFlashcardSets();
+            Pageable pageable = PageRequest.of(page, size);
 
-            return ResponseEntity.ok(Map.of(
-                    "status", "success",
-                    "message", "Public flashcard sets retrieved successfully",
-                    "data", publicFlashcardSets,
-                    "total", publicFlashcardSets.size()
-            ));
+            var result = flashcardService.getPublicFlashcardSets(pageable);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Public flashcard sets retrieved successfully");
+            response.put("data", result.getData());
+            response.put("pagination", result.getPagination());
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return buildServerError(e);
         }

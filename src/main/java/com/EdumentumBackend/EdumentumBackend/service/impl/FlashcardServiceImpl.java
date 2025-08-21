@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
+import com.EdumentumBackend.EdumentumBackend.dtos.PaginatedResponse;
 import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardSetRequestDto;
@@ -14,6 +15,8 @@ import com.EdumentumBackend.EdumentumBackend.repository.FlashcardSetRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
 import com.EdumentumBackend.EdumentumBackend.service.FlashcardService;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -64,24 +67,20 @@ public class FlashcardServiceImpl implements FlashcardService {
     }
 
     @Override
-    public List<FlashcardSetResponseDto> getAllFlashcardSets(Long userId) {
+    public PaginatedResponse<FlashcardSetResponseDto> getAllFlashcardSets(Long userId, Pageable pageable) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
 
-        List<FlashcardSetEntity> flashcardSets = flashcardSetRepository.findByUserOrderByCreatedAtDesc(user);
-        
-        return flashcardSets.stream()
-                .map(this::convertToResponseDto)
-                .collect(Collectors.toList());
+        Page<FlashcardSetEntity> flashcardSetsPage = flashcardSetRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+        Page<FlashcardSetResponseDto> responsePage = flashcardSetsPage.map(this::convertToResponseDto);
+        return PaginatedResponse.fromPage(responsePage);
     }
 
     @Override
-    public List<FlashcardSetResponseDto> getPublicFlashcardSets() {
-        List<FlashcardSetEntity> publicFlashcardSets = flashcardSetRepository.findByIsPublicTrue();
-        
-        return publicFlashcardSets.stream()
-                .map(this::convertToResponseDto)
-                .collect(Collectors.toList());
+    public PaginatedResponse<FlashcardSetResponseDto> getPublicFlashcardSets(Pageable pageable) {
+        Page<FlashcardSetEntity> publicFlashcardSetsPage = flashcardSetRepository.findByIsPublicTrueOrderByCreatedAtDesc(pageable);
+        Page<FlashcardSetResponseDto> responsePage = publicFlashcardSetsPage.map(this::convertToResponseDto);
+        return PaginatedResponse.fromPage(responsePage);
     }
 
     @Override
