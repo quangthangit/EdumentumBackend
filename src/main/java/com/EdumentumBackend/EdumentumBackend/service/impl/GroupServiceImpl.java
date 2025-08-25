@@ -8,21 +8,21 @@ import com.EdumentumBackend.EdumentumBackend.dtos.group.GroupResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.group.UserGroupResponse;
 import com.EdumentumBackend.EdumentumBackend.entity.*;
 import com.EdumentumBackend.EdumentumBackend.enums.RoleGroup;
-import com.EdumentumBackend.EdumentumBackend.exception.AuthenticationFailedException;
 import com.EdumentumBackend.EdumentumBackend.exception.BadRequestException;
 import com.EdumentumBackend.EdumentumBackend.exception.NotFoundException;
 import com.EdumentumBackend.EdumentumBackend.repository.*;
 import com.EdumentumBackend.EdumentumBackend.service.GroupService;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class GroupServiceImpl implements GroupService {
 
     private final GroupRepository groupRepository;
@@ -32,82 +32,79 @@ public class GroupServiceImpl implements GroupService {
     private final PointRepository pointRepository;
     private final FolderRepository folderRepository;
 
-    public GroupServiceImpl(FolderRepository folderRepository, PointRepository pointRepository, ContributionHistoryRepository contributionHistoryRepository, GroupRepository groupRepository, UserRepository userRepository, GroupMemberRepository groupMemberRepository) {
-        this.groupRepository = groupRepository;
-        this.userRepository = userRepository;
-        this.folderRepository = folderRepository;
-        this.contributionHistoryRepository = contributionHistoryRepository;
-        this.groupMemberRepository = groupMemberRepository;
-        this.pointRepository = pointRepository;
+    private GroupResponseDto mapGroup(GroupEntity entity) {
+        return GroupResponseDto.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .isPublic(entity.isPublic())
+                .contributionPoints(entity.getContributionPoints())
+                .tier(entity.getTier())
+                .ownerId(entity.getOwner().getUserId())
+                .ownerName(entity.getOwner().getUsername())
+                .memberCount(entity.getMemberCount())
+                .key(entity.getKey())
+                .createdAt(entity.getCreatedAt())
+                .build();
+    }
+
+    private GroupDetailResponse mapGroupDetail(GroupEntity entity, List<UserGroupResponse> userGroupResponse) {
+        return GroupDetailResponse.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .contributionPoints(entity.getContributionPoints())
+                .groupTier(entity.getTier())
+                .ownerId(entity.getOwner().getUserId())
+                .ownerName(entity.getOwner().getUsername())
+                .memberCount(entity.getMemberCount())
+                .key(entity.getKey())
+                .memberLimit(entity.getMemberLimit())
+                .createdAt(entity.getCreatedAt())
+                .userGroupResponseList(userGroupResponse)
+                .build();
     }
 
     @Override
     @Transactional
-    public GroupResponseDto createGroup(GroupRequestDto groupRequestDto, Long ownerId) {
+    public GroupResponseDto createGroup(GroupRequestDto dto, Long ownerId) {
         UserEntity owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> new NotFoundException("Owner not found"));
 
-        GroupEntity group = new GroupEntity();
-        group.setName(groupRequestDto.getName());
-        group.setDescription(groupRequestDto.getDescription());
-        group.setPublic(groupRequestDto.isPublic());
-        group.setOwner(owner);
-        group.setMemberLimit(groupRequestDto.getMemberLimit());
+        GroupEntity group = groupRepository.save(
+                GroupEntity.builder()
+                        .name(dto.getName())
+                        .description(dto.getDescription())
+                        .isPublic(dto.isPublic())
+                        .owner(owner)
+                        .memberLimit(dto.getMemberLimit())
+                        .build()
+        );
 
-        group = groupRepository.save(group);
+        groupMemberRepository.save(
+                GroupMemberEntity.builder()
+                        .group(group)
+                        .user(owner)
+                        .roleGroup(RoleGroup.OWNER)
+                        .build()
+        );
 
-        GroupMemberEntity groupMemberEntity = new GroupMemberEntity();
-        groupMemberEntity.setGroup(group);
-        groupMemberEntity.setUser(owner);
-        groupMemberEntity.setRoleGroup(RoleGroup.OWNER);
-        groupMemberRepository.save(groupMemberEntity);
-
-        return GroupResponseDto.builder()
-                .id(group.getId())
-                .name(group.getName())
-                .description(group.getDescription())
-                .isPublic(group.isPublic())
-                .contributionPoints(group.getContributionPoints())
-                .tier(group.getTier())
-                .ownerId(owner.getUserId())
-                .ownerName(owner.getUsername())
-                .memberCount(group.getMemberCount())
-                .key(group.getKey())
-                .createdAt(group.getCreatedAt())
-                .build();
+        return mapGroup(group);
     }
 
+
     @Override
-    public GroupResponseDto updateGroup(GroupRequestDto groupRequestDto, Long groupId, Long ownerId) {
-        GroupEntity group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new NotFoundException("Group not found"));
+    @Transactional
+    public GroupResponseDto updateGroup(GroupRequestDto dto, Long groupId, Long ownerId) {
+        GroupEntity group = groupRepository.findByIdAndOwnerUserId(groupId, ownerId)
+                .orElseThrow(() -> new AccessDeniedException("Only the group owner can update the group"));
 
-        UserEntity owner = userRepository.findById(ownerId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        group.setName(dto.getName());
+        group.setDescription(dto.getDescription());
+        group.setPublic(dto.isPublic());
+        group.setMemberLimit(dto.getMemberLimit());
 
-        if (!group.getOwner().getUserId().equals(owner.getUserId())) {
-            throw new AccessDeniedException("Only the group owner can update the group");
-        }
-
-        group.setName(groupRequestDto.getName());
-        group.setDescription(groupRequestDto.getDescription());
-        group.setPublic(groupRequestDto.isPublic());
-        group.setMemberLimit(groupRequestDto.getMemberLimit());
-
-        groupRepository.save(group);
-
-        return GroupResponseDto.builder()
-                .id(group.getId())
-                .name(group.getName())
-                .description(group.getDescription())
-                .isPublic(group.isPublic())
-                .contributionPoints(group.getContributionPoints())
-                .tier(group.getTier())
-                .memberCount(group.getMemberCount())
-                .memberLimit(group.getMemberLimit())
-                .key(group.getKey())
-                .createdAt(group.getCreatedAt())
-                .build();
+        return mapGroup(groupRepository.save(group));
     }
 
     @Override
@@ -119,83 +116,35 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional
     public void joinGroup(Long groupId, Long userId) {
-        GroupEntity group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new NotFoundException("Group not found"));
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        if (groupMemberRepository.existsByGroupAndUser(group, user)) {
+        if (groupMemberRepository.existsByGroup_IdAndUser_UserId(groupId, userId)) {
             throw new BadRequestException("User has already joined the group");
         }
-        if (!group.isPublic()) {
-            throw new AccessDeniedException("Cannot join a private group");
-        }
 
-        int updated = groupRepository.incrementMemberCount(groupId);
+        int updated = groupRepository.incrementMemberCountIfJoinable(groupId);
         if (updated == 0) {
-            throw new BadRequestException("Group is full");
+            throw new BadRequestException("Group is full or private");
         }
-
-        GroupMemberEntity member = GroupMemberEntity.builder()
-                .group(group)
-                .user(user)
+        groupMemberRepository.save(GroupMemberEntity.builder()
+                .group(GroupEntity.builder().id(groupId).build())
+                .user(UserEntity.builder().userId(userId).build())
                 .roleGroup(RoleGroup.MEMBER)
-                .build();
-        groupMemberRepository.save(member);
+                .build());
     }
-
 
     @Override
     public List<GroupResponseDto> findByUEntities(Long userId) {
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        List<GroupMemberEntity> groupMemberEntities = groupMemberRepository.findAllByUser(user);
-
-        return groupMemberEntities.stream()
-                .map(member -> {
-                    GroupEntity group = member.getGroup();
-                    GroupResponseDto dto = new GroupResponseDto();
-                    dto.setId(group.getId());
-                    dto.setName(group.getName());
-                    dto.setDescription(group.getDescription());
-                    dto.setPublic(group.isPublic());
-                    dto.setOwnerId(group.getOwner().getUserId());
-                    dto.setMemberCount(group.getMemberCount());
-                    dto.setCreatedAt(group.getCreatedAt());
-                    dto.setMemberLimit(group.getMemberLimit());
-                    return dto;
-                })
-                .collect(Collectors.toList());
+        return groupMemberRepository.findGroupMemberByUserUserId(userId)
+                .stream()
+                .map(member -> mapGroup(member.getGroup()))
+                .toList();
     }
 
     @Override
     public GroupDetailResponse findGroupById(Long groupId, Long userId) {
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
         GroupEntity group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new NotFoundException("Group not found"));
-
-        GroupMemberEntity groupMemberEntity = groupMemberRepository.findByGroupAndUser(group, user);
-        if (groupMemberEntity == null) {
-            throw new AuthenticationFailedException("You are not a member of this group");
-        }
-
         List<UserGroupResponse> userGroupResponses = groupMemberRepository.findAllUsersByGroupDto(group);
-        GroupDetailResponse response = new GroupDetailResponse();
-        response.setId(group.getId());
-        response.setMemberCount(group.getMemberCount());
-        response.setKey(group.getKey());
-        response.setOwnerName(group.getOwner().getUsername());
-        response.setOwnerId(group.getOwner().getUserId());
-        response.setName(group.getName());
-        response.setGroupTier(group.getTier());
-        response.setContributionPoints(group.getContributionPoints());
-        response.setDescription(group.getDescription());
-        response.setMemberLimit(group.getMemberLimit());
-        response.setUserGroupResponseList(userGroupResponses);
-        return response;
+        return mapGroupDetail(group,userGroupResponses);
     }
 
     @Override
