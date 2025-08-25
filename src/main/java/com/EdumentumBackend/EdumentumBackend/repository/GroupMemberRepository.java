@@ -17,6 +17,8 @@ public interface GroupMemberRepository extends JpaRepository<GroupMemberEntity, 
 
     GroupMemberEntity findByGroupAndUser(GroupEntity groupEntity, UserEntity userEntity);
 
+    void deleteAllByGroup(GroupEntity groupEntity);
+
     @Query("SELECT new com.EdumentumBackend.EdumentumBackend.dtos.group.UserGroupResponse(gm.user.userId, gm.user.username, gm.user.imageUrl) " +
             "FROM GroupMemberEntity gm WHERE gm.group = :group")
     List<UserGroupResponse> findAllUsersByGroupDto(@Param("group") GroupEntity group);

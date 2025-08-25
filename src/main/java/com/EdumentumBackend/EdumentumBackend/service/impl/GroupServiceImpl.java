@@ -30,10 +30,12 @@ public class GroupServiceImpl implements GroupService {
     private final GroupMemberRepository groupMemberRepository;
     private final ContributionHistoryRepository contributionHistoryRepository;
     private final PointRepository pointRepository;
+    private final FolderRepository folderRepository;
 
-    public GroupServiceImpl(PointRepository pointRepository,ContributionHistoryRepository contributionHistoryRepository,GroupRepository groupRepository, UserRepository userRepository, GroupMemberRepository groupMemberRepository) {
+    public GroupServiceImpl(FolderRepository folderRepository, PointRepository pointRepository, ContributionHistoryRepository contributionHistoryRepository, GroupRepository groupRepository, UserRepository userRepository, GroupMemberRepository groupMemberRepository) {
         this.groupRepository = groupRepository;
         this.userRepository = userRepository;
+        this.folderRepository = folderRepository;
         this.contributionHistoryRepository = contributionHistoryRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.pointRepository = pointRepository;
@@ -109,8 +111,8 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public PaginatedResponse<GroupResponseDto> findAllPublicGroups(Long userId,Pageable pageable) {
-        Page<GroupResponseDto> page = groupRepository.findGroupsNotContainingUserDto(userId,pageable);
+    public PaginatedResponse<GroupResponseDto> findAllPublicGroups(Long userId, Pageable pageable, String keyword) {
+        Page<GroupResponseDto> page = groupRepository.findGroupsNotContainingUserDto(userId, keyword, pageable);
         return PaginatedResponse.fromPage(page);
     }
 
@@ -141,7 +143,6 @@ public class GroupServiceImpl implements GroupService {
                 .build();
         groupMemberRepository.save(member);
     }
-
 
 
     @Override
@@ -189,6 +190,8 @@ public class GroupServiceImpl implements GroupService {
         response.setOwnerName(group.getOwner().getUsername());
         response.setOwnerId(group.getOwner().getUserId());
         response.setName(group.getName());
+        response.setGroupTier(group.getTier());
+        response.setContributionPoints(group.getContributionPoints());
         response.setDescription(group.getDescription());
         response.setMemberLimit(group.getMemberLimit());
         response.setUserGroupResponseList(userGroupResponses);
@@ -225,6 +228,23 @@ public class GroupServiceImpl implements GroupService {
         contributionHistoryRepository.save(history);
 
         groupRepository.addContributionPoints(group.getId(), dto.getPoints());
+    }
+
+    @Override
+    @Transactional
+    public void deleteGroup(Long groupId, Long userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        GroupEntity group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new NotFoundException("Group not found"));
+
+        if (!group.getOwner().getUserId().equals(user.getUserId())) {
+            throw new AccessDeniedException("Only the group owner can update the group");
+        }
+        groupMemberRepository.deleteAllByGroup(group);
+        folderRepository.deleteAllByGroupEntity(group);
+        groupRepository.deleteById(groupId);
     }
 
 }
