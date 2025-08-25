@@ -17,8 +17,14 @@ public interface GroupRepository extends JpaRepository<GroupEntity, Long> {
             "g.id, g.name, g.description, g.isPublic, g.owner.userId, g.owner.username, g.memberCount, g.memberLimit, g.key, g.createdAt, g.contributionPoints, g.tier) " +
             "FROM GroupEntity g " +
             "LEFT JOIN GroupMemberEntity gm ON gm.group = g AND gm.user.userId = :userId " +
-            "WHERE g.isPublic = true AND gm.id IS NULL")
-    Page<GroupResponseDto> findGroupsNotContainingUserDto(@Param("userId") Long userId, Pageable pageable);
+            "WHERE g.isPublic = true AND gm.id IS NULL " +
+            "AND (LOWER(g.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "     OR LOWER(g.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<GroupResponseDto> findGroupsNotContainingUserDto(
+            @Param("userId") Long userId,
+            @Param("keyword") String keyword,
+            Pageable pageable);
+
 
     @Modifying
     @Query("UPDATE GroupEntity g SET g.memberCount = g.memberCount + 1 WHERE g.id = :groupId AND g.memberCount < g.memberLimit")
@@ -27,4 +33,6 @@ public interface GroupRepository extends JpaRepository<GroupEntity, Long> {
     @Modifying
     @Query("UPDATE GroupEntity g SET g.contributionPoints = g.contributionPoints + :points WHERE g.id = :groupId")
     void addContributionPoints(@Param("groupId") Long groupId, @Param("points") int points);
+
+
 }

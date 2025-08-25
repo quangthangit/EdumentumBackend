@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.dtos.group;
 
+import com.EdumentumBackend.EdumentumBackend.enums.GroupTier;
 import lombok.Data;
 
 import java.util.List;
@@ -14,5 +15,7 @@ public class GroupDetailResponse {
     private String key;
     private String name;
     private String description;
+    private GroupTier groupTier;
     private List<UserGroupResponse> userGroupResponseList;
+    private int contributionPoints;
 }

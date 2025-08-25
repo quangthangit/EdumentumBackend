@@ -46,6 +46,20 @@ public class UserGroupController {
         }
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteGroup(@PathVariable Long id) {
+        try {
+            Long userId = getCurrentUserId();
+            groupService.deleteGroup(id, userId);
+            return ResponseEntity.ok(Map.of(
+                    "status", "success",
+                    "message", "Group delete successfully"
+            ));
+        } catch (Exception e) {
+            return buildServerError(e);
+        }
+    }
+
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateGroup(
             @PathVariable Long id,
@@ -87,13 +101,14 @@ public class UserGroupController {
 
     @GetMapping("/public")
     public ResponseEntity<?> getPublicGroups(
+            @RequestParam() String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
 
         Long userId = getCurrentUserId();
         Pageable pageable = PageRequest.of(page, size);
 
-        var result = groupService.findAllPublicGroups(userId, pageable);
+        var result = groupService.findAllPublicGroups(userId, pageable,keyword);
 
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");
