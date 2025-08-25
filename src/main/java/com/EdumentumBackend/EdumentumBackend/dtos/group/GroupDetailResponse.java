@@ -1,11 +1,19 @@
 package com.EdumentumBackend.EdumentumBackend.dtos.group;
 
 import com.EdumentumBackend.EdumentumBackend.enums.GroupTier;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class GroupDetailResponse {
     private Long id;
     private Long ownerId;
@@ -18,4 +26,5 @@ public class GroupDetailResponse {
     private GroupTier groupTier;
     private List<UserGroupResponse> userGroupResponseList;
     private int contributionPoints;
+    private LocalDateTime createdAt;
 }
