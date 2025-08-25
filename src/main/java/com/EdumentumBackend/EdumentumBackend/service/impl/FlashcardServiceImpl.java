@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
+import com.EdumentumBackend.EdumentumBackend.dtos.PaginatedResponse;
 import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardSetRequestDto;
@@ -14,6 +15,8 @@ import com.EdumentumBackend.EdumentumBackend.repository.FlashcardSetRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
 import com.EdumentumBackend.EdumentumBackend.service.FlashcardService;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -44,7 +47,7 @@ public class FlashcardServiceImpl implements FlashcardService {
         FlashcardSetEntity flashcardSet = FlashcardSetEntity.builder()
                 .title(flashcardSetRequestDto.getTitle())
                 .description(flashcardSetRequestDto.getDescription())
-                .isPublic(false) // Set default value for is_public
+                .isPublic(flashcardSetRequestDto.getIsPublic() != null ? flashcardSetRequestDto.getIsPublic() : false)
                 .user(user)
                 .flashcards(new ArrayList<>()) // Initialize empty list
                 .build();
@@ -64,15 +67,20 @@ public class FlashcardServiceImpl implements FlashcardService {
     }
 
     @Override
-    public List<FlashcardSetResponseDto> getAllFlashcardSets(Long userId) {
+    public PaginatedResponse<FlashcardSetResponseDto> getAllFlashcardSets(Long userId, Pageable pageable) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
 
-        List<FlashcardSetEntity> flashcardSets = flashcardSetRepository.findByUserOrderByCreatedAtDesc(user);
-        
-        return flashcardSets.stream()
-                .map(this::convertToResponseDto)
-                .collect(Collectors.toList());
+        Page<FlashcardSetEntity> flashcardSetsPage = flashcardSetRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+        Page<FlashcardSetResponseDto> responsePage = flashcardSetsPage.map(this::convertToResponseDto);
+        return PaginatedResponse.fromPage(responsePage);
+    }
+
+    @Override
+    public PaginatedResponse<FlashcardSetResponseDto> getPublicFlashcardSets(Pageable pageable) {
+        Page<FlashcardSetEntity> publicFlashcardSetsPage = flashcardSetRepository.findByIsPublicTrueOrderByCreatedAtDesc(pageable);
+        Page<FlashcardSetResponseDto> responsePage = publicFlashcardSetsPage.map(this::convertToResponseDto);
+        return PaginatedResponse.fromPage(responsePage);
     }
 
     @Override
@@ -102,6 +110,11 @@ public class FlashcardServiceImpl implements FlashcardService {
         
         if (flashcardSetRequestDto.getDescription() != null) {
             flashcardSet.setDescription(flashcardSetRequestDto.getDescription());
+        }
+
+        // Update isPublic field if provided
+        if (flashcardSetRequestDto.getIsPublic() != null) {
+            flashcardSet.setIsPublic(flashcardSetRequestDto.getIsPublic());
         }
 
         // Update flashcards only if provided
@@ -150,12 +163,6 @@ public class FlashcardServiceImpl implements FlashcardService {
                     .collect(Collectors.toList());
         }
 
-        UserResponseDto userDto = UserResponseDto.builder()
-                .userId(entity.getUser().getUserId())
-                .username(entity.getUser().getUsername())
-                .email(entity.getUser().getEmail())
-                .build();
-
         return FlashcardSetResponseDto.builder()
                 .id(entity.getId())
                 .title(entity.getTitle())
@@ -197,4 +204,4 @@ public class FlashcardServiceImpl implements FlashcardService {
                 .user(user)
                 .build();
     }
-} 
+}

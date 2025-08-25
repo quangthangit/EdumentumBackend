@@ -1,10 +1,10 @@
 package com.EdumentumBackend.EdumentumBackend.entity;
 
+import com.EdumentumBackend.EdumentumBackend.entity.listener.UserEntityListener;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity
@@ -14,7 +14,8 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserEntity {
+@EntityListeners(UserEntityListener.class)
+public class UserEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,7 +38,7 @@ public class UserEntity {
     private String password;
 
     @Column(nullable = false)
-    private Boolean isActive = true;
+    private Boolean isActive;
 
     @Column(nullable = true)
     private String imageUrl;
@@ -49,12 +50,4 @@ public class UserEntity {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<RoleEntity> roles;
-
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
 }

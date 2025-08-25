@@ -21,6 +21,5 @@ public class GroupRequestDto {
     @Max(value = 50, message = "Group cannot have more than 50 members")
     private int memberLimit;
 
-    @NotNull
     private boolean isPublic;
 }

@@ -8,9 +8,7 @@ import lombok.Data;
 public class ContributionHistoryRequestDto {
     @NotNull(message = "Group ID must not be null")
     private Long groupId;
-
     @Min(value = 1, message = "Contribution points must be at least 1")
     private int points;
-
     private String message;
 }

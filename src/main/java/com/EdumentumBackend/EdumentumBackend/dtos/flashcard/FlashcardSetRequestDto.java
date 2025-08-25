@@ -22,6 +22,8 @@ public class FlashcardSetRequestDto {
     @Size(max = 1000, message = "Description must not exceed 1000 characters")
     private String description;
     
+    private Boolean isPublic;
+    
     @Valid
     private List<FlashcardRequestDto> flashcards;
 }
