@@ -1,86 +1,135 @@
 # Backend API Resources
 
 ## 1. Authentication & User Management
-
-| Endpoint                    | Method | Mô tả                     | Trạng thái |
-|-----------------------------|--------|---------------------------|------------|
-| `/api/v1/auth/register`     | POST   | Đăng ký user mới          | (Done)     |
-| `/api/v1/auth/login`        | POST   | Đăng nhập                 | (Done)     |
-| `/api/v1/auth/google`       | POST   | Đăng nhập bằng googole    | (Done)     |
-| `/api/v1/guest/set-role`    | POST   | Chọn role                 | (Done)     |
-| `/api/v1/auth/logout`       | POST   | Đăng xuất                 | Chưa làm   |
-| `/api/v1/users/{id}`        | GET    | Lấy thông tin user theo ID | Chưa làm   |
-| `/api/v1/users/{id}`        | PUT    | Cập nhật thông tin user   | Chưa làm   |
-| `/api/v1/users/{id}/avatar` | POST   | Upload ảnh đại diện       | Chưa làm   |
-
-Còn Update thêm
+#### Author: Quang Thang
+##### Done: 90%
+| Endpoint                    | Method | Description                | Status   |
+|-----------------------------|--------|----------------------------|----------|
+| `/api/v1/auth/register`     | POST   | Register new user          | (Done)   |
+| `/api/v1/auth/login`        | POST   | Login                      | (Done)   |
+| `/api/v1/auth/google`       | POST   | Login with Google          | (Done)   |
+| `/api/v1/guest/set-role`    | POST   | Choose role                | (Done)   |
+| `/api/v1/auth/logout`       | POST   | Logout                     | (Done)   |
+| `/api/v1/users/{id}`        | GET    | Get user info by ID        | (Done)   |
+| `/api/v1/users/{id}`        | PUT    | Update user info           | (Done)   |
+| `/api/v1/users/{id}/avatar` | POST   | Upload avatar              | (Done)   |
 
 ## 2. Group Management
-
-| Method | URL                                     | Mô tả                                     | Request Body / Params                             | Trạng thái |
-|--------|-----------------------------------------|-------------------------------------------|---------------------------------------------------|------------|
-| POST   | `/api/v1/student/groups`                | Tạo nhóm mới                              | JSON: GroupRequestDto                             | (Done)     |
-| PATCH  | `/api/v1/student/groups/{id}`           | Cập nhật nhóm theo id                     | Path: id, JSON: GroupRequestDto                   | (Done)     |
-| GET    | `/api/v1/student/groups/{id}`           | Lấy chi tiết nhóm theo id                 | Path: id                                          | (Done)     |
-| GET    | `/api/v1/student/groups/public`         | Lấy danh sách nhóm công khai (phân trang) | Query params: page (default=0), size (default=12) | (Done) |
-| POST   | `/api/v1/student/groups/{groupId}/join` | Tham gia nhóm                             | Path: groupId                                     | (Done)     |
-| GET    | `/api/v1/student/groups/my-group`       | Lấy danh sách nhóm của user hiện tại      | -                                                 | (Done)     |
-
-Còn Update thêm
+#### Author : Quang Thang
+##### Done: 90%
+| Method | URL                                  | Description                          | Status     |
+|--------|--------------------------------------|--------------------------------------|------------|
+| POST   | `/api/v1/user/groups`                | Create new group                     | (Done)     |
+| PATCH  | `/api/v1/user/groups/{id}`           | Update group by id                   | (Done)     |
+| GET    | `/api/v1/user/groups/{id}`           | Get group details by id              | (Done)     |
+| GET    | `/api/v1/user/groups/public`         | Get list of public groups            | (Done)     |
+| POST   | `/api/v1/user/groups/{groupId}/join` | Join group                           | (Done)     |
+| GET    | `/api/v1/user/groups/my-group`       | Get current user's groups            | (Done)     |
+| DELETE | `/api/v1/user/groups/{id}`           | Delete group by id                   | (Done)     |
+| POST   | `/api/v1/user/groups/donate-point`   | Donate points to group               | (Done)     |
+| POST   | `/api/v1/user/groups/leave`          | Leave group                          | (Done)     |
 
 ## 3. Chat / Messaging
-
-| Endpoint                    | Method  | Mô tả                          | Trạng thái |
-|-----------------------------|---------|--------------------------------|------------|
-| `/api/chat/rooms`           | GET     | Lấy danh sách phòng chat       | (Done)     |
-| `/api/chat/rooms/{id}`      | GET     | Lấy tin nhắn trong phòng chat  | (Done)     |
-| `/api/chat/rooms/{id}/send` | POST    | Gửi tin nhắn trong phòng chat  | (Done)     |
-
-Còn Update thêm
+#### Author : Quang Thang
+##### Done: 70%
+| Method | URL                          | Description                     | Status     |
+|--------|------------------------------|---------------------------------|------------|
+| GET    | `/api/chat/rooms`            | Get chat room list              | (Done)     |
+| GET    | `/api/chat/rooms/{id}`       | Get messages in chat room       | (Done)     |
+| POST   | `/api/chat/rooms/{id}/send`  | Send message in chat room       | (Done)     |
 
 ## 4. FlashCard
+#### Author : Hung Quan
+##### Done: 90%
+| Method  | URL                                 | Description                             | Status  |
+|---------|-------------------------------------|-----------------------------------------|---------|
+| POST    | `/api/v1/student/flashcards`        | Create new flashcard set                | (Done)  |
+| GET     | `/api/v1/student/flashcards`        | Get all user's flashcard sets           | (Done)  |
+| GET     | `/api/v1/student/flashcards/{id}`   | Get flashcard set details by ID         | (Done)  |
+| GET     | `/api/v1/student/flashcards/public` | Get flashcard set with status public    | (Done)  |
+| PATCH   | `/api/v1/student/flashcards/{id}`   | Update flashcard set by ID              | (Done)  |
+| DELETE  | `/api/v1/student/flashcards/{id}`   | Delete flashcard set by ID              | (Done)  |
 
-| Method  | URL                               | Mô tả                                   | Request Body / Params                  | Trạng thái  |
-|---------|-----------------------------------|-----------------------------------------|----------------------------------------|-------------|
-| POST    | `/api/v1/student/flashcards`      | Tạo bộ flashcard mới                    | JSON: FlashcardSetRequestDto           | (Done)      |
-| GET     | `/api/v1/student/flashcards`      | Lấy tất cả bộ flashcard của user        | -                                      | (Done)      |
-| GET     | `/api/v1/student/flashcards/{id}` | Lấy chi tiết bộ flashcard theo ID       | Path: id                               | (Done)      |
-| PATCH   | `/api/v1/student/flashcards/{id}` | Cập nhật bộ flashcard theo ID           | Path: id, JSON: FlashcardSetRequestDto | (Done)      |
-| DELETE  | `/api/v1/student/flashcards/{id}` | Xóa bộ flashcard theo ID                | Path: id                               | (Done)      |
-
-Còn Update thêm
+To be updated
 
 ## 5. Admin
+#### Author :
+| Method  | URL                               | Description                             | Status      |
+|---------|-----------------------------------|-----------------------------------------|-------------|
 
-| Method  | URL                               | Mô tả                                   | Request Body / Params                  | Trạng thái  |
-|---------|-----------------------------------|-----------------------------------------|----------------------------------------|-------------|
-
-Còn Update thêm
+To be updated
 
 ## 6 MindMaps
-
-| Method    | URL                                          | Mô tả                                   | Request Body / Params                 | Trạng thái  |
-|-----------|----------------------------------------------|-----------------------------------------|---------------------------------------|-------------|
-| GET       | `/api/v1/student/mindmaps/files`             | Lấy danh sách file mind map của user    | -                                     | (Done)      |
-| POST      | `/api/v1/student/mindmaps/files`             | Tạo mới file mind map                   | JSON: MindMapFileRequestDto           | (Done)      |
-| PUT       | `/api/v1/student/mindmaps/files/{id}`        | Cập nhật file mind map theo ID          | Path: id, JSON: MindMapFileRequestDto | (Done)      |
-| DELETE    | `/api/v1/student/mindmaps/files/{id}`        | Xóa file mind map theo ID               | Path: id                              | (Done)      |
-| GET       | `/api/v1/student/mindmaps/files/{id}`        | Lấy chi tiết file mind map theo ID      | Path: id                              | (Done)      |
-| PUT       | `/api/v1/student/mindmaps/files/{id}/name`   | Cập nhật tên file mind map theo ID      | Path: id, JSON: { "name": "string" }  | (Done)      |
-| POST      | `/api/v1/student/mindmaps`                   | Tạo mới mind map                        | JSON: MindMapRequestDto               | (Done)      |
-| GET       | `/api/v1/student/mindmaps/{id}`              | Lấy mind map theo ID                    | Path: id                              | (Done)      |
-| GET       | `/api/v1/student/mindmaps/user`              | Lấy tất cả mind map của user hiện tại   | -                                     | (Done)      |
-| PUT       | `/api/v1/student/mindmaps/{id}`              | Cập nhật mind map theo ID               | Path: id, JSON: MindMapRequestDto     | (Done)      |
-| DELETE    | `/api/v1/student/mindmaps/{id}`              | Xóa mind map theo ID                    | Path: id                              | (Done)      |
+#### Author : Nhat Hao
+| Method    | URL                                          | Description                             | Status  |
+|-----------|----------------------------------------------|-----------------------------------------|---------|
+| GET       | `/api/v1/student/mindmaps/files`             | Get user's mind map file list           | (Done)  |
+| POST      | `/api/v1/student/mindmaps/files`             | Create new mind map file                | (Done)  |
+| PUT       | `/api/v1/student/mindmaps/files/{id}`        | Update mind map file by ID              | (Done)  |
+| DELETE    | `/api/v1/student/mindmaps/files/{id}`        | Delete mind map file by ID              | (Done)  |
+| GET       | `/api/v1/student/mindmaps/files/{id}`        | Get mind map file details by ID         | (Done)  |
+| PUT       | `/api/v1/student/mindmaps/files/{id}/name`   | Update mind map file name by ID         | (Done)  |
+| POST      | `/api/v1/student/mindmaps`                   | Create new mind map                     | (Done)  |
+| GET       | `/api/v1/student/mindmaps/{id}`              | Get mind map by ID                      | (Done)  |
+| GET       | `/api/v1/student/mindmaps/user`              | Get all mind maps of current user       | (Done)  |
+| PUT       | `/api/v1/student/mindmaps/{id}`              | Update mind map by ID                   | (Done)  |
+| DELETE    | `/api/v1/student/mindmaps/{id}`              | Delete mind map by ID                   | (Done)  |
 
 ## 7 Task
+#### Author : Cong Bien
+| Method  | URL                          | Description                        | Status  |
+|---------|------------------------------|------------------------------------|---------|
+| POST    | `/api/v1/student/tasks`      | Create new Task                    | (Done)  |
+| GET     | `/api/v1/student/tasks`      | Get all user's Tasks               | (Done)  |
+| GET     | `/api/v1/student/tasks/{id}` | Get Task by ID                     | (Done)  |
+| PUT     | `/api/v1/student/tasks/{id}` | Update Task by ID                  | (Done)  |
+| DELETE  | `/api/v1/student/tasks/{id}` | Delete Task by ID                  | (Done)  |
 
-| Method  | URL                          | Mô tả                              | Request Body / Params           | Trạng thái |
-|---------|------------------------------|------------------------------------|---------------------------------|------------|
-| POST    | `/api/v1/student/tasks`      | Tạo Task mới                       | JSON: TaskRequestDto            | (Done)     |
-| GET     | `/api/v1/student/tasks`      | Lấy tất cả Task của user           | -                               | (Done)     |
-| GET     | `/api/v1/student/tasks/{id}` | Lấy Task theo ID                   | Path: id                        | (Done)     |
-| PUT     | `/api/v1/student/tasks/{id}` | Cập nhật Task theo ID              | Path: id, JSON: TaskRequestDto  | (Done)     |
-| DELETE  | `/api/v1/student/tasks/{id}` | Xóa Task theo ID                   | Path: id                        | (Done)     |
+## 8. Folder in Group Management
+#### Author : Quang Thang
+##### Done: 80%
+| Method | URL                                                 | Description                              | Status |
+|--------|-----------------------------------------------------|------------------------------------------|--------|
+| POST   | `/api/v1/user/groups/{groupId}/folders`             | Create a new folder inside a group       | (Done) |
+| DELETE | `/api/v1/user/groups/{groupId}/folders/{folderId}/` | Delete a folder by its ID within a group | (Done) |
+| GET    | `/api/v1/user/groups/folders/{groupId}`             | Get all folders of a group               | (Done) |
+| POST   | `/api/v1/user/groups/folders/upload-file`           | Upload multiple files into a folder      | (Done) |
+| DELETE | `/api/v1/user/groups/folders/delete-file/{id}`      | Delete a file by its ID                  | (Done) |
+| PATCH  | `/api/v1/user/groups/folders/{folderId}`            | Update current folder's groups           | (Done) |
 
-## Hoàn thiện 25%
+## 9. ContributionHistory
+#### Author : Quang Thang
+##### Done: 10%
+| Method | URL                                           | Description                             | Status |
+|--------|-----------------------------------------------|-----------------------------------------|--------|
+| GET    | `/api/v1/user/contribution-history/{groupId}` | Get all contribution history by groupId | (Done) |
+
+## 10. Notification
+
+## 11. Course Management (Teacher)
+
+## 12. Achivement
+
+## 13. Planner
+
+## 14. Payment
+
+## 15. Quizzes
+#### Author : Chi Tam
+##### Done: 75%
+| Method  | URL                                 | Description                             | Status  |
+|---------|-------------------------------------|-----------------------------------------|---------|
+| POST    | `/api/v1/student/quizzes`           | Create new quizz set                    | (Done)  |
+| GET     | `/api/v1/student/quizzes`           | Get all user's quizz                    | (Done)  |
+| GET     | `/api/v1/student/quizzes/{id}`      | Get quizz set details by ID             | (Done)  |
+| GET     | `/api/v1/student/quizzes/public`    | Get quizz set with status public        | (Done)  |
+| PATCH   | `/api/v1/student/quizzes/{id}`      | Update quizz set by ID                  | (Done)  |
+| DELETE  | `/api/v1/student/quizzes/{id}`      | Delete quizz set by ID                  | (Done)  |
+
+To be updated
+
+## 16. Pomodoro
+
+## 17. Collections
+
+## 18. Materials
