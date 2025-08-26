@@ -9,4 +9,5 @@ import java.util.List;
 public interface FolderService {
     FolderResponseDto createFolder(FolderRequestDto folderRequestDto, Long groupId, Long userId);
     List<FolderResponseDto> getAllFolderByGroup(Long groupId,Long userId);
+    void deleteFolderById(Long folderId, Long userId, Long groupId);
 }

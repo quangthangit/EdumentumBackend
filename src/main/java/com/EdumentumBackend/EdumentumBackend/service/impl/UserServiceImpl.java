@@ -48,6 +48,7 @@ public class UserServiceImpl implements UserService {
                 .username(userRequestDto.getUsername())
                 .password(passwordEncoder.encode(userRequestDto.getPassword()))
                 .isActive(true)
+                .imageUrl(userRequestDto.getImageUrl())
                 .roles(Collections.singleton(role))
                 .build();
 
@@ -65,6 +66,7 @@ public class UserServiceImpl implements UserService {
         return UserResponseDto.builder()
                 .userId(user.getUserId())
                 .email(user.getEmail())
+                .imageUrl(user.getImageUrl())
                 .username(user.getUsername())
                 .isActive(user.getIsActive())
                 .roles(user.getRoles())

@@ -50,6 +50,21 @@ public class UserFolderController {
         }
     }
 
+    @DeleteMapping("{groupId}/folders/{folderId}/")
+    public ResponseEntity<?> deleteFolder(@PathVariable Long groupId,
+                                          @PathVariable Long folderId ) {
+        try {
+            Long userId = getCurrentUserId();
+            folderService.deleteFolderById(folderId,groupId,userId);
+            return ResponseEntity.ok(Map.of(
+                    "status", "success",
+                    "message", "Delete folder successfully"
+            ));
+        } catch (Exception e) {
+            return buildServerError(e);
+        }
+    }
+
     @GetMapping("/folders/{groupId}")
     public ResponseEntity<?> getFolderByGroup(@PathVariable Long groupId) {
         try {

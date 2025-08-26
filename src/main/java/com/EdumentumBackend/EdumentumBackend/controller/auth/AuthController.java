@@ -91,6 +91,7 @@ public class AuthController {
             GoogleIdToken.Payload payload = googleTokenVerifierService.verifyToken(token);
             String email = payload.getEmail();
             String username = (String) payload.get("name");
+            String imageUrl = (String) payload.get("picture");
 
             UserResponseDto user;
             try {
@@ -98,6 +99,7 @@ public class AuthController {
             } catch (NotFoundException e) {
                 UserRequestDto newUser = new UserRequestDto();
                 newUser.setEmail(email);
+                newUser.setImageUrl(imageUrl);
                 newUser.setPassword(UUID.randomUUID().toString());
                 newUser.setUsername(username);
                 user = userService.createUser(newUser);
