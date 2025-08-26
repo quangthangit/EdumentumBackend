@@ -4,13 +4,15 @@ import com.EdumentumBackend.EdumentumBackend.entity.listener.GroupEntityListener
 import com.EdumentumBackend.EdumentumBackend.enums.GroupTier;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @Entity
 @EntityListeners(GroupEntityListener.class)
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "groups")
 public class GroupEntity extends BaseEntity {
 
