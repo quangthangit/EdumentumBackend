@@ -52,7 +52,4 @@ public class GroupEntity extends BaseEntity {
 
     @Column(nullable = false)
     private int contributionPoints = 0;
-
-    @Version
-    private Integer version;
 }
