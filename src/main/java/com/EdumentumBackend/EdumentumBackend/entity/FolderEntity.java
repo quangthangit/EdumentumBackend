@@ -28,12 +28,12 @@ public class FolderEntity extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(name = "group_id", nullable = false)
-    private GroupEntity groupEntity;
+    private GroupEntity group;
 
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity userEntity;
+    private UserEntity user;
 
     @OneToMany(mappedBy = "folder", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FileEntity> files;

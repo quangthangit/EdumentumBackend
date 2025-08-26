@@ -40,6 +40,7 @@ public class GroupServiceImpl implements GroupService {
                 .isPublic(entity.isPublic())
                 .contributionPoints(entity.getContributionPoints())
                 .tier(entity.getTier())
+                .memberLimit(entity.getMemberLimit())
                 .ownerId(entity.getOwner().getUserId())
                 .ownerName(entity.getOwner().getUsername())
                 .memberCount(entity.getMemberCount())
@@ -192,7 +193,7 @@ public class GroupServiceImpl implements GroupService {
             throw new AccessDeniedException("Only the group owner can update the group");
         }
         groupMemberRepository.deleteAllByGroup(group);
-        folderRepository.deleteAllByGroupEntity(group);
+        folderRepository.deleteAllByGroupId(groupId);
         groupRepository.deleteById(groupId);
     }
 
