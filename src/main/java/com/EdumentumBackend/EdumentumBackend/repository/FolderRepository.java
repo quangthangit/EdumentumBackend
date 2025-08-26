@@ -9,6 +9,6 @@ import java.util.List;
 
 @Repository
 public interface FolderRepository extends JpaRepository<FolderEntity, Long> {
-    List<FolderEntity> findAllByGroupEntity(GroupEntity groupEntity);
-    void deleteAllByGroupEntity(GroupEntity groupEntity);;
+    List<FolderEntity> findAllByGroupId(Long groupId);
+    void deleteAllByGroupId(Long groupId);;
 }

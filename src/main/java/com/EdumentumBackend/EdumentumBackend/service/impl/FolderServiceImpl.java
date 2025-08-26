@@ -49,8 +49,8 @@ public class FolderServiceImpl implements FolderService {
 
         FolderEntity folderEntity = FolderEntity.builder()
                 .name(folderRequestDto.getName())
-                .groupEntity(group)
-                .userEntity(user)
+                .group(group)
+                .user(user)
                 .build();
 
         FolderEntity savedFolder = folderRepository.save(folderEntity);
@@ -69,7 +69,7 @@ public class FolderServiceImpl implements FolderService {
         GroupEntity group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new NotFoundException("Group not found"));
 
-        List<FolderEntity> folderEntities = folderRepository.findAllByGroupEntity(group);
+        List<FolderEntity> folderEntities = folderRepository.findAllByGroupId(groupId);
 
         return folderEntities.stream()
                 .map(folder -> {
@@ -91,11 +91,19 @@ public class FolderServiceImpl implements FolderService {
                             .id(folder.getId())
                             .folderName(folder.getName())
                             .files(fileDtos)
-                            .ownerId(folder.getUserEntity().getUserId())
-                            .ownerName(folder.getUserEntity().getUsername())
+                            .ownerId(folder.getUser().getUserId())
+                            .ownerName(folder.getUser().getUsername())
                             .createdAt(folder.getCreatedAt())
                             .build();
                 })
                 .toList();
+    }
+
+    @Override
+    public void deleteFolderById(Long folderId, Long userId, Long groupId) {
+        if (groupMemberRepository.existsByGroup_IdAndUser_UserId(groupId, userId)) {
+            throw new BadRequestException("User has already joined the group");
+        }
+        folderRepository.deleteById(folderId);
     }
 }
