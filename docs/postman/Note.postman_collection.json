@@ -1,0 +1,409 @@
+{
+  "info": {
+    "name": "Edumentum - Notes API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "b0a7fe2b-2b6e-4c9d-9b9c-9a0f3cf6ed00",
+    "description": "Collection các endpoint cho module Note. Sử dụng biến {{baseUrl}} và {{token}} (JWT)."
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"12345678\",\n  \"username\": \"demo\"\n}"},
+            "url": {"raw": "{{baseUrl}}/api/v1/auth/register", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","register"]}
+          },
+          "response": [
+            {
+              "name": "201",
+              "originalRequest": {},
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"status\": \"success\",\n  \"message\": \"User registered successfully\",\n  \"data\": {\n    \"user\": { \"userId\": 1, \"email\": \"user@example.com\", \"username\": \"demo\" },\n    \"accessToken\": \"...\",\n    \"refreshToken\": \"...\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"12345678\"\n}"},
+            "url": {"raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"]}
+          },
+          "response": [
+            {
+              "name": "200",
+              "originalRequest": {},
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"status\": \"success\",\n  \"message\": \"User login successfully\",\n  \"data\": {\n    \"user\": { \"userId\": 1, \"email\": \"user@example.com\", \"username\": \"demo\" },\n    \"accessToken\": \"...\",\n    \"refreshToken\": \"...\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Assign Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{baseUrl}}/api/v1/user/assign-role?userId={{userId}}&roleName={{roleName}}", "host": ["{{baseUrl}}"], "path": ["api","v1","user","assign-role"], "query": [
+              {"key": "userId", "value": "{{userId}}"},
+              {"key": "roleName", "value": "{{roleName}}"}
+            ]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notes",
+      "item": [
+        {
+          "name": "List Notes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes?page=0&size=20&query=&ownerId=&tag=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notes"],
+              "query": [
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "20"},
+                {"key": "query", "value": ""},
+                {"key": "ownerId", "value": ""},
+                {"key": "tag", "value": ""}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Note Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes/{{noteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notes", "{{noteId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Note",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"New Note\",\n  \"tags\": [\"math\", \"algebra\"]\n}"
+            },
+            "url": {"raw": "{{baseUrl}}/api/v1/notes", "host": ["{{baseUrl}}"], "path": ["api","v1","notes"]}
+          },
+          "response": [
+            {"name":"200","code":200,"body":"{\\n  \\\"id\\\": 1,\\n  \\\"title\\\": \\\"New Note\\\",\\n  \\\"ownerId\\\": 1,\\n  \\\"isDeleted\\\": false,\\n  \\\"blocks\\\": [],\\n  \\\"tags\\\": [\\\"math\\\", \\\"algebra\\\"]\\n}"}
+          ]
+        },
+        {
+          "name": "Update Note",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Note Title\",\n  \"tags\": [\"math\", \"geometry\"]\n}"
+            },
+            "url": {"raw": "{{baseUrl}}/api/v1/notes/{{noteId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","notes","{{noteId}}"]}
+          }
+        },
+        {
+          "name": "Delete Note (soft)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{baseUrl}}/api/v1/notes/{{noteId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","notes","{{noteId}}"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Blocks",
+      "item": [
+        {
+          "name": "Add Block",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"PARAGRAPH\",\n  \"orderIndex\": 0,\n  \"content\": {\n    \"text\": \"Hello\"\n  }\n}"
+            },
+            "url": {"raw": "{{baseUrl}}/api/v1/notes/{{noteId}}/blocks", "host": ["{{baseUrl}}"], "path": ["api","v1","notes","{{noteId}}","blocks"]}
+          },
+          "response": [
+            {"name":"200","code":200,"body":"{\\n  \\\"id\\\": 10,\\n  \\\"type\\\": \\\"PARAGRAPH\\\",\\n  \\\"orderIndex\\\": 0,\\n  \\\"content\\\": {\\n    \\\"text\\\": \\\"Hello\\\"\\n  }\\n}"}
+          ]
+        },
+        {
+          "name": "Update Block",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"HEADING_1\",\n  \"orderIndex\": 1,\n  \"content\": {\n    \"text\": \"Title\"\n  }\n}"
+            },
+            "url": {"raw": "{{baseUrl}}/api/v1/notes/blocks/{{blockId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","notes","blocks","{{blockId}}"]}
+          }
+        },
+        {
+          "name": "Delete Block",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{baseUrl}}/api/v1/notes/blocks/{{blockId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","notes","blocks","{{blockId}}"]}
+          }
+        },
+        {
+          "name": "Reorder Blocks",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"noteId\": {{noteId}},\n  \"orderedBlockIds\": [1,2,3]\n}"
+            },
+            "url": {"raw": "{{baseUrl}}/api/v1/notes/blocks/reorder", "host": ["{{baseUrl}}"], "path": ["api","v1","notes","blocks","reorder"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Collaborators",
+      "item": [
+        {
+          "name": "List Collaborators",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{baseUrl}}/api/v1/notes/{{noteId}}/collaborators", "host": ["{{baseUrl}}"], "path": ["api","v1","notes","{{noteId}}","collaborators"]}
+          }
+        },
+        {
+          "name": "Add Collaborator",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": {{userId}},\n  \"permission\": \"EDITOR\"\n}"
+            },
+            "url": {"raw": "{{baseUrl}}/api/v1/notes/{{noteId}}/collaborators", "host": ["{{baseUrl}}"], "path": ["api","v1","notes","{{noteId}}","collaborators"]}
+          }
+        },
+        {
+          "name": "Remove Collaborator",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{baseUrl}}/api/v1/notes/{{noteId}}/collaborators/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","notes","{{noteId}}","collaborators","{{userId}}"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "List Comments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{baseUrl}}/api/v1/notes/{{noteId}}/comments", "host": ["{{baseUrl}}"], "path": ["api","v1","notes","{{noteId}}","comments"]}
+          },
+          "response": [
+            {"name":"200","code":200,"body":"[]"}
+          ]
+        },
+        {
+          "name": "Add Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Nice block\",\n  \"blockId\": {{blockId}}\n}"
+            },
+            "url": {"raw": "{{baseUrl}}/api/v1/notes/{{noteId}}/comments", "host": ["{{baseUrl}}"], "path": ["api","v1","notes","{{noteId}}","comments"]}
+          }
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{baseUrl}}/api/v1/notes/comments/{{commentId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","notes","comments","{{commentId}}"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tags",
+      "item": [
+        {
+          "name": "List Tags",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{baseUrl}}/api/v1/tags", "host": ["{{baseUrl}}"], "path": ["api","v1","tags"]}
+          }
+        },
+        {
+          "name": "Create Tag",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tags?name={{tagName}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","v1","tags"],
+              "query": [{"key":"name","value":"{{tagName}}"}]
+            }
+          }
+        },
+        {
+          "name": "Delete Tag",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{baseUrl}}/api/v1/tags/{{tagId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","tags","{{tagId}}"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search & History",
+      "item": [
+        {
+          "name": "Search Notes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search/notes?query={{query}}&tag={{tag}}&ownerId={{ownerId}}&page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","v1","search","notes"],
+              "query": [
+                {"key": "query", "value": "{{query}}"},
+                {"key": "tag", "value": "{{tag}}"},
+                {"key": "ownerId", "value": "{{ownerId}}"},
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "20"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Version History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{baseUrl}}/api/v1/notes/{{noteId}}/history", "host": ["{{baseUrl}}"], "path": ["api","v1","notes","{{noteId}}","history"]}
+          }
+        },
+        {
+          "name": "Restore Version (stub)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "url": {"raw": "{{baseUrl}}/api/v1/notes/{{noteId}}/restore/{{versionId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","notes","{{noteId}}","restore","{{versionId}}"]}
+          },
+          "response": [
+            {"name":"200","code":200,"body":"[]"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Realtime (STOMP)",
+      "description": "Kết nối STOMP tới ws {{baseUrl}}/ws-chat. Gửi tới /app/note.events và subscribe /topic/note/{noteId}.",
+      "item": []
+    }
+  ],
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:8080"},
+    {"key": "token", "value": ""},
+    {"key": "noteId", "value": "1"},
+    {"key": "blockId", "value": "1"},
+    {"key": "userId", "value": "1"},
+    {"key": "commentId", "value": "1"},
+    {"key": "tagId", "value": "1"},
+    {"key": "tagName", "value": "math"},
+    {"key": "query", "value": "note"},
+    {"key": "tag", "value": "math"},
+    {"key": "ownerId", "value": ""},
+    {"key": "versionId", "value": "1"}
+  ]
+}
+
+
