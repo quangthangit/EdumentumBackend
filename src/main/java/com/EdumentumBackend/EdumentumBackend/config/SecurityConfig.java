@@ -44,7 +44,6 @@ public class SecurityConfig {
                         .requestMatchers("/ws-chat/**").permitAll()
                         .requestMatchers("/api/v1/chat/**").hasAnyRole("STUDENT","TEACHER")
                         .requestMatchers("/api/v1/user/**").hasAnyRole("STUDENT","TEACHER")
-                        .requestMatchers("/api/v1/notes/**").hasAnyRole("STUDENT","TEACHER")
                         .requestMatchers("/api/v1/guest/**").hasRole("GUEST")
                         .requestMatchers("/api/v1/student/**").hasAnyRole("STUDENT","ADMIN")
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
