@@ -1,0 +1,182 @@
+{
+  "title": "Kiến thức cơ bản về Machine Learning",
+  "description": "Bài kiểm tra kiến thức về Machine Learning cho người mới bắt đầu, bao gồm các khái niệm cơ bản và thuật toán phổ biến.",
+  "thumbnailUrl": "https://example.com/images/machine-learning-quiz.jpg",
+  "difficulty": "MEDIUM",
+  "estimatedTime": 30,
+  "passingScore": 70,
+  "maxAttempts": 3,
+  "isAiGenerated": true,
+  "aiModel": "GPT-4",
+  "sourceType": "TEXT",
+  "metaTitle": "Kiểm tra kiến thức Machine Learning cho người mới bắt đầu",
+  "metaDescription": "Bài kiểm tra 30 phút đánh giá hiểu biết cơ bản về Machine Learning và các thuật toán phổ biến",
+  "canonicalUrl": "https://edumentum.com/quizzes/machine-learning-basics",
+  "keywords": ["machine learning", "AI", "thuật toán", "học máy", "data science"],
+  "visibility": "PUBLIC",
+  "isPremium": false,
+  "quizData": {
+    "introduction": "Chào mừng bạn đến với bài kiểm tra kiến thức cơ bản về Machine Learning. Hãy trả lời các câu hỏi dưới đây để kiểm tra hiểu biết của bạn.",
+    "instructions": "Chọn một đáp án đúng cho mỗi câu hỏi. Bạn cần đạt ít nhất 70% số điểm để vượt qua bài kiểm tra này.",
+    "questions": [
+      {
+        "id": 1,
+        "text": "Machine Learning là gì?",
+        "type": "MULTIPLE_CHOICE",
+        "points": 1,
+        "options": [
+          {
+            "id": "a",
+            "text": "Một nhánh của AI cho phép máy tính học từ dữ liệu mà không cần lập trình cụ thể"
+          },
+          {
+            "id": "b",
+            "text": "Một ngôn ngữ lập trình mới dành cho AI"
+          },
+          {
+            "id": "c",
+            "text": "Một phần cứng máy tính chuyên dụng cho AI"
+          },
+          {
+            "id": "d",
+            "text": "Một hệ điều hành dành riêng cho các ứng dụng AI"
+          }
+        ],
+        "correctAnswer": "a",
+        "explanation": "Machine Learning là một nhánh của AI (Trí tuệ nhân tạo) cho phép máy tính học từ dữ liệu và kinh nghiệm mà không cần lập trình cụ thể để thực hiện một nhiệm vụ."
+      },
+      {
+        "id": 2,
+        "text": "Có những loại học máy chính nào?",
+        "type": "MULTIPLE_CHOICE",
+        "points": 1,
+        "options": [
+          {
+            "id": "a",
+            "text": "Học có giám sát, học không giám sát, học tăng cường"
+          },
+          {
+            "id": "b",
+            "text": "Học sâu, học nông, học trung bình"
+          },
+          {
+            "id": "c",
+            "text": "Học nhanh, học chậm, học vừa"
+          },
+          {
+            "id": "d",
+            "text": "Học trong, học ngoài, học giữa"
+          }
+        ],
+        "correctAnswer": "a",
+        "explanation": "Ba loại học máy chính là học có giám sát (supervised learning), học không giám sát (unsupervised learning) và học tăng cường (reinforcement learning)."
+      },
+      {
+        "id": 3,
+        "text": "Overfitting trong machine learning là gì?",
+        "type": "MULTIPLE_CHOICE",
+        "points": 1,
+        "options": [
+          {
+            "id": "a",
+            "text": "Khi mô hình hoạt động tốt trên dữ liệu huấn luyện nhưng kém trên dữ liệu mới"
+          },
+          {
+            "id": "b",
+            "text": "Khi mô hình quá đơn giản và không thể nắm bắt các mẫu trong dữ liệu"
+          },
+          {
+            "id": "c",
+            "text": "Khi mô hình quá phức tạp và tốn nhiều tài nguyên tính toán"
+          },
+          {
+            "id": "d",
+            "text": "Khi mô hình cần quá nhiều dữ liệu để huấn luyện"
+          }
+        ],
+        "correctAnswer": "a",
+        "explanation": "Overfitting (quá khớp) xảy ra khi mô hình học quá kỹ từ dữ liệu huấn luyện, đến mức nó nắm bắt cả nhiễu, dẫn đến hiệu suất tốt trên dữ liệu huấn luyện nhưng kém trên dữ liệu mới."
+      },
+      {
+        "id": 4,
+        "text": "Thế nào là precision và recall trong đánh giá mô hình phân loại?",
+        "type": "MULTIPLE_CHOICE",
+        "points": 1,
+        "options": [
+          {
+            "id": "a",
+            "text": "Precision là tỷ lệ dự đoán đúng trong các dự đoán tích cực, Recall là tỷ lệ các trường hợp tích cực thực sự được phát hiện"
+          },
+          {
+            "id": "b",
+            "text": "Precision là độ chính xác tổng thể, Recall là tốc độ dự đoán"
+          },
+          {
+            "id": "c",
+            "text": "Precision là tốc độ học của mô hình, Recall là khả năng ghi nhớ dữ liệu"
+          },
+          {
+            "id": "d",
+            "text": "Precision và Recall đều đo lường tốc độ tính toán của mô hình"
+          }
+        ],
+        "correctAnswer": "a",
+        "explanation": "Precision (độ chính xác) là tỷ lệ dự đoán đúng trong số các dự đoán tích cực. Recall (độ bao phủ) là tỷ lệ các trường hợp tích cực thực sự được phát hiện bởi mô hình."
+      },
+      {
+        "id": 5,
+        "text": "Thuật toán K-means được sử dụng cho loại học máy nào?",
+        "type": "MULTIPLE_CHOICE",
+        "points": 1,
+        "options": [
+          {
+            "id": "a",
+            "text": "Học không giám sát"
+          },
+          {
+            "id": "b",
+            "text": "Học có giám sát"
+          },
+          {
+            "id": "c",
+            "text": "Học tăng cường"
+          },
+          {
+            "id": "d",
+            "text": "Học sâu"
+          }
+        ],
+        "correctAnswer": "a",
+        "explanation": "K-means là một thuật toán phân cụm thuộc loại học không giám sát (unsupervised learning), vì nó tìm ra các nhóm (clusters) trong dữ liệu mà không cần nhãn trước."
+      }
+    ],
+    "summary": "Bạn đã hoàn thành bài kiểm tra kiến thức cơ bản về Machine Learning. Hãy xem kết quả của mình và tìm hiểu thêm về các khái niệm mà bạn chưa nắm vững."
+  },
+  "tags": [
+    {
+      "name": "Machine Learning",
+      "description": "Các khái niệm và thuật toán trong lĩnh vực học máy",
+      "icon": "brain",
+      "color": "#4285F4"
+    },
+    {
+      "name": "AI",
+      "description": "Trí tuệ nhân tạo và các ứng dụng",
+      "icon": "robot",
+      "color": "#34A853"
+    },
+    {
+      "name": "Data Science",
+      "description": "Khoa học dữ liệu và phân tích",
+      "icon": "chart-bar",
+      "color": "#EA4335"
+    },
+    {
+      "name": "Beginner",
+      "description": "Nội dung dành cho người mới bắt đầu",
+      "icon": "star",
+      "color": "#FBBC05"
+    }
+  ]
+}
+

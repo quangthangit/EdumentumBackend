@@ -6,8 +6,11 @@ import com.EdumentumBackend.EdumentumBackend.enums.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 @Entity
 @Table(name = "quizzes")
@@ -21,12 +24,20 @@ public class QuizzesEntity extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Basic Information
     @Column(name = "title", nullable = false)
     private String title;
+
+    @Column(name = "slug", nullable = false, unique = true)
+    private String slug;
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "thumbnail_url", length = 500)
+    private String thumbnailUrl;
+
+    // Ownership & Access
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
@@ -34,46 +45,39 @@ public class QuizzesEntity extends BaseEntity {
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private UserEntity user;
 
+    @Column(name = "original_quiz_id")
+    private Long originalQuizId;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private QuizCategoriesEntity category;
+    @JoinColumn(name = "original_quiz_id", insertable = false, updatable = false)
+    private QuizzesEntity originalQuiz;
+
+    // Content Structure
+    @Column(name = "quiz_data", columnDefinition = "jsonb", nullable = false)
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> quizData;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "visibility")
-    private VisibilityType visibility = VisibilityType.PRIVATE;
-
-    @Column(name = "language", length = 10)
-    private String language = "AUTO";
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "question_type")
-    private QuestionType questionType = QuestionType.MIXED;
-
-    @Column(name = "number_of_questions")
-    private Integer numberOfQuestions = 10;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "mode")
-    private QuizMode mode = QuizMode.QUIZ;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "difficulty")
+    @Column(name = "difficulty", length = 20)
     private DifficultyLevel difficulty = DifficultyLevel.EASY;
 
-    @Column(name = "task", length = 50)
-    private String task = "GENERATE_QUIZ";
+    @Column(name = "estimated_time")
+    private Integer estimatedTime; // in minutes
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "parsing_mode")
-    private ParsingMode parsingMode = ParsingMode.BALANCED;
+    // Scoring Configuration
+    @Column(name = "total_questions", nullable = false)
+    private Integer totalQuestions;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "source_type")
-    private SourceType sourceType;
+    @Column(name = "total_points", nullable = false)
+    private Integer totalPoints;
 
-    @Column(name = "source_content", columnDefinition = "TEXT")
-    private String sourceContent;
+    @Column(name = "passing_score")
+    private Integer passingScore = 70; // percentage
 
+    @Column(name = "max_attempts")
+    private Integer maxAttempts = 0; // 0 = unlimited
+
+    // AI Information (Simplified)
     @Column(name = "is_ai_generated")
     private Boolean isAiGenerated = false;
 
@@ -81,30 +85,73 @@ public class QuizzesEntity extends BaseEntity {
     private String aiModel;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "generation_mode")
-    private GenerationMode generationMode;
+    @Column(name = "source_type", length = 20)
+    private SourceType sourceType;
+
+//    @Column(name = "generation_prompt", columnDefinition = "TEXT")
+//    private String generationPrompt;
+
+    // SEO & Discovery
+    @Column(name = "meta_title", length = 160)
+    private String metaTitle;
+
+    @Column(name = "meta_description", length = 160)
+    private String metaDescription;
+
+    @Column(name = "canonical_url", length = 500)
+    private String canonicalUrl;
+
+    @Column(name = "keywords", columnDefinition = "text[]")
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    private String[] keywords;
+
+    // Analytics & Performance
+    @Column(name = "view_count")
+    private Integer viewCount = 0;
+
+    @Column(name = "attempt_count")
+    private Integer attemptCount = 0;
+
+    @Column(name = "completion_count")
+    private Integer completionCount = 0;
+
+    @Column(name = "avg_score", precision = 5, scale = 2)
+    private BigDecimal avgScore = BigDecimal.ZERO;
+
+    @Column(name = "avg_completion_time")
+    private Integer avgCompletionTime = 0; // in seconds
+
+    @Column(name = "bookmark_count")
+    private Integer bookmarkCount = 0;
+
+    @Column(name = "share_count")
+    private Integer shareCount = 0;
+
+    // Status & Visibility
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility", length = 20)
+    private VisibilityType visibility = VisibilityType.PRIVATE;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "file_processing_mode")
-    private FileProcessingMode fileProcessingMode;
+    @Column(name = "status", length = 20)
+    private QuizStatus status = QuizStatus.DRAFT;
 
-    @Column(name = "quiz_data", columnDefinition = "jsonb", nullable = false)
-    @JdbcTypeCode(SqlTypes.JSON)
-    private Map<String , Object> quizData;
+    @Column(name = "is_featured")
+    private Boolean isFeatured = false;
 
-    @Column(name = "tags", columnDefinition = "text[]")
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    private String[] tags;
+    @Column(name = "is_trending")
+    private Boolean isTrending = false;
 
-    @Column(name = "estimated_time")
-    private Integer estimatedTime;
+    @Column(name = "is_premium")
+    private Boolean isPremium = false;
 
-    @Column(name = "passing_score")
-    private Integer passingScore = 70;
+    // Timestamps
+    @Column(name = "published_at")
+    private LocalDateTime publishedAt;
 
-    @Column(name = "total_questions", insertable = false, updatable = false)
-    private Integer totalQuestions;
+    @Column(name = "archived_at")
+    private LocalDateTime archivedAt;
 
-    @Column(name = "total_points", insertable = false, updatable = false)
-    private Integer totalPoints;
+    @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<QuizTagEntity> quizTags = new HashSet<>();
 }
