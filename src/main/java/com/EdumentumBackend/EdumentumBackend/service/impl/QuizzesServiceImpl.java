@@ -126,7 +126,7 @@ public class QuizzesServiceImpl implements QuizzesService {
         // Create the quiz entity
         QuizzesEntity quizEntity = QuizzesEntity.builder()
                 .title(quizRequestDto.getTitle())
-                .slug(SlugUtil.toSlug(quizRequestDto.getTitle()))
+                .slug(SlugUtil.toUniqueSlug(quizRequestDto.getTitle()))
                 .description(quizRequestDto.getDescription())
                 .thumbnailUrl(quizRequestDto.getThumbnailUrl())
                 .userId(userId)
@@ -346,7 +346,6 @@ public class QuizzesServiceImpl implements QuizzesService {
             processQuizTags(savedQuiz, quizRequestDto.getTags());
         }
 
-        // Refresh the quiz to get the updated tags
         savedQuiz = quizzesRepository.findById(savedQuiz.getId()).orElseThrow();
 
         return mapToResponseDto(savedQuiz);
