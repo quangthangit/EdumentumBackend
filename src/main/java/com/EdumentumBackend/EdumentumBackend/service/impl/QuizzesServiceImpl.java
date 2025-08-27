@@ -1,21 +1,21 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizCategoriesResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizResponseDto;
-import com.EdumentumBackend.EdumentumBackend.entity.QuizCategoriesEntity;
-import com.EdumentumBackend.EdumentumBackend.entity.QuizzesEntity;
-import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
-import com.EdumentumBackend.EdumentumBackend.repository.QuizCategoriesRepository;
+import com.EdumentumBackend.EdumentumBackend.dtos.quiz.*;
+import com.EdumentumBackend.EdumentumBackend.entity.*;
+import com.EdumentumBackend.EdumentumBackend.enums.QuizStatus;
+import com.EdumentumBackend.EdumentumBackend.repository.QuizTagRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizzesRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
 import com.EdumentumBackend.EdumentumBackend.service.QuizzesService;
+import com.EdumentumBackend.EdumentumBackend.service.TagsService;
+import com.EdumentumBackend.EdumentumBackend.utils.SlugUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,48 +25,59 @@ public class QuizzesServiceImpl implements QuizzesService {
     private QuizzesRepository quizzesRepository;
 
     @Autowired
-    private QuizCategoriesRepository quizCategoriesRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private TagsService tagsService;
+
+    @Autowired
+    private QuizTagRepository quizTagRepository;
 
     private QuizResponseDto toResponseDto(QuizzesEntity entity) {
         QuizResponseDto.QuizResponseDtoBuilder builder = QuizResponseDto.builder()
                 .id(entity.getId())
                 .title(entity.getTitle())
+                .slug(entity.getSlug())
                 .description(entity.getDescription())
-                .language(entity.getLanguage())
+                .thumbnailUrl(entity.getThumbnailUrl())
                 .visibility(entity.getVisibility())
-                .questionType(entity.getQuestionType())
-                .numberOfQuestions(entity.getNumberOfQuestions())
-                .mode(entity.getMode())
                 .difficulty(entity.getDifficulty())
-                .parsingMode(entity.getParsingMode())
                 .sourceType(entity.getSourceType())
                 .isAiGenerated(entity.getIsAiGenerated())
                 .aiModel(entity.getAiModel())
-                .generationMode(entity.getGenerationMode())
-                .fileProcessingMode(entity.getFileProcessingMode())
                 .quizData(entity.getQuizData())
-                .tags(entity.getTags())
                 .estimatedTime(entity.getEstimatedTime())
                 .passingScore(entity.getPassingScore())
+                .maxAttempts(entity.getMaxAttempts())
                 .totalQuestions(entity.getTotalQuestions())
                 .totalPoints(entity.getTotalPoints())
+                .viewCount(entity.getViewCount())
+                .attemptCount(entity.getAttemptCount())
+                .completionCount(entity.getCompletionCount())
+                .avgScore(entity.getAvgScore())
+                .avgCompletionTime(entity.getAvgCompletionTime())
+                .bookmarkCount(entity.getBookmarkCount())
+                .shareCount(entity.getShareCount())
+                .isFeatured(entity.getIsFeatured())
+                .isTrending(entity.getIsTrending())
+                .isPremium(entity.getIsPremium())
+                .status(entity.getStatus().name())
+                .metaTitle(entity.getMetaTitle())
+                .metaDescription(entity.getMetaDescription())
+                .canonicalUrl(entity.getCanonicalUrl())
+                .publishedAt(entity.getPublishedAt())
+                .archivedAt(entity.getArchivedAt())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt());
 
-        // Add category if exists
-        if (entity.getCategory() != null) {
-            QuizCategoriesResponseDto categoryDto = QuizCategoriesResponseDto.builder()
-                    .id(entity.getCategory().getId())
-                    .name(entity.getCategory().getName())
-                    .description(entity.getCategory().getDescription())
-                    .isActive(entity.getCategory().getIsActive())
-                    .createdAt(entity.getCategory().getCreatedAt())
-                    .updatedAt(entity.getCategory().getUpdatedAt())
-                    .build();
-            builder.category(categoryDto);
+        // Add keywords if exists
+        if (entity.getKeywords() != null) {
+            builder.keywords(Arrays.asList(entity.getKeywords()));
+        }
+
+        // Add original quiz if exists
+        if (entity.getOriginalQuiz() != null) {
+            builder.originalQuizId(entity.getOriginalQuiz().getId());
         }
 
         // Add user if exists
@@ -90,45 +101,180 @@ public class QuizzesServiceImpl implements QuizzesService {
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .userId(userId)
-                .language(dto.getLanguage())
+//                .language(dto.getLanguage())
                 .visibility(dto.getVisibility())
-                .questionType(dto.getQuestionType())
-                .numberOfQuestions(dto.getNumberOfQuestions())
-                .mode(dto.getMode())
+
                 .difficulty(dto.getDifficulty())
-                .parsingMode(dto.getParsingMode())
                 .sourceType(dto.getSourceType())
-                .sourceContent(dto.getSourceContent())
                 .isAiGenerated(dto.getIsAiGenerated())
                 .aiModel(dto.getAiModel())
-                .generationMode(dto.getGenerationMode())
-                .fileProcessingMode(dto.getFileProcessingMode())
                 .quizData(dto.getQuizData())
-                .tags(dto.getTags())
                 .estimatedTime(dto.getEstimatedTime())
                 .passingScore(dto.getPassingScore())
                 .build();
     }
 
     @Override
+    @Transactional
     public QuizResponseDto createQuiz(QuizRequestDto quizRequestDto, Long userId) {
-        // Validate category exists
-        Optional<QuizCategoriesEntity> categoryOpt = quizCategoriesRepository.findById(quizRequestDto.getCategoryId());
-        if (categoryOpt.isEmpty()) {
-            throw new RuntimeException("Category not found with id: " + quizRequestDto.getCategoryId());
-        }
-
-        // Validate user exists - using findByUserId instead of findById
+        // Validate user exists
         Optional<UserEntity> userOpt = userRepository.findByUserId(userId);
         if (userOpt.isEmpty()) {
             throw new RuntimeException("User not found with id: " + userId);
         }
 
-        QuizzesEntity entity = toEntity(quizRequestDto, userId);
-        entity.setCategory(categoryOpt.get());
+        // Create the quiz entity
+        QuizzesEntity quizEntity = QuizzesEntity.builder()
+                .title(quizRequestDto.getTitle())
+                .slug(SlugUtil.toUniqueSlug(quizRequestDto.getTitle()))
+                .description(quizRequestDto.getDescription())
+                .thumbnailUrl(quizRequestDto.getThumbnailUrl())
+                .userId(userId)
+                .quizData(quizRequestDto.getQuizData())
+                .difficulty(quizRequestDto.getDifficulty())
+                .estimatedTime(quizRequestDto.getEstimatedTime())
+                .passingScore(quizRequestDto.getPassingScore())
+                .maxAttempts(quizRequestDto.getMaxAttempts())
+                .isAiGenerated(quizRequestDto.getIsAiGenerated())
+                .aiModel(quizRequestDto.getAiModel())
+                .sourceType(quizRequestDto.getSourceType())
+                .metaTitle(quizRequestDto.getMetaTitle())
+                .metaDescription(quizRequestDto.getMetaDescription())
+                .canonicalUrl(quizRequestDto.getCanonicalUrl())
+                .keywords(quizRequestDto.getKeywords() != null ?
+                         quizRequestDto.getKeywords().toArray(new String[0]) : null)
+                .visibility(quizRequestDto.getVisibility())
+                .status(QuizStatus.DRAFT)
+                .isPremium(quizRequestDto.getIsPremium())
+                .totalQuestions(calculateTotalQuestions(quizRequestDto.getQuizData()))
+                .totalPoints(calculateTotalPoints(quizRequestDto.getQuizData()))
+                .build();
 
-        QuizzesEntity savedEntity = quizzesRepository.save(entity);
-        return toResponseDto(savedEntity);
+        // Save the quiz to get an ID
+        QuizzesEntity savedQuiz = quizzesRepository.save(quizEntity);
+
+        // Handle tags
+        if (quizRequestDto.getTags() != null && !quizRequestDto.getTags().isEmpty()) {
+            processQuizTags(savedQuiz, quizRequestDto.getTags());
+        }
+
+        // Refresh the quiz to get the associated tags
+        savedQuiz = quizzesRepository.findById(savedQuiz.getId()).orElseThrow();
+
+        return mapToResponseDto(savedQuiz);
+    }
+
+    /**
+     * Process tags for a quiz - checks for existing tags and creates new ones if needed
+     */
+    private void processQuizTags(QuizzesEntity quiz, List<TagRequestDto> tagRequests) {
+        if (tagRequests == null || tagRequests.isEmpty()) {
+            return;
+        }
+
+        // Process each tag
+        for (TagRequestDto tagRequest : tagRequests) {
+            // Get or create the tag
+            TagResponseDto tagResponse = tagsService.getOrCreateTag(tagRequest);
+
+            // Create quiz-tag association
+            QuizTagId quizTagId = new QuizTagId(quiz.getId(), tagResponse.getId());
+            QuizTagEntity quizTag = QuizTagEntity.builder()
+                    .id(quizTagId)
+                    .quiz(quiz)
+                    .tag(TagsEntity.builder().id(tagResponse.getId()).build())
+                    .weight(1)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            quizTagRepository.save(quizTag);
+        }
+    }
+
+    /**
+     * Maps a QuizzesEntity to a QuizResponseDto including tags
+     */
+    private QuizResponseDto mapToResponseDto(QuizzesEntity entity) {
+        // Get tags for this quiz
+        List<QuizTagEntity> quizTags = quizTagRepository.findByQuizId(entity.getId());
+        List<TagResponseDto> tagDtos = quizTags.stream()
+                .map(quizTag -> tagsService.getTagById(quizTag.getTag().getId()))
+                .collect(Collectors.toList());
+
+        return QuizResponseDto.builder()
+                .id(entity.getId())
+                .title(entity.getTitle())
+                .slug(entity.getSlug())
+                .description(entity.getDescription())
+                .thumbnailUrl(entity.getThumbnailUrl())
+                .difficulty(entity.getDifficulty())
+                .estimatedTime(entity.getEstimatedTime())
+                .totalQuestions(entity.getTotalQuestions())
+                .totalPoints(entity.getTotalPoints())
+                .passingScore(entity.getPassingScore())
+                .maxAttempts(entity.getMaxAttempts())
+                .isAiGenerated(entity.getIsAiGenerated())
+                .aiModel(entity.getAiModel())
+                .sourceType(entity.getSourceType())
+                .quizData(entity.getQuizData())
+                .metaTitle(entity.getMetaTitle())
+                .metaDescription(entity.getMetaDescription())
+                .canonicalUrl(entity.getCanonicalUrl())
+                .keywords(entity.getKeywords() != null ?
+                        Arrays.asList(entity.getKeywords()) : null)
+                .viewCount(entity.getViewCount())
+                .attemptCount(entity.getAttemptCount())
+                .completionCount(entity.getCompletionCount())
+                .avgScore(entity.getAvgScore())
+                .avgCompletionTime(entity.getAvgCompletionTime())
+                .bookmarkCount(entity.getBookmarkCount())
+                .shareCount(entity.getShareCount())
+                .visibility(entity.getVisibility())
+                .status(entity.getStatus().name())
+                .isFeatured(entity.getIsFeatured())
+                .isTrending(entity.getIsTrending())
+                .isPremium(entity.getIsPremium())
+                .tags(tagDtos)
+                .publishedAt(entity.getPublishedAt())
+                .archivedAt(entity.getArchivedAt())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    /**
+     * Calculate total questions from quiz data
+     */
+    private Integer calculateTotalQuestions(Map<String, Object> quizData) {
+        // Default implementation, adjust according to your actual quiz data structure
+        if (quizData == null || !quizData.containsKey("questions")) {
+            return 0;
+        }
+
+        try {
+            List<?> questions = (List<?>) quizData.get("questions");
+            return questions.size();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Calculate total points from quiz data
+     */
+    private Integer calculateTotalPoints(Map<String, Object> quizData) {
+        // Default implementation, adjust according to your actual quiz data structure
+        if (quizData == null || !quizData.containsKey("questions")) {
+            return 0;
+        }
+
+        try {
+            List<?> questions = (List<?>) quizData.get("questions");
+            // Assuming each question is worth 1 point
+            return questions.size();
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     @Override
@@ -167,38 +313,42 @@ public class QuizzesServiceImpl implements QuizzesService {
             throw new RuntimeException("Access denied to update quiz with id: " + quizId);
         }
 
-        // Validate category if changed
-        if (quizRequestDto.getCategoryId() != null) {
-            Optional<QuizCategoriesEntity> categoryOpt = quizCategoriesRepository.findById(quizRequestDto.getCategoryId());
-            if (categoryOpt.isEmpty()) {
-                throw new RuntimeException("Category not found with id: " + quizRequestDto.getCategoryId());
-            }
-            quiz.setCategory(categoryOpt.get());
-        }
-
-        // Update fields
+        // Update basic fields
         quiz.setTitle(quizRequestDto.getTitle());
         quiz.setDescription(quizRequestDto.getDescription());
-        quiz.setLanguage(quizRequestDto.getLanguage());
         quiz.setVisibility(quizRequestDto.getVisibility());
-        quiz.setQuestionType(quizRequestDto.getQuestionType());
-        quiz.setNumberOfQuestions(quizRequestDto.getNumberOfQuestions());
-        quiz.setMode(quizRequestDto.getMode());
         quiz.setDifficulty(quizRequestDto.getDifficulty());
-        quiz.setParsingMode(quizRequestDto.getParsingMode());
-        quiz.setSourceType(quizRequestDto.getSourceType());
-        quiz.setSourceContent(quizRequestDto.getSourceContent());
-        quiz.setIsAiGenerated(quizRequestDto.getIsAiGenerated());
-        quiz.setAiModel(quizRequestDto.getAiModel());
-        quiz.setGenerationMode(quizRequestDto.getGenerationMode());
-        quiz.setFileProcessingMode(quizRequestDto.getFileProcessingMode());
-        quiz.setQuizData(quizRequestDto.getQuizData());
-        quiz.setTags(quizRequestDto.getTags());
         quiz.setEstimatedTime(quizRequestDto.getEstimatedTime());
         quiz.setPassingScore(quizRequestDto.getPassingScore());
+        quiz.setMaxAttempts(quizRequestDto.getMaxAttempts());
+        quiz.setIsAiGenerated(quizRequestDto.getIsAiGenerated());
+        quiz.setAiModel(quizRequestDto.getAiModel());
+        quiz.setSourceType(quizRequestDto.getSourceType());
+        quiz.setQuizData(quizRequestDto.getQuizData());
+        quiz.setMetaTitle(quizRequestDto.getMetaTitle());
+        quiz.setMetaDescription(quizRequestDto.getMetaDescription());
+        quiz.setCanonicalUrl(quizRequestDto.getCanonicalUrl());
+        quiz.setIsPremium(quizRequestDto.getIsPremium());
 
-        QuizzesEntity savedEntity = quizzesRepository.save(quiz);
-        return toResponseDto(savedEntity);
+        // Update keywords if provided
+        if (quizRequestDto.getKeywords() != null) {
+            quiz.setKeywords(quizRequestDto.getKeywords().toArray(new String[0]));
+        }
+
+        // Save the updated quiz
+        QuizzesEntity savedQuiz = quizzesRepository.save(quiz);
+
+        // Handle tags update if provided
+        if (quizRequestDto.getTags() != null && !quizRequestDto.getTags().isEmpty()) {
+            // Remove existing tags first
+            quizTagRepository.deleteByQuizId(quiz.getId());
+            // Add the new tags
+            processQuizTags(savedQuiz, quizRequestDto.getTags());
+        }
+
+        savedQuiz = quizzesRepository.findById(savedQuiz.getId()).orElseThrow();
+
+        return mapToResponseDto(savedQuiz);
     }
 
     @Override
@@ -219,12 +369,19 @@ public class QuizzesServiceImpl implements QuizzesService {
 
     @Override
     public List<QuizResponseDto> getQuizzesByCategory(Long categoryId, Long userId) {
-        List<QuizzesEntity> quizzes = quizzesRepository.findByCategoryId(categoryId);
-        return quizzes.stream()
-                .filter(quiz -> quiz.getUserId().equals(userId) ||
-                               quiz.getVisibility() == com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC)
-                .map(this::toResponseDto)
-                .collect(Collectors.toList());
+        // Không còn sử dụng category nên trả về danh sách rỗng hoặc có thể viết lại logic
+        // để lọc theo tag thay vì category
+        return new ArrayList<>();
+
+        // Hoặc có thể thay thế bằng logic tìm kiếm theo tag
+        // List<QuizzesEntity> quizzes = quizTagRepository.findByTagId(categoryId).stream()
+        //         .map(QuizTagEntity::getQuiz)
+        //         .collect(Collectors.toList());
+        // return quizzes.stream()
+        //         .filter(quiz -> quiz.getUserId().equals(userId) ||
+        //                quiz.getVisibility() == VisibilityType.PUBLIC)
+        //         .map(this::toResponseDto)
+        //         .collect(Collectors.toList());
     }
 
     @Override

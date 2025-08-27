@@ -16,9 +16,10 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
 
     Page<QuizzesEntity> findByVisibility(VisibilityType visibility, Pageable pageable);
 
-    @Query("SELECT q FROM QuizzesEntity q WHERE q.category.id = :categoryId")
-    List<QuizzesEntity> findByCategoryId(Long categoryId);
-
     @Query("SELECT q FROM QuizzesEntity q WHERE q.title LIKE %:title%")
     List<QuizzesEntity> findByTitleContaining(String title);
+
+    @Query("SELECT DISTINCT q FROM QuizzesEntity q JOIN q.quizTags qt WHERE qt.tag.id IN :tagIds AND q.visibility = :visibility")
+    List<QuizzesEntity> findByTagIdsAndVisibility(List<Long> tagIds, VisibilityType visibility);
+
 }
