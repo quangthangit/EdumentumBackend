@@ -11,7 +11,6 @@ public class QuizDTO {
     private String title;
     private String description;
     private Long userId;
-    private QuizCategoryDTO category;
     private VisibilityType visibility;
     private String language;
     private QuestionType questionType;
