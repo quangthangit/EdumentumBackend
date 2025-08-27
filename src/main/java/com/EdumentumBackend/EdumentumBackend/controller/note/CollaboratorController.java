@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/notes")
+@RequestMapping("/api/v1/user/notes")
 public class CollaboratorController {
 
     private final NoteRepository noteRepository;
