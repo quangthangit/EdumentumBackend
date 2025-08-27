@@ -3,39 +3,40 @@ FROM gradle:8.5-jdk21 AS build
 
 WORKDIR /app
 
-# Copy Gradle wrapper & config first to cache dependencies
-COPY gradlew .
+# Copy Gradle wrapper & config first (cache deps)
+COPY gradlew . 
 COPY gradle gradle
 COPY build.gradle .
 COPY settings.gradle .
 
-# Make gradlew executable
 RUN chmod +x gradlew
 
-# Download dependencies only to cache layer
-RUN ./gradlew build -x test --parallel --no-daemon || true
+# Pre-download dependencies (cache)
+RUN ./gradlew dependencies --no-daemon || true
 
-# Copy source code
+# Copy source
 COPY src src
 
-# Build the Spring Boot jar
-RUN ./gradlew bootJar -x test --parallel --no-daemon
+# Build the Spring Boot fat jar (skip tests)
+RUN ./gradlew bootJar -x test --no-daemon
 
 # ====================== RUNTIME STAGE ======================
 FROM eclipse-temurin:21-jre-jammy AS runtime
 
 WORKDIR /app
 
-# Copy the built jar from build stage
+# Copy built jar
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# Set Spring profile
+# Profile
 ENV SPRING_PROFILES_ACTIVE=production
 
-# Expose app port
+ENV JAVA_OPTS="-Xmx256m -Xms128m -XX:+UseSerialGC -XX:+UseContainerSupport"
+
 EXPOSE 8080
 
-# Use tini to handle PID 1 properly (prevents zombie processes)
-RUN apt-get update && apt-get install -y tini && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends tini \
+    && rm -rf /var/lib/apt/lists/*
 
-ENTRYPOINT ["tini", "--", "java", "-jar", "app.jar"]
+ENTRYPOINT ["tini", "--"]
+CMD ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
