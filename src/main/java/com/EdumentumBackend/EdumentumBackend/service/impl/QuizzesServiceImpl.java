@@ -34,6 +34,16 @@ public class QuizzesServiceImpl implements QuizzesService {
     private QuizTagRepository quizTagRepository;
 
     private QuizResponseDto toResponseDto(QuizzesEntity entity) {
+
+        List<QuizTagEntity> quizTags = quizTagRepository.findByQuizId(entity.getId());
+        List<TagResponseDto> tagDtos = null;
+        if (quizTags != null && !quizTags.isEmpty()) {
+            tagDtos = quizTags.stream()
+                    .map(quizTag -> tagsService.getTagById(quizTag.getTag().getId()))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        }
+
         QuizResponseDto.QuizResponseDtoBuilder builder = QuizResponseDto.builder()
                 .id(entity.getId())
                 .title(entity.getTitle())
@@ -68,7 +78,8 @@ public class QuizzesServiceImpl implements QuizzesService {
                 .publishedAt(entity.getPublishedAt())
                 .archivedAt(entity.getArchivedAt())
                 .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt());
+                .updatedAt(entity.getUpdatedAt())
+                .tags(tagDtos);
 
         // Add keywords if exists
         if (entity.getKeywords() != null) {
@@ -195,7 +206,6 @@ public class QuizzesServiceImpl implements QuizzesService {
      * Maps a QuizzesEntity to a QuizResponseDto including tags
      */
     private QuizResponseDto mapToResponseDto(QuizzesEntity entity) {
-        // Get tags for this quiz
         List<QuizTagEntity> quizTags = quizTagRepository.findByQuizId(entity.getId());
         List<TagResponseDto> tagDtos = quizTags.stream()
                 .map(quizTag -> tagsService.getTagById(quizTag.getTag().getId()))
