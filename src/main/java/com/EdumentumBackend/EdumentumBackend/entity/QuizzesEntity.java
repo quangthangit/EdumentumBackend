@@ -92,10 +92,10 @@ public class QuizzesEntity extends BaseEntity {
 //    private String generationPrompt;
 
     // SEO & Discovery
-    @Column(name = "meta_title", length = 160)
+    @Column(name = "meta_title", length = 1000)
     private String metaTitle;
 
-    @Column(name = "meta_description", length = 160)
+    @Column(name = "meta_description", length = 1000)
     private String metaDescription;
 
     @Column(name = "canonical_url", length = 500)
