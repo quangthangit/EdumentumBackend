@@ -17,10 +17,8 @@ import com.EdumentumBackend.EdumentumBackend.enums.CourseLevel;
 import com.EdumentumBackend.EdumentumBackend.enums.CourseStatus;
 import com.EdumentumBackend.EdumentumBackend.enums.EnrollmentStatus;
 import com.EdumentumBackend.EdumentumBackend.service.CourseService;
+import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
 import jakarta.validation.Valid;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -139,7 +137,7 @@ public class CourseController {
 
     // Course Query Endpoints
 
-    @GetMapping("/teacher/my-courses")
+    @GetMapping("/my-courses")
     public ResponseEntity<Map<String, Object>> getTeacherCourses(
             @RequestParam(defaultValue = "PUBLISHED") CourseStatus status,
             @RequestParam(defaultValue = "0") int page,
@@ -252,12 +250,12 @@ public class CourseController {
 
     @GetMapping("/tags")
     public ResponseEntity<Map<String, Object>> getCoursesByTags(
-            @RequestParam List<String> tagNames,
+            @RequestParam List<String> tagCourseNames,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
         
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<CourseResponseDto> response = courseService.getCoursesByTags(tagNames, pageable);
+        Page<CourseResponseDto> response = courseService.getCoursesByTags(tagCourseNames, pageable);
         
         return ResponseEntity.ok(Map.of(
                 "status", "success",
@@ -687,15 +685,9 @@ public class CourseController {
 
     // Helper method to extract user ID from authentication
     private Long getUserId(UserDetails userDetails) {
-        // Get userId from request attribute that was set in JwtAuthenticationFilter
-        ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attr != null) {
-            HttpServletRequest request = attr.getRequest();
-            Long userId = (Long) request.getAttribute("userId");
-            if (userId != null) {
-                return userId;
-            }
+        if (userDetails instanceof CustomUserDetails customUserDetails) {
+            return customUserDetails.getUserId();
         }
-        throw new IllegalStateException("userId not found in request attributes");
+        throw new IllegalStateException("User details is not an instance of CustomUserDetails");
     }
 }

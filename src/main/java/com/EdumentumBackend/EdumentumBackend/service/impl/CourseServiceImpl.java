@@ -76,7 +76,7 @@ public class CourseServiceImpl implements CourseService {
                 .orElseThrow(() -> new NotFoundException("Teacher not found with id: " + teacherId));
 
         // Handle tags
-        Set<TagCourseEntity> tags = processTags(request.getTagNames());
+        Set<TagCourseEntity> tags = processTags(request.getTagCourseNames());
 
         CourseEntity course = CourseEntity.builder()
                 .title(request.getTitle())
@@ -119,8 +119,8 @@ public class CourseServiceImpl implements CourseService {
             }
             course.setPrice(request.getPrice());
         }
-        if (request.getTagNames() != null) {
-            course.setTags(processTags(request.getTagNames()));
+        if (request.getTagCourseNames() != null) {
+            course.setTags(processTags(request.getTagCourseNames()));
         }
 
         CourseEntity updatedCourse = courseRepository.save(course);
@@ -230,11 +230,11 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public Page<CourseResponseDto> getCoursesByTags(List<String> tagNames, Pageable pageable) {
-        if (tagNames == null || tagNames.isEmpty()) {
+    public Page<CourseResponseDto> getCoursesByTags(List<String> tagCourseNames, Pageable pageable) {
+        if (tagCourseNames == null || tagCourseNames.isEmpty()) {
             throw new BadRequestException("Tag names are required");
         }
-        Page<CourseEntity> courses = courseRepository.findByTagNames(tagNames, pageable);
+        Page<CourseEntity> courses = courseRepository.findByTagNames(tagCourseNames, pageable);
         return courses.map(this::convertToCourseResponse);
     }
 
@@ -683,12 +683,12 @@ public class CourseServiceImpl implements CourseService {
         return course;
     }
 
-    private Set<TagCourseEntity> processTags(Set<String> tagNames) {
-        if (tagNames == null || tagNames.isEmpty()) {
+    private Set<TagCourseEntity> processTags(Set<String> tagCourseNames) {
+        if (tagCourseNames == null || tagCourseNames.isEmpty()) {
             return Set.of();
         }
 
-        return tagNames.stream()
+        return tagCourseNames.stream()
                 .filter(name -> name != null && !name.trim().isEmpty())
                 .map(name -> {
                     String trimmedName = name.trim();

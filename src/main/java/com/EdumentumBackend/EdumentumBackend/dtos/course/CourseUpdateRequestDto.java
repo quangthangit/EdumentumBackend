@@ -29,5 +29,5 @@ public class CourseUpdateRequestDto {
     @Digits(integer = 8, fraction = 2, message = "Invalid price format")
     private BigDecimal price;
     
-    private Set<String> tagNames;
+    private Set<String> tagCourseNames;
 }

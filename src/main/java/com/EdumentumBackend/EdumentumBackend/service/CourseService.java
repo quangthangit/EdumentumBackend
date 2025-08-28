@@ -46,7 +46,7 @@ public interface CourseService {
     
     Page<CourseResponseDto> filterCourses(CourseLevel level, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
     
-    Page<CourseResponseDto> getCoursesByTags(List<String> tagNames, Pageable pageable);
+    Page<CourseResponseDto> getCoursesByTags(List<String> tagCourseNames, Pageable pageable);
     
     Page<CourseResponseDto> getPopularCourses(Pageable pageable);
     
