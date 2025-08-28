@@ -1,7 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.util.List;
@@ -18,7 +17,7 @@ public class FlashcardEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
+    @Column(name = "question", columnDefinition = "TEXT")
     private String question;
 
     @ElementCollection
@@ -28,6 +27,15 @@ public class FlashcardEntity {
 
     @Column(name = "correct_answer")
     private Integer correctAnswer;
+
+    @Column(name = "vocabulary")
+    private String vocabulary;
+
+    @Column(name = "meaning", columnDefinition = "TEXT")
+    private String meaning;
+
+    @Column(name = "example", columnDefinition = "TEXT")
+    private String example;
 
     @Column(columnDefinition = "TEXT")
     private String explanation;
