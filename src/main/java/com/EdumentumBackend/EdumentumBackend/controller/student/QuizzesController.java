@@ -48,6 +48,26 @@ public class QuizzesController {
         }
     }
 
+    @GetMapping("/{quizId}/{slug}")
+    public ResponseEntity<QuizResponseDto> getQuizByIdAndSlug(@PathVariable Long quizId, @PathVariable String slug) {
+        try {
+            Long userId = getCurrentUserId();
+            QuizResponseDto quiz = quizzesService.getQuizById(quizId, userId);
+            // Verify that the slug matches to ensure proper URL
+            if (!quiz.getSlug().equals(slug)) {
+                return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
+                    .header("Location", "/api/v1/user/quizzes/" + quizId + "/" + quiz.getSlug())
+                    .build();
+            }
+            return ResponseEntity.ok(quiz);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // Keep the old endpoint for backward compatibility
     @GetMapping("/{quizId}")
     public ResponseEntity<QuizResponseDto> getQuizById(@PathVariable Long quizId) {
         try {
@@ -110,6 +130,55 @@ public class QuizzesController {
             Long userId = getCurrentUserId();
             List<QuizResponseDto> quizzes = quizzesService.searchQuizzes(title, userId);
             return ResponseEntity.ok(quizzes);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PutMapping("/{quizId}/{slug}")
+    public ResponseEntity<QuizResponseDto> updateQuizWithSlug(
+            @PathVariable Long quizId,
+            @PathVariable String slug,
+            @Valid @RequestBody QuizRequestDto quizRequestDto) {
+        try {
+            Long userId = getCurrentUserId();
+            // Verify quiz exists and slug matches
+            QuizResponseDto existingQuiz = quizzesService.getQuizById(quizId, userId);
+            if (!existingQuiz.getSlug().equals(slug)) {
+                return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
+                    .header("Location", "/api/v1/user/quizzes/" + quizId + "/" + existingQuiz.getSlug())
+                    .build();
+            }
+
+            QuizResponseDto updatedQuiz = quizzesService.updateQuiz(quizId, quizRequestDto, userId);
+            return ResponseEntity.ok(updatedQuiz);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
+
+    @DeleteMapping("/{quizId}/{slug}")
+    public ResponseEntity<Void> deleteQuizWithSlug(@PathVariable Long quizId, @PathVariable String slug) {
+        try {
+            Long userId = getCurrentUserId();
+            // Verify quiz exists and slug matches
+            QuizResponseDto existingQuiz = quizzesService.getQuizById(quizId, userId);
+            if (!existingQuiz.getSlug().equals(slug)) {
+                return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
+                    .header("Location", "/api/v1/user/quizzes/" + quizId + "/" + existingQuiz.getSlug())
+                    .build();
+            }
+
+            boolean deleted = quizzesService.deleteQuiz(quizId, userId);
+            if (deleted) {
+                return ResponseEntity.noContent().build();
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
