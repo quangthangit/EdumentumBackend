@@ -1,15 +1,16 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.PaginatedResponse;
-import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardSetRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardSetResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.*;
 import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
+import com.EdumentumBackend.EdumentumBackend.entity.FlashcardCategoryEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.FlashcardEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.FlashcardSetEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
+import com.EdumentumBackend.EdumentumBackend.enums.FlashcardType;
+import com.EdumentumBackend.EdumentumBackend.exception.BadRequestException;
 import com.EdumentumBackend.EdumentumBackend.exception.NotFoundException;
+import com.EdumentumBackend.EdumentumBackend.repository.FlashcardCategoryRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.FlashcardRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.FlashcardSetRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
@@ -28,13 +29,16 @@ public class FlashcardServiceImpl implements FlashcardService {
 
     private final FlashcardSetRepository flashcardSetRepository;
     private final FlashcardRepository flashcardRepository;
+    private final FlashcardCategoryRepository categoryRepository;
     private final UserRepository userRepository;
 
-    public FlashcardServiceImpl(FlashcardSetRepository flashcardSetRepository, 
-                              FlashcardRepository flashcardRepository, 
-                              UserRepository userRepository) {
+    public FlashcardServiceImpl(FlashcardSetRepository flashcardSetRepository,
+                                FlashcardRepository flashcardRepository,
+                                FlashcardCategoryRepository categoryRepository,
+                                UserRepository userRepository) {
         this.flashcardSetRepository = flashcardSetRepository;
         this.flashcardRepository = flashcardRepository;
+        this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
     }
 
@@ -44,10 +48,25 @@ public class FlashcardServiceImpl implements FlashcardService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
 
+        // Validate flashcard type
+        FlashcardType flashcardType = flashcardSetRequestDto.getFlashcardType();
+        if(flashcardType == null){
+            throw new BadRequestException("FlashcardType type is required");
+        }
+
+        // Get category if provided
+        FlashcardCategoryEntity category = null;
+        if (flashcardSetRequestDto.getCategoryId() != null) {
+            category = categoryRepository.findById(flashcardSetRequestDto.getCategoryId())
+                    .orElseThrow(() -> new NotFoundException("Category not found with id: " + flashcardSetRequestDto.getCategoryId()));
+        }
+
         FlashcardSetEntity flashcardSet = FlashcardSetEntity.builder()
                 .title(flashcardSetRequestDto.getTitle())
                 .description(flashcardSetRequestDto.getDescription())
                 .isPublic(flashcardSetRequestDto.getIsPublic() != null ? flashcardSetRequestDto.getIsPublic() : false)
+                .flashcardType(flashcardType)
+                .category(category)
                 .user(user)
                 .flashcards(new ArrayList<>()) // Initialize empty list
                 .build();
@@ -55,10 +74,15 @@ public class FlashcardServiceImpl implements FlashcardService {
         FlashcardSetEntity savedFlashcardSet = flashcardSetRepository.save(flashcardSet);
 
         if (flashcardSetRequestDto.getFlashcards() != null && !flashcardSetRequestDto.getFlashcards().isEmpty()) {
+            // Validate flashcards based on type
+            for (FlashcardRequestDto flashcard : flashcardSetRequestDto.getFlashcards()) {
+                validateFlashcardByType(flashcard, flashcardType);
+            }
+
             List<FlashcardEntity> flashcards = flashcardSetRequestDto.getFlashcards().stream()
-                    .map(dto -> convertToEntity(dto, savedFlashcardSet, user))
+                    .map(dto -> convertToEntity(dto, savedFlashcardSet, user, flashcardType))
                     .collect(Collectors.toList());
-            
+
             List<FlashcardEntity> savedFlashcards = flashcardRepository.saveAll(flashcards);
             savedFlashcardSet.getFlashcards().addAll(savedFlashcards);
         }
@@ -107,7 +131,7 @@ public class FlashcardServiceImpl implements FlashcardService {
         if (flashcardSetRequestDto.getTitle() != null && !flashcardSetRequestDto.getTitle().trim().isEmpty()) {
             flashcardSet.setTitle(flashcardSetRequestDto.getTitle());
         }
-        
+
         if (flashcardSetRequestDto.getDescription() != null) {
             flashcardSet.setDescription(flashcardSetRequestDto.getDescription());
         }
@@ -117,8 +141,20 @@ public class FlashcardServiceImpl implements FlashcardService {
             flashcardSet.setIsPublic(flashcardSetRequestDto.getIsPublic());
         }
 
+        if (flashcardSetRequestDto.getCategoryId() != null) {
+            FlashcardCategoryEntity category = categoryRepository.findById(flashcardSetRequestDto.getCategoryId())
+                    .orElseThrow(() -> new NotFoundException("Category not found with id: " + flashcardSetRequestDto.getCategoryId()));
+            flashcardSet.setCategory(category);
+        }
+
         // Update flashcards only if provided
         if (flashcardSetRequestDto.getFlashcards() != null) {
+            // Validate flashcards based on current type
+            FlashcardType currentType = flashcardSet.getFlashcardType();
+            for (FlashcardRequestDto flashcard : flashcardSetRequestDto.getFlashcards()) {
+                validateFlashcardByType(flashcard, currentType);
+            }
+
             // Delete existing flashcards
             flashcardRepository.deleteAll(flashcardSet.getFlashcards());
             flashcardSet.getFlashcards().clear();
@@ -126,9 +162,9 @@ public class FlashcardServiceImpl implements FlashcardService {
             // Add new flashcards if list is not empty
             if (!flashcardSetRequestDto.getFlashcards().isEmpty()) {
                 List<FlashcardEntity> newFlashcards = flashcardSetRequestDto.getFlashcards().stream()
-                        .map(dto -> convertToEntity(dto, flashcardSet, user))
+                        .map(dto -> convertToEntity(dto, flashcardSet, user, currentType))
                         .collect(Collectors.toList());
-                
+
                 List<FlashcardEntity> savedFlashcards = flashcardRepository.saveAll(newFlashcards);
                 flashcardSet.getFlashcards().addAll(savedFlashcards);
             }
@@ -149,18 +185,59 @@ public class FlashcardServiceImpl implements FlashcardService {
 
         // Delete all flashcards first (if needed due to foreign key constraints)
         flashcardRepository.deleteAll(flashcardSet.getFlashcards());
-        
+
         // Delete the flashcard set
         flashcardSetRepository.delete(flashcardSet);
     }
 
+    // -------------------- PRIVATE HELPER METHODS --------------------
+
+    // Validate flashcard based on its type
+    private void validateFlashcardByType(FlashcardRequestDto flashcard, FlashcardType type) {
+        if (type == FlashcardType.QUESTIONS) {
+            validateQuestionsFlashcard(flashcard);
+        } else if (type == FlashcardType.VOCABULARY) {
+            validateVocabularyFlashcard(flashcard);
+        }
+    }
+
+    // Validate QUESTIONS type flashcard
+    private void validateQuestionsFlashcard(FlashcardRequestDto flashcard) {
+        if (flashcard.getQuestion() == null || flashcard.getQuestion().trim().isEmpty()) {
+            throw new BadRequestException("Question is required for QUESTIONS type");
+        }
+        if (flashcard.getChoices() == null || flashcard.getChoices().size() < 2) {
+            throw new BadRequestException("At least 2 choices are required for QUESTIONS type");
+        }
+        if (flashcard.getCorrectAnswer() == null || flashcard.getCorrectAnswer() < 0 ||
+                flashcard.getCorrectAnswer() >= flashcard.getChoices().size()) {
+            throw new BadRequestException("Valid correct answer index is required for QUESTIONS type");
+        }
+    }
+
+    // Validate VOCABULARY type flashcard
+    private void validateVocabularyFlashcard(FlashcardRequestDto flashcard) {
+        if (flashcard.getVocabulary() == null || flashcard.getVocabulary().trim().isEmpty()) {
+            throw new BadRequestException("Vocabulary is required for VOCABULARY type");
+        }
+        if (flashcard.getMeaning() == null || flashcard.getMeaning().trim().isEmpty()) {
+            throw new BadRequestException("Meaning is required for VOCABULARY type");
+        }
+    }
+
     private FlashcardSetResponseDto convertToResponseDto(FlashcardSetEntity entity) {
         List<FlashcardResponseDto> flashcardDtos = new ArrayList<>();
-        
+
         if (entity.getFlashcards() != null) {
             flashcardDtos = entity.getFlashcards().stream()
                     .map(this::convertToResponseDto)
                     .collect(Collectors.toList());
+        }
+
+        // Convert category to DTO if exists
+        FlashcardCategoryResponseDto categoryDto = null;
+        if (entity.getCategory() != null) {
+            categoryDto = convertCategoryToDto(entity.getCategory());
         }
 
         return FlashcardSetResponseDto.builder()
@@ -168,9 +245,22 @@ public class FlashcardServiceImpl implements FlashcardService {
                 .title(entity.getTitle())
                 .description(entity.getDescription())
                 .isPublic(entity.getIsPublic())
+                .flashcardType(entity.getFlashcardType())
+                .category(categoryDto)
                 .createdAt(entity.getCreatedAt())
                 .user(convertUserToDto(entity.getUser()))
                 .flashcards(flashcardDtos)
+                .build();
+    }
+
+    private FlashcardCategoryResponseDto convertCategoryToDto(FlashcardCategoryEntity category) {
+        return FlashcardCategoryResponseDto.builder()
+                .id(category.getId())
+                .name(category.getName())
+                .description(category.getDescription())
+                .isActive(category.getIsActive())
+                .createdAt(category.getCreatedAt())
+                .updatedAt(category.getUpdatedAt())
                 .build();
     }
 
@@ -185,23 +275,45 @@ public class FlashcardServiceImpl implements FlashcardService {
     }
 
     private FlashcardResponseDto convertToResponseDto(FlashcardEntity entity) {
-        return FlashcardResponseDto.builder()
+        FlashcardType type = entity.getFlashcardSet().getFlashcardType();
+
+        FlashcardResponseDto.FlashcardResponseDtoBuilder b = FlashcardResponseDto.builder()
                 .id(entity.getId())
-                .question(entity.getQuestion())
-                .choices(entity.getChoices())
-                .correctAnswer(entity.getCorrectAnswer())
-                .explanation(entity.getExplanation())
-                .build();
+                .explanation(entity.getExplanation());
+
+        if (type == FlashcardType.QUESTIONS) {
+            b.question(entity.getQuestion())
+                    .choices(entity.getChoices())
+                    .correctAnswer(entity.getCorrectAnswer());
+        } else {
+            b.vocabulary(entity.getVocabulary())
+                    .meaning(entity.getMeaning())
+                    .example(entity.getExample());
+        }
+        return b.build();
     }
 
-    private FlashcardEntity convertToEntity(FlashcardRequestDto dto, FlashcardSetEntity flashcardSet, UserEntity user) {
-        return FlashcardEntity.builder()
-                .question(dto.getQuestion())
-                .choices(dto.getChoices())
-                .correctAnswer(dto.getCorrectAnswer())
-                .explanation(dto.getExplanation())
+    private FlashcardEntity convertToEntity(FlashcardRequestDto dto, FlashcardSetEntity flashcardSet, UserEntity user, FlashcardType type) {
+        FlashcardEntity.FlashcardEntityBuilder builder = FlashcardEntity.builder()
                 .flashcardSet(flashcardSet)
                 .user(user)
-                .build();
+                .explanation(dto.getExplanation());
+
+        if (type == FlashcardType.QUESTIONS) {
+            builder.question(dto.getQuestion())
+                    .choices(dto.getChoices())
+                    .correctAnswer(dto.getCorrectAnswer())
+                    .vocabulary(null)
+                    .meaning(null)
+                    .example(null);
+        } else {
+            builder.vocabulary(dto.getVocabulary())
+                    .meaning(dto.getMeaning())
+                    .example(dto.getExample())
+                    .question(null)
+                    .choices(null)
+                    .correctAnswer(null);
+        }
+        return builder.build();
     }
 }

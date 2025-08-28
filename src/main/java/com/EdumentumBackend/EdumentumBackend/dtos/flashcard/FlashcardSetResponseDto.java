@@ -1,6 +1,7 @@
 package com.EdumentumBackend.EdumentumBackend.dtos.flashcard;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
+import com.EdumentumBackend.EdumentumBackend.enums.FlashcardType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,6 +21,8 @@ public class FlashcardSetResponseDto {
     private String title;
     private String description;
     private Boolean isPublic;
+    private FlashcardType flashcardType;
+    private FlashcardCategoryResponseDto category;
     private LocalDateTime createdAt;
     private UserResponseDto user;
     private List<FlashcardResponseDto> flashcards;
