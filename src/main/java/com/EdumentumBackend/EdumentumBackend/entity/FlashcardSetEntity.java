@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.entity;
 
+import com.EdumentumBackend.EdumentumBackend.enums.FlashcardType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -29,6 +30,10 @@ public class FlashcardSetEntity {
     @Column(name = "is_public", nullable = false)
     private Boolean isPublic = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "flashcard_type", nullable = false)
+    private FlashcardType flashcardType = FlashcardType.QUESTIONS;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -36,6 +41,10 @@ public class FlashcardSetEntity {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private FlashcardCategoryEntity category;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

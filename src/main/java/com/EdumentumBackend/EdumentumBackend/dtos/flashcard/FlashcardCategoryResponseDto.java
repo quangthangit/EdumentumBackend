@@ -1,10 +1,6 @@
-package com.EdumentumBackend.EdumentumBackend.dtos.quiz;
+package com.EdumentumBackend.EdumentumBackend.dtos.flashcard;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -13,7 +9,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class QuizCategoriesResponseDto {
+public class FlashcardCategoryResponseDto {
     private Long id;
     private String name;
     private String description;

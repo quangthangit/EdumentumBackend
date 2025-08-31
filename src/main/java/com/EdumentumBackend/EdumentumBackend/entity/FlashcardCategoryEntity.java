@@ -3,15 +3,16 @@ package com.EdumentumBackend.EdumentumBackend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-@Entity
-@Table(name = "quiz_categories")
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class QuizCategoriesEntity extends BaseEntity {
-
+@Entity
+@Table(name = "flashcard_categories")
+public class FlashcardCategoryEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,4 +25,20 @@ public class QuizCategoriesEntity extends BaseEntity {
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }
