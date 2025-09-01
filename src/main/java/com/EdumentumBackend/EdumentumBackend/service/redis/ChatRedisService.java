@@ -1,4 +1,4 @@
-package com.EdumentumBackend.EdumentumBackend.service;
+package com.EdumentumBackend.EdumentumBackend.service.redis;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.chat.ChatMessageDto;
 
