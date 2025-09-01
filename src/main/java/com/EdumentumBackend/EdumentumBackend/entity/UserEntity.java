@@ -43,6 +43,9 @@ public class UserEntity extends BaseEntity {
     @Column(nullable = true)
     private String imageUrl;
 
+    @Column(nullable = true)
+    private String bannerUrl;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
