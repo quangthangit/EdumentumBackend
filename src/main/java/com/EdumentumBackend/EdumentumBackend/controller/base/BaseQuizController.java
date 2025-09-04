@@ -4,6 +4,10 @@ import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizResponseDto;
 import com.EdumentumBackend.EdumentumBackend.service.QuizzesService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,6 +49,56 @@ public abstract class BaseQuizController {
         try {
             Long userId = getCurrentUserId();
             List<QuizResponseDto> quizzes = quizzesService.getAllQuizzes(userId);
+            return ResponseEntity.ok(quizzes);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Get all quizzes for the current user with pagination
+     * @param page Page number (0-based)
+     * @param size Number of items per page
+     * @param sortBy Field to sort by
+     * @param direction Sort direction (ASC or DESC)
+     * @return Paginated list of quizzes
+     */
+    protected ResponseEntity<Page<QuizResponseDto>> doGetAllQuizzesPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction) {
+        try {
+            Long userId = getCurrentUserId();
+            Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
+            Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+            Page<QuizResponseDto> quizzes = quizzesService.getAllQuizzesPaginated(userId, pageable);
+            return ResponseEntity.ok(quizzes);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Search quizzes with pagination
+     * @param title Search term
+     * @param page Page number (0-based)
+     * @param size Number of items per page
+     * @param sortBy Field to sort by
+     * @param direction Sort direction (ASC or DESC)
+     * @return Paginated list of quizzes matching the search term
+     */
+    protected ResponseEntity<Page<QuizResponseDto>> doSearchQuizzesPaginated(
+            @RequestParam String title,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction) {
+        try {
+            Long userId = getCurrentUserId();
+            Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
+            Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+            Page<QuizResponseDto> quizzes = quizzesService.searchQuizzesPaginated(title, userId, pageable);
             return ResponseEntity.ok(quizzes);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

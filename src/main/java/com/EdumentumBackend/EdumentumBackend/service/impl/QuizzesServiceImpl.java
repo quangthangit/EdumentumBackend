@@ -4,6 +4,7 @@ import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.*;
 import com.EdumentumBackend.EdumentumBackend.entity.*;
 import com.EdumentumBackend.EdumentumBackend.enums.QuizStatus;
+import com.EdumentumBackend.EdumentumBackend.enums.VisibilityType;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizTagRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizzesRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
@@ -11,6 +12,9 @@ import com.EdumentumBackend.EdumentumBackend.service.QuizzesService;
 import com.EdumentumBackend.EdumentumBackend.service.TagsService;
 import com.EdumentumBackend.EdumentumBackend.utils.SlugUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -200,8 +204,7 @@ public class QuizzesServiceImpl implements QuizzesService {
     @Override
     @Transactional(readOnly = true)
     public List<QuizResponseDto> searchQuizzes(String title, Long userId) {
-        // Using optimized query that fetches quizzes with tags in a single query
-        List<QuizzesEntity> quizzes = quizzesRepository.findByTitleContainingWithTags(title);
+        List<QuizzesEntity> quizzes = quizzesRepository.findByTitleContaining(title);
         return quizzes.stream()
                 .filter(quiz -> quiz.getUserId().equals(userId) ||
                                quiz.getVisibility() == com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC)
@@ -249,18 +252,13 @@ public class QuizzesServiceImpl implements QuizzesService {
                 .totalPoints(calculateTotalPoints(quizRequestDto.getQuizData()))
                 .build();
 
-        // Log để kiểm tra slug
-        System.out.println("Generated unique slug: " + uniqueSlug);
 
-        // Save the quiz to get an ID
         QuizzesEntity savedQuiz = quizzesRepository.save(quizEntity);
 
-        // Handle tags
         if (quizRequestDto.getTags() != null && !quizRequestDto.getTags().isEmpty()) {
             processQuizTags(savedQuiz, quizRequestDto.getTags());
         }
 
-        // Refresh the quiz to get the associated tags with a single query
         savedQuiz = quizzesRepository.findByIdWithTags(savedQuiz.getId());
         if (savedQuiz == null) {
             throw new RuntimeException("Failed to retrieve saved quiz");
@@ -274,15 +272,12 @@ public class QuizzesServiceImpl implements QuizzesService {
             title = "quiz-" + System.currentTimeMillis(); // Fallback for empty titles
         }
 
-        // First attempt with the standard method
         String slug = SlugUtil.toUniqueSlug(title);
 
-        // If it doesn't exist, we can use it
         if (!quizzesRepository.existsBySlug(slug)) {
             return slug;
         }
 
-        // Otherwise, try with different random suffixes up to MAX_SLUG_RETRIES times
         for (int i = 0; i < MAX_SLUG_RETRIES; i++) {
             slug = SlugUtil.generateNewUniqueSlug(title);
             if (!quizzesRepository.existsBySlug(slug)) {
@@ -290,13 +285,10 @@ public class QuizzesServiceImpl implements QuizzesService {
             }
         }
 
-        // If all retries failed, use timestamp-based approach which should guarantee uniqueness
         return SlugUtil.generateFallbackSlug(title);
     }
 
-    /**
-     * Process tags for a quiz - checks for existing tags and creates new ones if needed
-     */
+
     private void processQuizTags(QuizzesEntity quiz, List<TagRequestDto> tagRequests) {
         if (tagRequests == null || tagRequests.isEmpty()) {
             return;
@@ -598,6 +590,62 @@ public class QuizzesServiceImpl implements QuizzesService {
                 // Skip if the value is not a valid enum constant
             }
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<QuizResponseDto> getAllQuizzesPaginated(Long userId, Pageable pageable) {
+
+        Page<QuizzesEntity> quizzesPage = quizzesRepository.findByUserIdPageable(userId, pageable);
+
+        List<QuizzesEntity> quizzesWithTags = new ArrayList<>();
+        for (QuizzesEntity quiz : quizzesPage.getContent()) {
+            QuizzesEntity quizWithTags = quizzesRepository.findByIdWithTags(quiz.getId());
+            if (quizWithTags != null) {
+                quizzesWithTags.add(quizWithTags);
+            }
+        }
+
+        List<QuizResponseDto> quizDtos = quizzesWithTags.stream()
+                .map(this::mapToResponseDto)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(quizDtos, pageable, quizzesPage.getTotalElements());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<QuizResponseDto> searchQuizzesPaginated(String title, Long userId, Pageable pageable) {
+        Page<QuizzesEntity> quizzesPage = quizzesRepository.findByTitleContaining(title, pageable);
+
+        List<QuizzesEntity> filteredQuizzes = quizzesPage.getContent().stream()
+                .filter(quiz -> quiz.getUserId().equals(userId) ||
+                       quiz.getVisibility() == VisibilityType.PUBLIC)
+                .collect(Collectors.toList());
+
+        List<QuizzesEntity> quizzesWithTags = new ArrayList<>();
+        for (QuizzesEntity quiz : filteredQuizzes) {
+            QuizzesEntity quizWithTags = quizzesRepository.findByIdWithTags(quiz.getId());
+            if (quizWithTags != null) {
+                quizzesWithTags.add(quizWithTags);
+            }
+        }
+
+
+        List<QuizResponseDto> quizDtos = quizzesWithTags.stream()
+                .map(this::mapToResponseDto)
+                .collect(Collectors.toList());
+
+
+        long filteredCount = quizzesPage.getTotalElements();
+        if (quizzesPage.getContent().size() != filteredQuizzes.size()) {
+            filteredCount = quizzesRepository.findByTitleContaining(title).stream()
+                    .filter(quiz -> quiz.getUserId().equals(userId) ||
+                           quiz.getVisibility() == VisibilityType.PUBLIC)
+                    .count();
+        }
+
+        return new PageImpl<>(quizDtos, pageable, filteredCount);
     }
 
 }

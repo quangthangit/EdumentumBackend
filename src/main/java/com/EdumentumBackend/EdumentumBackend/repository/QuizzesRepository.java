@@ -14,13 +14,21 @@ import java.util.List;
 public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
     List<QuizzesEntity> findByUserId(Long userId);
 
+    Page<QuizzesEntity> findByUserId(Long userId, Pageable pageable);
+
     Page<QuizzesEntity> findByVisibility(VisibilityType visibility, Pageable pageable);
 
     @Query("SELECT q FROM QuizzesEntity q WHERE q.title LIKE %:title%")
     List<QuizzesEntity> findByTitleContaining(String title);
 
+    @Query("SELECT q FROM QuizzesEntity q WHERE q.title LIKE %:title%")
+    Page<QuizzesEntity> findByTitleContaining(String title, Pageable pageable);
+
     @Query("SELECT DISTINCT q FROM QuizzesEntity q JOIN q.quizTags qt WHERE qt.tag.id IN :tagIds AND q.visibility = :visibility")
     List<QuizzesEntity> findByTagIdsAndVisibility(List<Long> tagIds, VisibilityType visibility);
+
+    @Query("SELECT DISTINCT q FROM QuizzesEntity q JOIN q.quizTags qt WHERE qt.tag.id IN :tagIds AND q.visibility = :visibility")
+    Page<QuizzesEntity> findByTagIdsAndVisibility(List<Long> tagIds, VisibilityType visibility, Pageable pageable);
 
     @Query("SELECT DISTINCT q FROM QuizzesEntity q LEFT JOIN FETCH q.quizTags qt LEFT JOIN FETCH qt.tag WHERE q.id = :quizId")
     QuizzesEntity findByIdWithTags(Long quizId);
@@ -28,11 +36,14 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
     @Query("SELECT DISTINCT q FROM QuizzesEntity q LEFT JOIN FETCH q.quizTags qt LEFT JOIN FETCH qt.tag WHERE q.userId = :userId")
     List<QuizzesEntity> findByUserIdWithTags(Long userId);
 
-    @Query("SELECT DISTINCT q FROM QuizzesEntity q LEFT JOIN FETCH q.quizTags qt LEFT JOIN FETCH qt.tag WHERE q.title LIKE %:title%")
-    List<QuizzesEntity> findByTitleContainingWithTags(String title);
+    @Query(value = "SELECT DISTINCT q FROM QuizzesEntity q WHERE q.userId = :userId",
+            countQuery = "SELECT COUNT(DISTINCT q) FROM QuizzesEntity q WHERE q.userId = :userId")
+    Page<QuizzesEntity> findByUserIdPageable(Long userId, Pageable pageable);
 
+    // Kiểm tra tồn tại của slug
     boolean existsBySlug(String slug);
 
+    // Tìm quiz theo slug kèm tags
     @Query("SELECT DISTINCT q FROM QuizzesEntity q LEFT JOIN FETCH q.quizTags qt LEFT JOIN FETCH qt.tag WHERE q.slug = :slug")
 
     QuizzesEntity findBySlugWithTags(String slug);
