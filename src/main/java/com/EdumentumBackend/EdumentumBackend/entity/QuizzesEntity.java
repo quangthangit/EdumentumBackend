@@ -28,7 +28,7 @@ public class QuizzesEntity extends BaseEntity {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "slug", nullable = false, unique = true)
+    @Column(name = "slug", nullable = false)
     private String slug;
 
     @Column(name = "description", columnDefinition = "TEXT")

@@ -2,6 +2,8 @@ package com.EdumentumBackend.EdumentumBackend.service;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizResponseDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Map;
 
@@ -9,6 +11,10 @@ public interface QuizzesService {
     QuizResponseDto createQuiz(QuizRequestDto quizRequestDto, Long userId);
 
     List<QuizResponseDto> getAllQuizzes(Long userId);
+
+    Page<QuizResponseDto> getAllQuizzesPaginated(Long userId, Pageable pageable);
+
+    Page<QuizResponseDto> searchQuizzesPaginated(String title, Long userId, Pageable pageable);
 
     QuizResponseDto getQuizById(Long quizId, Long userId);
 

@@ -8,6 +8,7 @@ import com.EdumentumBackend.EdumentumBackend.service.QuizzesService;
 import com.EdumentumBackend.EdumentumBackend.service.UserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,6 +48,15 @@ public class StudentQuizzesController extends BaseQuizController {
     public ResponseEntity<List<QuizResponseDto>> getAllQuizzes() {
         return doGetAllQuizzes();
     }
+    @GetMapping("/page")
+    public ResponseEntity<Page<QuizResponseDto>> getAllQuizzesPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction) {
+        return doGetAllQuizzesPaginated(page, size, sortBy, direction);
+    }
+
 
     @GetMapping("/{quizId}")
     public ResponseEntity<QuizResponseDto> getQuizById(@PathVariable Long quizId) {
@@ -91,5 +101,15 @@ public class StudentQuizzesController extends BaseQuizController {
     @GetMapping("/search")
     public ResponseEntity<List<QuizResponseDto>> searchQuizzes(@RequestParam String title) {
         return doSearchQuizzes(title);
+    }
+
+    @GetMapping("/search/page")
+    public ResponseEntity<Page<QuizResponseDto>> searchQuizzesPaginated(
+            @RequestParam String title,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction) {
+        return doSearchQuizzesPaginated(title, page, size, sortBy, direction);
     }
 }
