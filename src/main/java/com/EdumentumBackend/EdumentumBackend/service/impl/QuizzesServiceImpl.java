@@ -28,16 +28,15 @@ public class QuizzesServiceImpl implements QuizzesService {
     private final TagsService tagsService;
     private final QuizTagRepository quizTagRepository;
 
-    /**
-     * Maps a QuizzesEntity to a QuizResponseDto including tags and user information
-     */
     private QuizResponseDto mapToResponseDto(QuizzesEntity entity) {
-        List<QuizTagEntity> quizTags = quizTagRepository.findByQuizId(entity.getId());
         List<TagResponseDto> tagDtos = null;
-        if (quizTags != null && !quizTags.isEmpty()) {
-            tagDtos = quizTags.stream()
-                    .map(quizTag -> tagsService.getTagById(quizTag.getTag().getId()))
-                    .filter(Objects::nonNull)
+        if (entity.getQuizTags() != null && !entity.getQuizTags().isEmpty()) {
+            tagDtos = entity.getQuizTags().stream()
+                    .map(quizTag -> TagResponseDto.builder()
+                            .id(quizTag.getTag().getId())
+                            .name(quizTag.getTag().getName())
+                            .description(quizTag.getTag().getDescription())
+                            .build())
                     .collect(Collectors.toList());
         }
 
@@ -105,133 +104,23 @@ public class QuizzesServiceImpl implements QuizzesService {
     }
 
     @Override
-    @Transactional
-    public QuizResponseDto createQuiz(QuizRequestDto quizRequestDto, Long userId) {
-        // Validate user exists
-        Optional<UserEntity> userOpt = userRepository.findByUserId(userId);
-        if (userOpt.isEmpty()) {
-            throw new RuntimeException("User not found with id: " + userId);
-        }
-
-        // Create the quiz entity
-        QuizzesEntity quizEntity = QuizzesEntity.builder()
-                .title(quizRequestDto.getTitle())
-                .slug(SlugUtil.toUniqueSlug(quizRequestDto.getTitle()))
-                .description(quizRequestDto.getDescription())
-                .thumbnailUrl(quizRequestDto.getThumbnailUrl())
-                .userId(userId)
-                .quizData(quizRequestDto.getQuizData())
-                .difficulty(quizRequestDto.getDifficulty())
-                .estimatedTime(quizRequestDto.getEstimatedTime())
-                .passingScore(quizRequestDto.getPassingScore())
-                .maxAttempts(quizRequestDto.getMaxAttempts())
-                .isAiGenerated(quizRequestDto.getIsAiGenerated())
-                .aiModel(quizRequestDto.getAiModel())
-                .sourceType(quizRequestDto.getSourceType())
-                .metaTitle(quizRequestDto.getMetaTitle())
-                .metaDescription(quizRequestDto.getMetaDescription())
-                .canonicalUrl(quizRequestDto.getCanonicalUrl())
-                .keywords(quizRequestDto.getKeywords() != null ?
-                         quizRequestDto.getKeywords().toArray(new String[0]) : null)
-                .visibility(quizRequestDto.getVisibility())
-                .status(QuizStatus.DRAFT)
-                .isPremium(quizRequestDto.getIsPremium())
-                .totalQuestions(calculateTotalQuestions(quizRequestDto.getQuizData()))
-                .totalPoints(calculateTotalPoints(quizRequestDto.getQuizData()))
-                .build();
-
-        // Save the quiz to get an ID
-        QuizzesEntity savedQuiz = quizzesRepository.save(quizEntity);
-
-        // Handle tags
-        if (quizRequestDto.getTags() != null && !quizRequestDto.getTags().isEmpty()) {
-            processQuizTags(savedQuiz, quizRequestDto.getTags());
-        }
-
-        // Refresh the quiz to get the associated tags
-        savedQuiz = quizzesRepository.findById(savedQuiz.getId()).orElseThrow();
-
-        return mapToResponseDto(savedQuiz);
-    }
-
-    /**
-     * Process tags for a quiz - checks for existing tags and creates new ones if needed
-     */
-    private void processQuizTags(QuizzesEntity quiz, List<TagRequestDto> tagRequests) {
-        if (tagRequests == null || tagRequests.isEmpty()) {
-            return;
-        }
-
-        // Process each tag
-        for (TagRequestDto tagRequest : tagRequests) {
-            // Get or create the tag
-            TagResponseDto tagResponse = tagsService.getOrCreateTag(tagRequest);
-
-            // Create quiz-tag association
-            QuizTagId quizTagId = new QuizTagId(quiz.getId(), tagResponse.getId());
-            QuizTagEntity quizTag = QuizTagEntity.builder()
-                    .id(quizTagId)
-                    .quiz(quiz)
-                    .tag(TagsEntity.builder().id(tagResponse.getId()).build())
-                    .weight(1)
-                    .createdAt(LocalDateTime.now())
-                    .build();
-
-            quizTagRepository.save(quizTag);
-        }
-    }
-
-    /**
-     * Calculate total questions from quiz data
-     */
-    private Integer calculateTotalQuestions(Map<String, Object> quizData) {
-        // Default implementation, adjust according to your actual quiz data structure
-        if (quizData == null || !quizData.containsKey("questions")) {
-            return 0;
-        }
-
-        try {
-            List<?> questions = (List<?>) quizData.get("questions");
-            return questions.size();
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
-    /**
-     * Calculate total points from quiz data
-     */
-    private Integer calculateTotalPoints(Map<String, Object> quizData) {
-        // Default implementation, adjust according to your actual quiz data structure
-        if (quizData == null || !quizData.containsKey("questions")) {
-            return 0;
-        }
-
-        try {
-            List<?> questions = (List<?>) quizData.get("questions");
-            // Assuming each question is worth 1 point
-            return questions.size();
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
-    @Override
+    @Transactional(readOnly = true)
     public List<QuizResponseDto> getAllQuizzes(Long userId) {
-        List<QuizzesEntity> quizzes = quizzesRepository.findByUserId(userId);
+        // Using optimized query that fetches quizzes with tags in a single query
+        List<QuizzesEntity> quizzes = quizzesRepository.findByUserIdWithTags(userId);
         return quizzes.stream()
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public QuizResponseDto getQuizById(Long quizId, Long userId) {
-        Optional<QuizzesEntity> quizOpt = quizzesRepository.findById(quizId);
-        if (quizOpt.isEmpty()) {
+        QuizzesEntity quiz = quizzesRepository.findByIdWithTags(quizId);
+        if (quiz == null) {
             throw new RuntimeException("Quiz not found with id: " + quizId);
         }
 
-        QuizzesEntity quiz = quizOpt.get();
         // Check if user owns the quiz or if it's public
         if (!quiz.getUserId().equals(userId) && quiz.getVisibility() != com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC) {
             throw new RuntimeException("Access denied to quiz with id: " + quizId);
@@ -308,14 +197,132 @@ public class QuizzesServiceImpl implements QuizzesService {
 
 
     @Override
+    @Transactional(readOnly = true)
     public List<QuizResponseDto> searchQuizzes(String title, Long userId) {
-        List<QuizzesEntity> quizzes = quizzesRepository.findByTitleContaining(title);
+        // Using optimized query that fetches quizzes with tags in a single query
+        List<QuizzesEntity> quizzes = quizzesRepository.findByTitleContainingWithTags(title);
         return quizzes.stream()
                 .filter(quiz -> quiz.getUserId().equals(userId) ||
                                quiz.getVisibility() == com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC)
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    @Transactional
+    public QuizResponseDto createQuiz(QuizRequestDto quizRequestDto, Long userId) {
+        // Validate user exists
+        Optional<UserEntity> userOpt = userRepository.findByUserId(userId);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("User not found with id: " + userId);
+        }
+
+        // Create the quiz entity
+        QuizzesEntity quizEntity = QuizzesEntity.builder()
+                .title(quizRequestDto.getTitle())
+                .slug(SlugUtil.toUniqueSlug(quizRequestDto.getTitle()))
+                .description(quizRequestDto.getDescription())
+                .thumbnailUrl(quizRequestDto.getThumbnailUrl())
+                .userId(userId)
+                .quizData(quizRequestDto.getQuizData())
+                .difficulty(quizRequestDto.getDifficulty())
+                .estimatedTime(quizRequestDto.getEstimatedTime())
+                .passingScore(quizRequestDto.getPassingScore())
+                .maxAttempts(quizRequestDto.getMaxAttempts())
+                .isAiGenerated(quizRequestDto.getIsAiGenerated())
+                .aiModel(quizRequestDto.getAiModel())
+                .sourceType(quizRequestDto.getSourceType())
+                .metaTitle(quizRequestDto.getMetaTitle())
+                .metaDescription(quizRequestDto.getMetaDescription())
+                .canonicalUrl(quizRequestDto.getCanonicalUrl())
+                .keywords(quizRequestDto.getKeywords() != null ?
+                         quizRequestDto.getKeywords().toArray(new String[0]) : null)
+                .visibility(quizRequestDto.getVisibility())
+                .status(QuizStatus.DRAFT)
+                .isPremium(quizRequestDto.getIsPremium())
+                .totalQuestions(calculateTotalQuestions(quizRequestDto.getQuizData()))
+                .totalPoints(calculateTotalPoints(quizRequestDto.getQuizData()))
+                .build();
+
+        // Save the quiz to get an ID
+        QuizzesEntity savedQuiz = quizzesRepository.save(quizEntity);
+
+        // Handle tags
+        if (quizRequestDto.getTags() != null && !quizRequestDto.getTags().isEmpty()) {
+            processQuizTags(savedQuiz, quizRequestDto.getTags());
+        }
+
+        // Refresh the quiz to get the associated tags with a single query
+        savedQuiz = quizzesRepository.findByIdWithTags(savedQuiz.getId());
+        if (savedQuiz == null) {
+            throw new RuntimeException("Failed to retrieve saved quiz");
+        }
+
+        return mapToResponseDto(savedQuiz);
+    }
+
+    /**
+     * Process tags for a quiz - checks for existing tags and creates new ones if needed
+     */
+    private void processQuizTags(QuizzesEntity quiz, List<TagRequestDto> tagRequests) {
+        if (tagRequests == null || tagRequests.isEmpty()) {
+            return;
+        }
+
+        // Process each tag
+        for (TagRequestDto tagRequest : tagRequests) {
+            // Get or create the tag
+            TagResponseDto tagResponse = tagsService.getOrCreateTag(tagRequest);
+
+            // Create quiz-tag association
+            QuizTagId quizTagId = new QuizTagId(quiz.getId(), tagResponse.getId());
+            QuizTagEntity quizTag = QuizTagEntity.builder()
+                    .id(quizTagId)
+                    .quiz(quiz)
+                    .tag(TagsEntity.builder().id(tagResponse.getId()).build())
+                    .weight(1)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            quizTagRepository.save(quizTag);
+        }
+    }
+
+    /**
+     * Calculate total questions from quiz data
+     */
+    private Integer calculateTotalQuestions(Map<String, Object> quizData) {
+        // Default implementation, adjust according to your actual quiz data structure
+        if (quizData == null || !quizData.containsKey("questions")) {
+            return 0;
+        }
+
+        try {
+            List<?> questions = (List<?>) quizData.get("questions");
+            return questions.size();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Calculate total points from quiz data
+     */
+    private Integer calculateTotalPoints(Map<String, Object> quizData) {
+        // Default implementation, adjust according to your actual quiz data structure
+        if (quizData == null || !quizData.containsKey("questions")) {
+            return 0;
+        }
+
+        try {
+            List<?> questions = (List<?>) quizData.get("questions");
+            // Assuming each question is worth 1 point
+            return questions.size();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
 
     @Override
     @Transactional
