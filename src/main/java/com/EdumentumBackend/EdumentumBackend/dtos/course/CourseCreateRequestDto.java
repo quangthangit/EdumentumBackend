@@ -28,6 +28,8 @@ public class CourseCreateRequestDto {
     @NotNull(message = "Course level is required")
     private CourseLevel courseLevel;
     
+    // private CourseStatus status;
+    
     private String thumbnailUrl;
     
     @DecimalMin(value = "0.0", inclusive = true, message = "Price must be non-negative")

@@ -1,6 +1,8 @@
 package com.EdumentumBackend.EdumentumBackend.dtos.course;
 
 import com.EdumentumBackend.EdumentumBackend.enums.CourseLevel;
+import com.EdumentumBackend.EdumentumBackend.enums.CourseStatus;
+
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -28,6 +30,9 @@ public class CourseUpdateRequestDto {
     @DecimalMin(value = "0.0", inclusive = true, message = "Price must be non-negative")
     @Digits(integer = 8, fraction = 2, message = "Invalid price format")
     private BigDecimal price;
+
+    @NotNull(message = "Course status is required")
+    private CourseStatus courseStatus;
     
     private Set<String> tagCourseNames;
 }

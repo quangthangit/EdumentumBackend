@@ -44,8 +44,7 @@ public class CourseEntity extends BaseEntity {
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @Builder.Default
-    private CourseStatus status = CourseStatus.DRAFT;
+    private CourseStatus status;
     
     @Column(nullable = true)
     private String thumbnailUrl;

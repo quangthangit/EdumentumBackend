@@ -85,6 +85,7 @@ public class CourseServiceImpl implements CourseService {
                 .courseLevel(request.getCourseLevel())
                 .thumbnailUrl(request.getThumbnailUrl())
                 .price(request.getPrice() != null ? request.getPrice() : BigDecimal.ZERO)
+                .status(request.getCourseStatus() != null ? request.getCourseStatus() : CourseStatus.DRAFT)
                 .teacher(teacher)
                 .tags(tags)
                 .build();
