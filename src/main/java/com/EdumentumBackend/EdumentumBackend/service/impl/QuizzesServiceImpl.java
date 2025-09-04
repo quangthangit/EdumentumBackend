@@ -10,7 +10,7 @@ import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
 import com.EdumentumBackend.EdumentumBackend.service.QuizzesService;
 import com.EdumentumBackend.EdumentumBackend.service.TagsService;
 import com.EdumentumBackend.EdumentumBackend.utils.SlugUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,22 +20,18 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class QuizzesServiceImpl implements QuizzesService {
 
-    @Autowired
-    private QuizzesRepository quizzesRepository;
+    private final QuizzesRepository quizzesRepository;
+    private final UserRepository userRepository;
+    private final TagsService tagsService;
+    private final QuizTagRepository quizTagRepository;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private TagsService tagsService;
-
-    @Autowired
-    private QuizTagRepository quizTagRepository;
-
-    private QuizResponseDto toResponseDto(QuizzesEntity entity) {
-
+    /**
+     * Maps a QuizzesEntity to a QuizResponseDto including tags and user information
+     */
+    private QuizResponseDto mapToResponseDto(QuizzesEntity entity) {
         List<QuizTagEntity> quizTags = quizTagRepository.findByQuizId(entity.getId());
         List<TagResponseDto> tagDtos = null;
         if (quizTags != null && !quizTags.isEmpty()) {
@@ -88,8 +84,8 @@ public class QuizzesServiceImpl implements QuizzesService {
         }
 
         // Add original quiz if exists
-        if (entity.getOriginalQuiz() != null) {
-            builder.originalQuizId(entity.getOriginalQuiz().getId());
+        if (entity.getOriginalQuizId() != null) {
+            builder.originalQuizId(entity.getOriginalQuizId());
         }
 
         // Add user if exists
@@ -107,26 +103,6 @@ public class QuizzesServiceImpl implements QuizzesService {
 
         return builder.build();
     }
-
-    // Remove this unused method since it's never called
-    /*
-    private QuizzesEntity toEntity(QuizRequestDto dto, Long userId) {
-        return QuizzesEntity.builder()
-                .title(dto.getTitle())
-                .description(dto.getDescription())
-                .userId(userId)
-//                .language(dto.getLanguage())
-                .visibility(dto.getVisibility())
-                .difficulty(dto.getDifficulty())
-                .sourceType(dto.getSourceType())
-                .isAiGenerated(dto.getIsAiGenerated())
-                .aiModel(dto.getAiModel())
-                .quizData(dto.getQuizData())
-                .estimatedTime(dto.getEstimatedTime())
-                .passingScore(dto.getPassingScore())
-                .build();
-    }
-    */
 
     @Override
     @Transactional
@@ -206,56 +182,6 @@ public class QuizzesServiceImpl implements QuizzesService {
     }
 
     /**
-     * Maps a QuizzesEntity to a QuizResponseDto including tags
-     */
-    private QuizResponseDto mapToResponseDto(QuizzesEntity entity) {
-        List<QuizTagEntity> quizTags = quizTagRepository.findByQuizId(entity.getId());
-        List<TagResponseDto> tagDtos = quizTags.stream()
-                .map(quizTag -> tagsService.getTagById(quizTag.getTag().getId()))
-                .collect(Collectors.toList());
-
-        return QuizResponseDto.builder()
-                .id(entity.getId())
-                .title(entity.getTitle())
-                .slug(entity.getSlug())
-                .description(entity.getDescription())
-                .thumbnailUrl(entity.getThumbnailUrl())
-                .difficulty(entity.getDifficulty())
-                .estimatedTime(entity.getEstimatedTime())
-                .totalQuestions(entity.getTotalQuestions())
-                .totalPoints(entity.getTotalPoints())
-                .passingScore(entity.getPassingScore())
-                .maxAttempts(entity.getMaxAttempts())
-                .isAiGenerated(entity.getIsAiGenerated())
-                .aiModel(entity.getAiModel())
-                .sourceType(entity.getSourceType())
-                .quizData(entity.getQuizData())
-                .metaTitle(entity.getMetaTitle())
-                .metaDescription(entity.getMetaDescription())
-                .canonicalUrl(entity.getCanonicalUrl())
-                .keywords(entity.getKeywords() != null ?
-                        Arrays.asList(entity.getKeywords()) : null)
-                .viewCount(entity.getViewCount())
-                .attemptCount(entity.getAttemptCount())
-                .completionCount(entity.getCompletionCount())
-                .avgScore(entity.getAvgScore())
-                .avgCompletionTime(entity.getAvgCompletionTime())
-                .bookmarkCount(entity.getBookmarkCount())
-                .shareCount(entity.getShareCount())
-                .visibility(entity.getVisibility())
-                .status(entity.getStatus().name())
-                .isFeatured(entity.getIsFeatured())
-                .isTrending(entity.getIsTrending())
-                .isPremium(entity.getIsPremium())
-                .tags(tagDtos)
-                .publishedAt(entity.getPublishedAt())
-                .archivedAt(entity.getArchivedAt())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
-    }
-
-    /**
      * Calculate total questions from quiz data
      */
     private Integer calculateTotalQuestions(Map<String, Object> quizData) {
@@ -294,7 +220,7 @@ public class QuizzesServiceImpl implements QuizzesService {
     public List<QuizResponseDto> getAllQuizzes(Long userId) {
         List<QuizzesEntity> quizzes = quizzesRepository.findByUserId(userId);
         return quizzes.stream()
-                .map(this::toResponseDto)
+                .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
 
@@ -311,7 +237,7 @@ public class QuizzesServiceImpl implements QuizzesService {
             throw new RuntimeException("Access denied to quiz with id: " + quizId);
         }
 
-        return toResponseDto(quiz);
+        return mapToResponseDto(quiz);
     }
 
     @Override
@@ -387,7 +313,7 @@ public class QuizzesServiceImpl implements QuizzesService {
         return quizzes.stream()
                 .filter(quiz -> quiz.getUserId().equals(userId) ||
                                quiz.getVisibility() == com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC)
-                .map(this::toResponseDto)
+                .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
 
