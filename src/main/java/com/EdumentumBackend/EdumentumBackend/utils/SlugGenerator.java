@@ -22,19 +22,14 @@ public class SlugGenerator {
         String normalized = Normalizer.normalize(input, Normalizer.Form.NFD)
                 .toLowerCase(Locale.ENGLISH);
 
-        // Remove diacritics
         normalized = normalized.replaceAll("\\p{M}", "");
 
-        // Replace whitespace with hyphens
         String noWhitespace = WHITESPACE.matcher(normalized).replaceAll("-");
 
-        // Remove non-Latin characters
         String slug = NONLATIN.matcher(noWhitespace).replaceAll("");
 
-        // Ensure no multiple consecutive dashes
         slug = MULTIPLE_DASHES.matcher(slug).replaceAll("-");
 
-        // Remove leading/trailing dashes
         slug = slug.replaceAll("^-|-$", "");
 
         return slug;

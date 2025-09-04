@@ -22,4 +22,12 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
     @Query("SELECT DISTINCT q FROM QuizzesEntity q JOIN q.quizTags qt WHERE qt.tag.id IN :tagIds AND q.visibility = :visibility")
     List<QuizzesEntity> findByTagIdsAndVisibility(List<Long> tagIds, VisibilityType visibility);
 
+    @Query("SELECT DISTINCT q FROM QuizzesEntity q LEFT JOIN FETCH q.quizTags qt LEFT JOIN FETCH qt.tag WHERE q.id = :quizId")
+    QuizzesEntity findByIdWithTags(Long quizId);
+
+    @Query("SELECT DISTINCT q FROM QuizzesEntity q LEFT JOIN FETCH q.quizTags qt LEFT JOIN FETCH qt.tag WHERE q.userId = :userId")
+    List<QuizzesEntity> findByUserIdWithTags(Long userId);
+
+    @Query("SELECT DISTINCT q FROM QuizzesEntity q LEFT JOIN FETCH q.quizTags qt LEFT JOIN FETCH qt.tag WHERE q.title LIKE %:title%")
+    List<QuizzesEntity> findByTitleContainingWithTags(String title);
 }

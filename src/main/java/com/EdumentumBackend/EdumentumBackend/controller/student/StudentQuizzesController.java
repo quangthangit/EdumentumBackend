@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.controller.student;
 
+import com.EdumentumBackend.EdumentumBackend.controller.base.BaseQuizController;
 import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizResponseDto;
@@ -7,28 +8,30 @@ import com.EdumentumBackend.EdumentumBackend.service.QuizzesService;
 import com.EdumentumBackend.EdumentumBackend.service.UserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/student/quizzes")
 @CrossOrigin(origins = "*")
-public class StudentQuizzesController {
+public class StudentQuizzesController extends BaseQuizController {
 
-    @Autowired
-    private QuizzesService quizzesService;
-    
-    @Autowired
-    private UserService userService;
+    private static final String BASE_PATH = "/api/v1/student/quizzes";
+    private final UserService userService;
 
-    private Long getCurrentUserId() {
+    public StudentQuizzesController(QuizzesService quizzesService, UserService userService) {
+        super(quizzesService);
+        this.userService = userService;
+    }
+
+    @Override
+    protected Long getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         UserResponseDto user = userService.getUserByEmail(email);
@@ -37,94 +40,56 @@ public class StudentQuizzesController {
 
     @PostMapping
     public ResponseEntity<QuizResponseDto> createQuiz(@Valid @RequestBody QuizRequestDto quizRequestDto) {
-        try {
-            Long userId = getCurrentUserId();
-
-            QuizResponseDto createdQuiz = quizzesService.createQuiz(quizRequestDto, userId);
-
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdQuiz);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+        return doCreateQuiz(quizRequestDto);
     }
 
     @GetMapping
     public ResponseEntity<List<QuizResponseDto>> getAllQuizzes() {
-        try {
-            Long userId = getCurrentUserId();
-            List<QuizResponseDto> quizzes = quizzesService.getAllQuizzes(userId);
-            return ResponseEntity.ok(quizzes);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return doGetAllQuizzes();
     }
 
     @GetMapping("/{quizId}")
     public ResponseEntity<QuizResponseDto> getQuizById(@PathVariable Long quizId) {
-        try {
-            Long userId = getCurrentUserId();
-            QuizResponseDto quiz = quizzesService.getQuizById(quizId, userId);
-            return ResponseEntity.ok(quiz);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return doGetQuizById(quizId);
+    }
+
+    @GetMapping("/{quizId}/{slug}")
+    public ResponseEntity<QuizResponseDto> getQuizByIdAndSlug(@PathVariable Long quizId, @PathVariable String slug) {
+        return doGetQuizByIdAndSlug(quizId, slug, BASE_PATH);
     }
 
     @PutMapping("/{quizId}")
     public ResponseEntity<QuizResponseDto> updateQuiz(
             @PathVariable Long quizId,
             @Valid @RequestBody QuizRequestDto quizRequestDto) {
-        try {
-            Long userId = getCurrentUserId();
-            QuizResponseDto updatedQuiz = quizzesService.updateQuiz(quizId, quizRequestDto, userId);
-            return ResponseEntity.ok(updatedQuiz);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+        return doUpdateQuiz(quizId, quizRequestDto);
+    }
+
+    @PutMapping("/{quizId}/{slug}")
+    public ResponseEntity<QuizResponseDto> updateQuizWithSlug(
+            @PathVariable Long quizId,
+            @PathVariable String slug,
+            @Valid @RequestBody QuizRequestDto quizRequestDto) {
+        return doUpdateQuizWithSlug(quizId, slug, quizRequestDto, BASE_PATH);
+    }
+
+    @PatchMapping("/{quizId}")
+    public ResponseEntity<QuizResponseDto> patchQuiz(@PathVariable Long quizId, @RequestBody Map<String, Object> updates) {
+        return doPatchQuiz(quizId, updates);
     }
 
     @DeleteMapping("/{quizId}")
     public ResponseEntity<Void> deleteQuiz(@PathVariable Long quizId) {
-        try {
-            Long userId = getCurrentUserId();
-            boolean deleted = quizzesService.deleteQuiz(quizId, userId);
-            if (deleted) {
-                return ResponseEntity.noContent().build();
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-            }
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return doDeleteQuiz(quizId);
     }
 
-    @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<QuizResponseDto>> getQuizzesByCategory(@PathVariable Long categoryId) {
-        try {
-            Long userId = getCurrentUserId();
-            List<QuizResponseDto> quizzes = quizzesService.getQuizzesByCategory(categoryId, userId);
-            return ResponseEntity.ok(quizzes);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    @DeleteMapping("/{quizId}/{slug}")
+    public ResponseEntity<Void> deleteQuizWithSlug(@PathVariable Long quizId, @PathVariable String slug) {
+        return doDeleteQuizWithSlug(quizId, slug, BASE_PATH);
     }
 
     @GetMapping("/search")
     public ResponseEntity<List<QuizResponseDto>> searchQuizzes(@RequestParam String title) {
-        try {
-            Long userId = getCurrentUserId();
-            List<QuizResponseDto> quizzes = quizzesService.searchQuizzes(title, userId);
-            return ResponseEntity.ok(quizzes);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return doSearchQuizzes(title);
     }
 }
