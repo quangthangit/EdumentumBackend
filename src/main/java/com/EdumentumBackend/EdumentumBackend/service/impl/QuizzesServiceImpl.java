@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
@@ -107,6 +108,8 @@ public class QuizzesServiceImpl implements QuizzesService {
         return builder.build();
     }
 
+    // Remove this unused method since it's never called
+    /*
     private QuizzesEntity toEntity(QuizRequestDto dto, Long userId) {
         return QuizzesEntity.builder()
                 .title(dto.getTitle())
@@ -114,7 +117,6 @@ public class QuizzesServiceImpl implements QuizzesService {
                 .userId(userId)
 //                .language(dto.getLanguage())
                 .visibility(dto.getVisibility())
-
                 .difficulty(dto.getDifficulty())
                 .sourceType(dto.getSourceType())
                 .isAiGenerated(dto.getIsAiGenerated())
@@ -124,6 +126,7 @@ public class QuizzesServiceImpl implements QuizzesService {
                 .passingScore(dto.getPassingScore())
                 .build();
     }
+    */
 
     @Override
     @Transactional
@@ -377,22 +380,6 @@ public class QuizzesServiceImpl implements QuizzesService {
         return true;
     }
 
-    @Override
-    public List<QuizResponseDto> getQuizzesByCategory(Long categoryId, Long userId) {
-        // Không còn sử dụng category nên trả về danh sách rỗng hoặc có thể viết lại logic
-        // để lọc theo tag thay vì category
-        return new ArrayList<>();
-
-        // Hoặc có thể thay thế bằng logic tìm kiếm theo tag
-        // List<QuizzesEntity> quizzes = quizTagRepository.findByTagId(categoryId).stream()
-        //         .map(QuizTagEntity::getQuiz)
-        //         .collect(Collectors.toList());
-        // return quizzes.stream()
-        //         .filter(quiz -> quiz.getUserId().equals(userId) ||
-        //                quiz.getVisibility() == VisibilityType.PUBLIC)
-        //         .map(this::toResponseDto)
-        //         .collect(Collectors.toList());
-    }
 
     @Override
     public List<QuizResponseDto> searchQuizzes(String title, Long userId) {
@@ -402,5 +389,239 @@ public class QuizzesServiceImpl implements QuizzesService {
                                quiz.getVisibility() == com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC)
                 .map(this::toResponseDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public QuizResponseDto patchQuiz(Long quizId, Long userId, Map<String, Object> updates) {
+        Optional<QuizzesEntity> quizOpt = quizzesRepository.findById(quizId);
+        if (quizOpt.isEmpty()) {
+            throw new RuntimeException("Quiz not found with id: " + quizId);
+        }
+
+        QuizzesEntity quiz = quizOpt.get();
+        if (!quiz.getUserId().equals(userId)) {
+            throw new RuntimeException("Access denied to update quiz with id: " + quizId);
+        }
+
+        applyBasicFieldUpdates(quiz, updates);
+
+        applyEnumFieldUpdates(quiz, updates);
+
+        applyArrayFieldUpdates(quiz, updates);
+
+        applyNestedObjectUpdates(quiz, updates);
+
+        // Save the updated quiz
+        QuizzesEntity savedQuiz = quizzesRepository.save(quiz);
+
+        // Process tags if provided
+        if (updates.containsKey("tags")) {
+            Object tagsObj = updates.get("tags");
+            if (tagsObj instanceof List<?>) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> tagsList = (List<Map<String, Object>>) tagsObj;
+                updateQuizTags(savedQuiz, tagsList);
+            }
+        }
+
+        // Recalculate totals if quiz data changed
+        if (updates.containsKey("quizData")) {
+            quiz.setTotalQuestions(calculateTotalQuestions(quiz.getQuizData()));
+            quiz.setTotalPoints(calculateTotalPoints(quiz.getQuizData()));
+            savedQuiz = quizzesRepository.save(quiz);
+        }
+
+        // Refresh the quiz to get the latest state with all associations
+        savedQuiz = quizzesRepository.findById(savedQuiz.getId()).orElseThrow();
+
+        return mapToResponseDto(savedQuiz);
+    }
+
+    /**
+     * Helper method to apply basic field updates to a quiz
+     */
+    private void applyBasicFieldUpdates(QuizzesEntity quiz, Map<String, Object> updates) {
+        // Handle title update (with slug generation)
+        applyString(updates, "title", title -> {
+            quiz.setTitle(title);
+            quiz.setSlug(SlugUtil.toUniqueSlug(title));
+        });
+
+        // Handle basic string fields
+        applyString(updates, "description", quiz::setDescription);
+        applyString(updates, "thumbnailUrl", quiz::setThumbnailUrl);
+        applyString(updates, "aiModel", quiz::setAiModel);
+        applyString(updates, "metaTitle", quiz::setMetaTitle);
+        applyString(updates, "metaDescription", quiz::setMetaDescription);
+        applyString(updates, "canonicalUrl", quiz::setCanonicalUrl);
+
+        // Handle numeric fields
+        applyInteger(updates, "estimatedTime", quiz::setEstimatedTime);
+        applyInteger(updates, "passingScore", quiz::setPassingScore);
+        applyInteger(updates, "maxAttempts", quiz::setMaxAttempts);
+
+        // Handle boolean fields
+        applyBoolean(updates, "isAiGenerated", quiz::setIsAiGenerated);
+        applyBoolean(updates, "isPremium", quiz::setIsPremium);
+    }
+
+    /**
+     * Helper method to apply enum field updates to a quiz
+     */
+    private void applyEnumFieldUpdates(QuizzesEntity quiz, Map<String, Object> updates) {
+        applyEnum(updates, "difficulty", com.EdumentumBackend.EdumentumBackend.enums.DifficultyLevel.class, quiz::setDifficulty);
+        applyEnum(updates, "visibility", com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.class, quiz::setVisibility);
+        applyEnum(updates, "status", com.EdumentumBackend.EdumentumBackend.enums.QuizStatus.class, quiz::setStatus);
+        applyEnum(updates, "sourceType", com.EdumentumBackend.EdumentumBackend.enums.SourceType.class, quiz::setSourceType);
+    }
+
+    /**
+     * Helper method to apply array field updates to a quiz
+     */
+    private void applyArrayFieldUpdates(QuizzesEntity quiz, Map<String, Object> updates) {
+        if (updates.containsKey("keywords")) {
+            Object keywordsObj = updates.get("keywords");
+            if (keywordsObj instanceof List) {
+                List<?> keywordsList = (List<?>) keywordsObj;
+                String[] keywordsArray = keywordsList.stream()
+                        .map(Object::toString)
+                        .toArray(String[]::new);
+                quiz.setKeywords(keywordsArray);
+            }
+        }
+    }
+
+    /**
+     * Helper method to apply nested object updates to a quiz
+     */
+    private void applyNestedObjectUpdates(QuizzesEntity quiz, Map<String, Object> updates) {
+        if (updates.containsKey("quizData")) {
+            Object quizDataObj = updates.get("quizData");
+            if (quizDataObj instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> quizData = (Map<String, Object>) quizDataObj;
+                quiz.setQuizData(quizData);
+            }
+        }
+    }
+
+    /**
+     * Helper method to update quiz tags
+     */
+    private void updateQuizTags(QuizzesEntity quiz, List<Map<String, Object>> tagsList) {
+        if (tagsList == null || tagsList.isEmpty()) {
+            return;
+        }
+
+        List<TagRequestDto> tagRequests = tagsList.stream()
+                .map(this::convertMapToTagRequestDto)
+                .collect(Collectors.toList());
+
+        // Remove existing tags first
+        quizTagRepository.deleteByQuizId(quiz.getId());
+
+        // Add the new tags
+        processQuizTags(quiz, tagRequests);
+    }
+
+    /**
+     * Convert a map to TagRequestDto
+     */
+    private TagRequestDto convertMapToTagRequestDto(Map<String, Object> tagMap) {
+        TagRequestDto dto = new TagRequestDto();
+
+        if (tagMap.containsKey("id")) {
+            Object idObj = tagMap.get("id");
+            if (idObj instanceof Number) {
+                dto.setId(((Number) idObj).longValue());
+            } else if (idObj instanceof String) {
+                try {
+                    dto.setId(Long.parseLong((String) idObj));
+                } catch (NumberFormatException ignored) {
+                    // If the ID can't be parsed, it will remain null
+                }
+            }
+        }
+
+        if (tagMap.containsKey("name")) {
+            dto.setName((String) tagMap.get("name"));
+        }
+
+        if (tagMap.containsKey("icon")) {
+            dto.setIcon((String) tagMap.get("icon"));
+        }
+
+        if (tagMap.containsKey("color")) {
+            dto.setColor((String) tagMap.get("color"));
+        }
+
+        if (tagMap.containsKey("description")) {
+            dto.setDescription((String) tagMap.get("description"));
+        }
+
+        return dto;
+    }
+
+    /**
+     * Helper method to apply string field updates
+     */
+    private void applyString(Map<String, Object> updates, String key, Consumer<String> setter) {
+        if (updates.containsKey(key) && updates.get(key) != null) {
+            setter.accept(updates.get(key).toString());
+        }
+    }
+
+    /**
+     * Helper method to apply integer field updates
+     */
+    private void applyInteger(Map<String, Object> updates, String key, Consumer<Integer> setter) {
+        if (updates.containsKey(key) && updates.get(key) != null) {
+            Object val = updates.get(key);
+            if (val instanceof Integer) {
+                setter.accept((Integer) val);
+            } else if (val instanceof Number) {
+                setter.accept(((Number) val).intValue());
+            } else if (val instanceof String) {
+                try {
+                    setter.accept(Integer.parseInt((String) val));
+                } catch (NumberFormatException ignored) {
+                    // Skip if the value can't be parsed as an integer
+                }
+            }
+        }
+    }
+
+    /**
+     * Helper method to apply boolean field updates
+     */
+    private void applyBoolean(Map<String, Object> updates, String key, Consumer<Boolean> setter) {
+        if (updates.containsKey(key) && updates.get(key) != null) {
+            Object val = updates.get(key);
+            if (val instanceof Boolean) {
+                setter.accept((Boolean) val);
+            } else if (val instanceof String) {
+                setter.accept(Boolean.parseBoolean((String) val));
+            }
+        }
+    }
+
+    /**
+     * Helper method to apply enum field updates
+     */
+    private <E extends Enum<E>> void applyEnum(
+            Map<String, Object> updates, String key, Class<E> enumType, Consumer<E> setter) {
+        if (updates.containsKey(key) && updates.get(key) != null) {
+            Object val = updates.get(key);
+            try {
+                if (val instanceof String) {
+                    setter.accept(Enum.valueOf(enumType, (String) val));
+                } else if (enumType.isInstance(val)) {
+                    setter.accept(enumType.cast(val));
+                }
+            } catch (IllegalArgumentException ignored) {
+                // Skip if the value is not a valid enum constant
+            }
+        }
     }
 }
