@@ -28,17 +28,18 @@ public class QuizzesServiceImpl implements QuizzesService {
     private final TagsService tagsService;
     private final QuizTagRepository quizTagRepository;
 
+    private static final int MAX_SLUG_RETRIES = 5;
+
     private QuizResponseDto mapToResponseDto(QuizzesEntity entity) {
-        List<TagResponseDto> tagDtos = null;
-        if (entity.getQuizTags() != null && !entity.getQuizTags().isEmpty()) {
-            tagDtos = entity.getQuizTags().stream()
-                    .map(quizTag -> TagResponseDto.builder()
-                            .id(quizTag.getTag().getId())
-                            .name(quizTag.getTag().getName())
-                            .description(quizTag.getTag().getDescription())
-                            .build())
-                    .collect(Collectors.toList());
-        }
+        List<TagResponseDto> tagDtos = entity.getQuizTags() == null ?
+                Collections.emptyList() :
+                entity.getQuizTags().stream()
+                        .map(quizTag -> TagResponseDto.builder()
+                                .id(quizTag.getTag().getId())
+                                .name(quizTag.getTag().getName())
+                                .description(quizTag.getTag().getDescription())
+                                .build())
+                        .collect(Collectors.toList());
 
         QuizResponseDto.QuizResponseDtoBuilder builder = QuizResponseDto.builder()
                 .id(entity.getId())
@@ -76,11 +77,8 @@ public class QuizzesServiceImpl implements QuizzesService {
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .tags(tagDtos);
-
-        // Add keywords if exists
-        if (entity.getKeywords() != null) {
-            builder.keywords(Arrays.asList(entity.getKeywords()));
-        }
+        builder.keywords(entity.getKeywords() == null ?
+                Collections.emptyList() : Arrays.asList(entity.getKeywords()));
 
         // Add original quiz if exists
         if (entity.getOriginalQuizId() != null) {
@@ -130,6 +128,7 @@ public class QuizzesServiceImpl implements QuizzesService {
     }
 
     @Override
+    @Transactional
     public QuizResponseDto updateQuiz(Long quizId, QuizRequestDto quizRequestDto, Long userId) {
         Optional<QuizzesEntity> quizOpt = quizzesRepository.findById(quizId);
         if (quizOpt.isEmpty()) {
@@ -174,7 +173,9 @@ public class QuizzesServiceImpl implements QuizzesService {
             processQuizTags(savedQuiz, quizRequestDto.getTags());
         }
 
-        savedQuiz = quizzesRepository.findById(savedQuiz.getId()).orElseThrow();
+        // Refresh the quiz to get the associated tags with a single query
+        savedQuiz = Optional.ofNullable(quizzesRepository.findByIdWithTags(savedQuiz.getId()))
+                .orElseThrow(() -> new RuntimeException("Failed to retrieve saved quiz"));
 
         return mapToResponseDto(savedQuiz);
     }
@@ -217,10 +218,14 @@ public class QuizzesServiceImpl implements QuizzesService {
             throw new RuntimeException("User not found with id: " + userId);
         }
 
-        // Create the quiz entity
+        String uniqueSlug = SlugUtil.generateUniqueSlugWithRetry(
+                quizRequestDto.getTitle(),
+                quizzesRepository::existsBySlug,
+                MAX_SLUG_RETRIES
+        );
         QuizzesEntity quizEntity = QuizzesEntity.builder()
                 .title(quizRequestDto.getTitle())
-                .slug(SlugUtil.toUniqueSlug(quizRequestDto.getTitle()))
+                .slug(uniqueSlug)
                 .description(quizRequestDto.getDescription())
                 .thumbnailUrl(quizRequestDto.getThumbnailUrl())
                 .userId(userId)
@@ -244,6 +249,9 @@ public class QuizzesServiceImpl implements QuizzesService {
                 .totalPoints(calculateTotalPoints(quizRequestDto.getQuizData()))
                 .build();
 
+        // Log để kiểm tra slug
+        System.out.println("Generated unique slug: " + uniqueSlug);
+
         // Save the quiz to get an ID
         QuizzesEntity savedQuiz = quizzesRepository.save(quizEntity);
 
@@ -259,6 +267,31 @@ public class QuizzesServiceImpl implements QuizzesService {
         }
 
         return mapToResponseDto(savedQuiz);
+    }
+
+    private String generateUniqueSlug(String title) {
+        if (title == null || title.trim().isEmpty()) {
+            title = "quiz-" + System.currentTimeMillis(); // Fallback for empty titles
+        }
+
+        // First attempt with the standard method
+        String slug = SlugUtil.toUniqueSlug(title);
+
+        // If it doesn't exist, we can use it
+        if (!quizzesRepository.existsBySlug(slug)) {
+            return slug;
+        }
+
+        // Otherwise, try with different random suffixes up to MAX_SLUG_RETRIES times
+        for (int i = 0; i < MAX_SLUG_RETRIES; i++) {
+            slug = SlugUtil.generateNewUniqueSlug(title);
+            if (!quizzesRepository.existsBySlug(slug)) {
+                return slug;
+            }
+        }
+
+        // If all retries failed, use timestamp-based approach which should guarantee uniqueness
+        return SlugUtil.generateFallbackSlug(title);
     }
 
     /**
@@ -338,35 +371,28 @@ public class QuizzesServiceImpl implements QuizzesService {
         }
 
         applyBasicFieldUpdates(quiz, updates);
-
         applyEnumFieldUpdates(quiz, updates);
-
         applyArrayFieldUpdates(quiz, updates);
-
         applyNestedObjectUpdates(quiz, updates);
 
-        // Save the updated quiz
+        if (updates.containsKey("quizData")) {
+            quiz.setTotalQuestions(calculateTotalQuestions(quiz.getQuizData()));
+            quiz.setTotalPoints(calculateTotalPoints(quiz.getQuizData()));
+        }
+
         QuizzesEntity savedQuiz = quizzesRepository.save(quiz);
 
-        // Process tags if provided
         if (updates.containsKey("tags")) {
             Object tagsObj = updates.get("tags");
             if (tagsObj instanceof List<?>) {
                 @SuppressWarnings("unchecked")
                 List<Map<String, Object>> tagsList = (List<Map<String, Object>>) tagsObj;
-                updateQuizTags(savedQuiz, tagsList);
+                updateQuizTagsDiff(savedQuiz, tagsList);
             }
         }
 
-        // Recalculate totals if quiz data changed
-        if (updates.containsKey("quizData")) {
-            quiz.setTotalQuestions(calculateTotalQuestions(quiz.getQuizData()));
-            quiz.setTotalPoints(calculateTotalPoints(quiz.getQuizData()));
-            savedQuiz = quizzesRepository.save(quiz);
-        }
-
-        // Refresh the quiz to get the latest state with all associations
-        savedQuiz = quizzesRepository.findById(savedQuiz.getId()).orElseThrow();
+        savedQuiz = Optional.ofNullable(quizzesRepository.findByIdWithTags(savedQuiz.getId()))
+                .orElseThrow(() -> new RuntimeException("Failed to retrieve saved quiz"));
 
         return mapToResponseDto(savedQuiz);
     }
@@ -378,7 +404,7 @@ public class QuizzesServiceImpl implements QuizzesService {
         // Handle title update (with slug generation)
         applyString(updates, "title", title -> {
             quiz.setTitle(title);
-            quiz.setSlug(SlugUtil.toUniqueSlug(title));
+            quiz.setSlug(generateUniqueSlug(title));
         });
 
         // Handle basic string fields
@@ -439,23 +465,39 @@ public class QuizzesServiceImpl implements QuizzesService {
         }
     }
 
-    /**
-     * Helper method to update quiz tags
-     */
-    private void updateQuizTags(QuizzesEntity quiz, List<Map<String, Object>> tagsList) {
-        if (tagsList == null || tagsList.isEmpty()) {
-            return;
+    private void updateQuizTagsDiff(QuizzesEntity quiz, List<Map<String, Object>> tagsList) {
+        if (tagsList == null) return;
+
+        List<TagRequestDto> requests = tagsList.stream()
+                .map(this::convertMapToTagRequestDto)
+                .toList();
+
+        List<TagResponseDto> resolved = requests.stream()
+                .map(tagsService::getOrCreateTag)
+                .toList();
+
+        Set<Long> newIds = resolved.stream().map(TagResponseDto::getId).collect(Collectors.toSet());
+        Set<Long> curIds = quiz.getQuizTags() == null ? Collections.emptySet() :
+                quiz.getQuizTags().stream().map(qt -> qt.getTag().getId()).collect(Collectors.toSet());
+
+        Set<Long> toAdd = newIds.stream().filter(id -> !curIds.contains(id)).collect(Collectors.toSet());
+        Set<Long> toRemove = curIds.stream().filter(id -> !newIds.contains(id)).collect(Collectors.toSet());
+
+        if (!toRemove.isEmpty()) {
+            quizTagRepository.deleteByQuizIdAndTagIdIn(quiz.getId(), toRemove);
         }
 
-        List<TagRequestDto> tagRequests = tagsList.stream()
-                .map(this::convertMapToTagRequestDto)
-                .collect(Collectors.toList());
-
-        // Remove existing tags first
-        quizTagRepository.deleteByQuizId(quiz.getId());
-
-        // Add the new tags
-        processQuizTags(quiz, tagRequests);
+        if (!toAdd.isEmpty()) {
+            List<QuizTagEntity> addEntities = toAdd.stream().map(id -> QuizTagEntity.builder()
+                    .id(new QuizTagId(quiz.getId(), id))
+                    .quiz(quiz)
+                    .tag(TagsEntity.builder().id(id).build())
+                    .weight(1)
+                    .createdAt(LocalDateTime.now())
+                    .build()
+            ).collect(Collectors.toList());
+            quizTagRepository.saveAll(addEntities);
+        }
     }
 
     /**
@@ -557,4 +599,5 @@ public class QuizzesServiceImpl implements QuizzesService {
             }
         }
     }
+
 }

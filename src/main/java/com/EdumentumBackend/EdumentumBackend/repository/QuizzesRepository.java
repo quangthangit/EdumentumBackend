@@ -30,4 +30,10 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
 
     @Query("SELECT DISTINCT q FROM QuizzesEntity q LEFT JOIN FETCH q.quizTags qt LEFT JOIN FETCH qt.tag WHERE q.title LIKE %:title%")
     List<QuizzesEntity> findByTitleContainingWithTags(String title);
+
+    boolean existsBySlug(String slug);
+
+    @Query("SELECT DISTINCT q FROM QuizzesEntity q LEFT JOIN FETCH q.quizTags qt LEFT JOIN FETCH qt.tag WHERE q.slug = :slug")
+
+    QuizzesEntity findBySlugWithTags(String slug);
 }
