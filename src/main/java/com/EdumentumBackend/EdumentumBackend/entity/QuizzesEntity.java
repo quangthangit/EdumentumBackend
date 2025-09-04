@@ -59,6 +59,7 @@ public class QuizzesEntity extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "difficulty", length = 20)
+    @Builder.Default
     private DifficultyLevel difficulty = DifficultyLevel.EASY;
 
     @Column(name = "estimated_time")
@@ -72,13 +73,16 @@ public class QuizzesEntity extends BaseEntity {
     private Integer totalPoints;
 
     @Column(name = "passing_score")
+    @Builder.Default
     private Integer passingScore = 70; // percentage
 
     @Column(name = "max_attempts")
+    @Builder.Default
     private Integer maxAttempts = 0; // 0 = unlimited
 
     // AI Information (Simplified)
     @Column(name = "is_ai_generated")
+    @Builder.Default
     private Boolean isAiGenerated = false;
 
     @Column(name = "ai_model", length = 50)
@@ -107,42 +111,54 @@ public class QuizzesEntity extends BaseEntity {
 
     // Analytics & Performance
     @Column(name = "view_count")
+    @Builder.Default
     private Integer viewCount = 0;
 
     @Column(name = "attempt_count")
+    @Builder.Default
     private Integer attemptCount = 0;
 
     @Column(name = "completion_count")
+    @Builder.Default
     private Integer completionCount = 0;
 
     @Column(name = "avg_score", precision = 5, scale = 2)
+    @Builder.Default
     private BigDecimal avgScore = BigDecimal.ZERO;
 
     @Column(name = "avg_completion_time")
+    @Builder.Default
     private Integer avgCompletionTime = 0; // in seconds
 
     @Column(name = "bookmark_count")
+    @Builder.Default
     private Integer bookmarkCount = 0;
 
     @Column(name = "share_count")
+    @Builder.Default
     private Integer shareCount = 0;
 
     // Status & Visibility
     @Enumerated(EnumType.STRING)
     @Column(name = "visibility", length = 20)
+    @Builder.Default
     private VisibilityType visibility = VisibilityType.PRIVATE;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)
+    @Builder.Default
     private QuizStatus status = QuizStatus.DRAFT;
 
     @Column(name = "is_featured")
+    @Builder.Default
     private Boolean isFeatured = false;
 
     @Column(name = "is_trending")
+    @Builder.Default
     private Boolean isTrending = false;
 
     @Column(name = "is_premium")
+    @Builder.Default
     private Boolean isPremium = false;
 
     // Timestamps

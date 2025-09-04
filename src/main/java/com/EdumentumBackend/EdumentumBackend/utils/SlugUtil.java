@@ -8,6 +8,8 @@ import java.util.regex.Pattern;
 public class SlugUtil {
     private static final Pattern NONLATIN = Pattern.compile("[^\\w-]");
     private static final Pattern WHITESPACE = Pattern.compile("[\\s]");
+    private static final Pattern SPECIAL_CHARS = Pattern.compile("[&+,;.']");
+    private static final Pattern MULTIPLE_DASHES = Pattern.compile("-+");
     private static final Random RANDOM = new Random();
 
     public static String toSlug(String input) {
@@ -15,9 +17,18 @@ public class SlugUtil {
             return "";
         }
 
-        String nowhitespace = WHITESPACE.matcher(input).replaceAll("-");
+        String withSpecialChars = SPECIAL_CHARS.matcher(input).replaceAll("-");
+
+        String nowhitespace = WHITESPACE.matcher(withSpecialChars).replaceAll("-");
+
         String normalized = Normalizer.normalize(nowhitespace, Normalizer.Form.NFD);
+
         String slug = NONLATIN.matcher(normalized).replaceAll("");
+
+        slug = MULTIPLE_DASHES.matcher(slug).replaceAll("-");
+
+        slug = slug.replaceAll("^-|-$", "");
+
         return slug.toLowerCase(Locale.ENGLISH);
     }
 
