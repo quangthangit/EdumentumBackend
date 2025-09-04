@@ -17,4 +17,5 @@ public class UserResponseDto {
     private Set<RoleEntity> roles;
     private Boolean isActive;
     private String imageUrl;
+    private String bannerUrl;
 }

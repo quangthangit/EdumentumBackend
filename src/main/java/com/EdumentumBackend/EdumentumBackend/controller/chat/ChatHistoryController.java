@@ -1,7 +1,7 @@
 package com.EdumentumBackend.EdumentumBackend.controller.chat;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.chat.ChatMessageDto;
-import com.EdumentumBackend.EdumentumBackend.service.ChatRedisService;
+import com.EdumentumBackend.EdumentumBackend.service.redis.ChatRedisService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;

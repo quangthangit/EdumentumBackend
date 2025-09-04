@@ -1,7 +1,7 @@
-package com.EdumentumBackend.EdumentumBackend.service.impl;
+package com.EdumentumBackend.EdumentumBackend.service.impl.redis;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.chat.ChatMessageDto;
-import com.EdumentumBackend.EdumentumBackend.service.ChatRedisService;
+import com.EdumentumBackend.EdumentumBackend.service.redis.ChatRedisService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -64,5 +64,8 @@ public class ChatMessageServiceImpl implements ChatRedisService {
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+    }
+
+    public static class StudyTimeServiceImpl {
     }
 }
