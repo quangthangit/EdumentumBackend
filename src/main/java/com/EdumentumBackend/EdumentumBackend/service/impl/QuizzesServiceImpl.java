@@ -5,6 +5,8 @@ import com.EdumentumBackend.EdumentumBackend.dtos.quiz.*;
 import com.EdumentumBackend.EdumentumBackend.entity.*;
 import com.EdumentumBackend.EdumentumBackend.enums.QuizStatus;
 import com.EdumentumBackend.EdumentumBackend.enums.VisibilityType;
+import com.EdumentumBackend.EdumentumBackend.event.AttendanceCreatedEvent;
+import com.EdumentumBackend.EdumentumBackend.event.QuizCreatedEvent;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizTagRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizzesRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
@@ -12,6 +14,7 @@ import com.EdumentumBackend.EdumentumBackend.service.QuizzesService;
 import com.EdumentumBackend.EdumentumBackend.service.TagsService;
 import com.EdumentumBackend.EdumentumBackend.utils.SlugUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageImpl;
@@ -31,7 +34,7 @@ public class QuizzesServiceImpl implements QuizzesService {
     private final UserRepository userRepository;
     private final TagsService tagsService;
     private final QuizTagRepository quizTagRepository;
-
+    private final ApplicationEventPublisher eventPublisher;
     private static final int MAX_SLUG_RETRIES = 5;
 
     private QuizResponseDto mapToResponseDto(QuizzesEntity entity) {
@@ -254,6 +257,7 @@ public class QuizzesServiceImpl implements QuizzesService {
 
 
         QuizzesEntity savedQuiz = quizzesRepository.save(quizEntity);
+        eventPublisher.publishEvent(new QuizCreatedEvent(this, userId));
 
         if (quizRequestDto.getTags() != null && !quizRequestDto.getTags().isEmpty()) {
             processQuizTags(savedQuiz, quizRequestDto.getTags());
