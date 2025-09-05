@@ -4,6 +4,7 @@ import com.EdumentumBackend.EdumentumBackend.controller.base.BaseQuizController;
 import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto;
 import com.EdumentumBackend.EdumentumBackend.service.QuizzesService;
 import com.EdumentumBackend.EdumentumBackend.service.UserService;
 import jakarta.validation.Valid;
@@ -45,13 +46,13 @@ public class StudentQuizzesController extends BaseQuizController {
     }
 
     @GetMapping
-    public ResponseEntity<List<QuizResponseDto>> getAllQuizzes() {
+    public ResponseEntity<List<QuizSummaryDto>> getAllQuizzes() {
         return doGetAllQuizzes();
     }
     @GetMapping("/page")
-    public ResponseEntity<Page<QuizResponseDto>> getAllQuizzesPaginated(
+    public ResponseEntity<Page<QuizSummaryDto>> getAllQuizzesPaginated(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "6") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String direction) {
         return doGetAllQuizzesPaginated(page, size, sortBy, direction);
@@ -99,15 +100,15 @@ public class StudentQuizzesController extends BaseQuizController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<QuizResponseDto>> searchQuizzes(@RequestParam String title) {
+    public ResponseEntity<List<QuizSummaryDto>> searchQuizzes(@RequestParam String title) {
         return doSearchQuizzes(title);
     }
 
     @GetMapping("/search/page")
-    public ResponseEntity<Page<QuizResponseDto>> searchQuizzesPaginated(
+    public ResponseEntity<Page<QuizSummaryDto>> searchQuizzesPaginated(
             @RequestParam String title,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "6") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String direction) {
         return doSearchQuizzesPaginated(title, page, size, sortBy, direction);

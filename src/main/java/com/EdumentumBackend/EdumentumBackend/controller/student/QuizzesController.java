@@ -3,6 +3,7 @@ package com.EdumentumBackend.EdumentumBackend.controller.student;
 import com.EdumentumBackend.EdumentumBackend.controller.base.BaseQuizController;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto;
 import com.EdumentumBackend.EdumentumBackend.service.QuizzesService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +36,7 @@ public class QuizzesController extends BaseQuizController {
     }
 
     @GetMapping
-    public ResponseEntity<List<QuizResponseDto>> getAllQuizzes() {
+    public ResponseEntity<List<QuizSummaryDto>> getAllQuizzes() {
         return doGetAllQuizzes();
     }
 
@@ -62,7 +63,7 @@ public class QuizzesController extends BaseQuizController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<QuizResponseDto>> searchQuizzes(@RequestParam String title) {
+    public ResponseEntity<List<QuizSummaryDto>> searchQuizzes(@RequestParam String title) {
         return doSearchQuizzes(title);
     }
 
