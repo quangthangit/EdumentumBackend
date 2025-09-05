@@ -48,8 +48,8 @@ public interface CourseRepository extends JpaRepository<CourseEntity, Long> {
                      @Param("status") CourseStatus status, Pageable pageable);
 
        // Find courses by tags
-       @Query("SELECT DISTINCT c FROM CourseEntity c JOIN c.tags t WHERE c.status = 'PUBLISHED' AND t.name IN :tagCourseNames")
-       Page<CourseEntity> findByTagNames(@Param("tagCourseNames") List<String> tagCourseNames, Pageable pageable);
+       @Query("SELECT DISTINCT c FROM CourseEntity c JOIN c.courseTags t WHERE c.status = 'PUBLISHED' AND t.name IN :tagNames")
+       Page<CourseEntity> findByTagNames(@Param("tagNames") List<String> tagNames, Pageable pageable);
 
        // Popular courses (most enrolled)
        @Query("SELECT c FROM CourseEntity c WHERE c.status = 'PUBLISHED' ORDER BY c.totalEnrollments DESC")

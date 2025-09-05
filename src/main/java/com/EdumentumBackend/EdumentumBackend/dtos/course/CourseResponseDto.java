@@ -23,7 +23,7 @@ public class CourseResponseDto {
     private String thumbnailUrl;
     private BigDecimal price;
     private TeacherSummaryResponseDto teacher;
-    private Set<TagCourseResponseDto> tags;
+    private Set<CourseTagResponseDto> courseTags;
     private Integer totalEnrollments;
     private Double averageRating;
     private LocalDateTime createdAt;

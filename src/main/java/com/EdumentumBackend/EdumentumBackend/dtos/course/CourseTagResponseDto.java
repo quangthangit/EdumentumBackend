@@ -6,9 +6,9 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TagCourseResponseDto {
+public class CourseTagResponseDto {
 
-    private Long tagCourseId;
+    private Long courseTagId;
     private String name;
     private String color;
 }

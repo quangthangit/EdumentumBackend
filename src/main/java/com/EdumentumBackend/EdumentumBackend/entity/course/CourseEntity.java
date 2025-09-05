@@ -59,13 +59,13 @@ public class CourseEntity extends BaseEntity {
     @JoinColumn(name = "teacher_id", nullable = false)
     private UserEntity teacher;
     
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
-        name = "course_tags",
+        name = "course_tags_mapping",
         joinColumns = @JoinColumn(name = "course_id"),
-        inverseJoinColumns = @JoinColumn(name = "tag_id")
+        inverseJoinColumns = @JoinColumn(name = "course_tag_id")
     )
-    private Set<TagCourseEntity> tags;
+    private Set<CourseTagEntity> courseTags;
     
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LessonEntity> lessons;

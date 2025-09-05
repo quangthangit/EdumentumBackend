@@ -2,6 +2,7 @@ package com.EdumentumBackend.EdumentumBackend.dtos.course;
 
 import com.EdumentumBackend.EdumentumBackend.enums.CourseLevel;
 import com.EdumentumBackend.EdumentumBackend.enums.CourseStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -39,5 +40,6 @@ public class CourseCreateRequestDto {
     @NotNull(message = "Course status is required")
     private CourseStatus courseStatus;
     
-    private Set<String> tagCourseNames;
+    @JsonProperty("tagNames")
+    private Set<String> courseTagNames;
 }

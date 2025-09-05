@@ -14,11 +14,11 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TagCourseEntity extends BaseEntity {
+public class CourseTagEntity extends BaseEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long tagCourseId;
+    private Long courseTagId;
     
     @NotBlank
     @Size(max = 50)
@@ -29,6 +29,6 @@ public class TagCourseEntity extends BaseEntity {
     @Column(nullable = true)
     private String color; // hex color code
     
-    @ManyToMany(mappedBy = "tags")
+    @ManyToMany(mappedBy = "courseTags")
     private Set<CourseEntity> courses;
 }

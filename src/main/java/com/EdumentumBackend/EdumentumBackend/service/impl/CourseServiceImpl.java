@@ -13,16 +13,16 @@ import com.EdumentumBackend.EdumentumBackend.dtos.course.RatingCreateRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.RatingResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.ResourceCreateRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.ResourceResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.TagCourseResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseTagResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.TeacherSummaryResponseDto;
 import com.EdumentumBackend.EdumentumBackend.entity.*;
 import com.EdumentumBackend.EdumentumBackend.entity.course.CourseEntity;
+import com.EdumentumBackend.EdumentumBackend.entity.course.CourseTagEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.course.EnrollmentEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.course.ExerciseEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.course.LessonEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.course.RatingEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.course.ResourceEntity;
-import com.EdumentumBackend.EdumentumBackend.entity.course.TagCourseEntity;
 import com.EdumentumBackend.EdumentumBackend.enums.*;
 import com.EdumentumBackend.EdumentumBackend.exception.*;
 import com.EdumentumBackend.EdumentumBackend.repository.*;
@@ -43,7 +43,7 @@ public class CourseServiceImpl implements CourseService {
 
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
-    private final TagCourseRepository TagCourseRepository;
+    private final CourseTagRepository TagCourseRepository;
     private final LessonRepository lessonRepository;
     private final ExerciseRepository exerciseRepository;
     private final ResourceRepository resourceRepository;
@@ -52,7 +52,7 @@ public class CourseServiceImpl implements CourseService {
 
     public CourseServiceImpl(CourseRepository courseRepository,
                            UserRepository userRepository,
-                           TagCourseRepository TagCourseRepository,
+                           CourseTagRepository TagCourseRepository,
                            LessonRepository lessonRepository,
                            ExerciseRepository exerciseRepository,
                            ResourceRepository resourceRepository,
@@ -76,7 +76,7 @@ public class CourseServiceImpl implements CourseService {
                 .orElseThrow(() -> new NotFoundException("Teacher not found with id: " + teacherId));
 
         // Handle tags
-        Set<TagCourseEntity> tags = processTags(request.getTagCourseNames());
+        Set<CourseTagEntity> tags = processTags(request.getCourseTagNames());
 
         CourseEntity course = CourseEntity.builder()
                 .title(request.getTitle())
@@ -87,7 +87,7 @@ public class CourseServiceImpl implements CourseService {
                 .price(request.getPrice() != null ? request.getPrice() : BigDecimal.ZERO)
                 .status(request.getCourseStatus() != null ? request.getCourseStatus() : CourseStatus.DRAFT)
                 .teacher(teacher)
-                .tags(tags)
+                .courseTags(tags)
                 .build();
 
         CourseEntity savedCourse = courseRepository.save(course);
@@ -121,7 +121,7 @@ public class CourseServiceImpl implements CourseService {
             course.setPrice(request.getPrice());
         }
         if (request.getTagCourseNames() != null) {
-            course.setTags(processTags(request.getTagCourseNames()));
+            course.setCourseTags(processTags(request.getTagCourseNames()));
         }
 
         CourseEntity updatedCourse = courseRepository.save(course);
@@ -684,7 +684,7 @@ public class CourseServiceImpl implements CourseService {
         return course;
     }
 
-    private Set<TagCourseEntity> processTags(Set<String> tagCourseNames) {
+    private Set<CourseTagEntity> processTags(Set<String> tagCourseNames) {
         if (tagCourseNames == null || tagCourseNames.isEmpty()) {
             return Set.of();
         }
@@ -695,7 +695,7 @@ public class CourseServiceImpl implements CourseService {
                     String trimmedName = name.trim();
                     return TagCourseRepository.findByName(trimmedName)
                             .orElseGet(() -> {
-                                TagCourseEntity newTag = TagCourseEntity.builder()
+                                CourseTagEntity newTag = CourseTagEntity.builder()
                                         .name(trimmedName)
                                         .build();
                                 return TagCourseRepository.save(newTag);
@@ -725,7 +725,7 @@ public class CourseServiceImpl implements CourseService {
                 .thumbnailUrl(entity.getThumbnailUrl())
                 .price(entity.getPrice())
                 .teacher(convertToTeacherSummaryResponse(entity.getTeacher()))
-                .tags(entity.getTags().stream()
+                .courseTags(entity.getCourseTags().stream()
                         .map(this::convertToTagResponse)
                         .collect(Collectors.toSet()))
                 .totalEnrollments(entity.getTotalEnrollments())
@@ -744,9 +744,9 @@ public class CourseServiceImpl implements CourseService {
                 .build();
     }
 
-    private TagCourseResponseDto convertToTagResponse(TagCourseEntity entity) {
-        return TagCourseResponseDto.builder()
-                .tagCourseId(entity.getTagCourseId())
+    private CourseTagResponseDto convertToTagResponse(CourseTagEntity entity) {
+        return CourseTagResponseDto.builder()
+                .courseTagId(entity.getCourseTagId())
                 .name(entity.getName())
                 .color(entity.getColor())
                 .build();
