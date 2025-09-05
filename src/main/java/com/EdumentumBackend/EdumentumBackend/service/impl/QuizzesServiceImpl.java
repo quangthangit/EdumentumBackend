@@ -2,9 +2,9 @@ package com.EdumentumBackend.EdumentumBackend.service.impl;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.*;
+import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizTagLinkDto;
 import com.EdumentumBackend.EdumentumBackend.entity.*;
 import com.EdumentumBackend.EdumentumBackend.enums.QuizStatus;
-import com.EdumentumBackend.EdumentumBackend.enums.VisibilityType;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizTagRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizzesRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
@@ -14,7 +14,6 @@ import com.EdumentumBackend.EdumentumBackend.utils.SlugUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +34,7 @@ public class QuizzesServiceImpl implements QuizzesService {
     private static final int MAX_SLUG_RETRIES = 5;
 
     private QuizResponseDto mapToResponseDto(QuizzesEntity entity) {
-        List<TagResponseDto> tagDtos = entity.getQuizTags() == null ?
+        List<TagResponseDto> tags = entity.getQuizTags() == null ?
                 Collections.emptyList() :
                 entity.getQuizTags().stream()
                         .map(quizTag -> TagResponseDto.builder()
@@ -80,7 +79,7 @@ public class QuizzesServiceImpl implements QuizzesService {
                 .archivedAt(entity.getArchivedAt())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
-                .tags(tagDtos);
+                .tags(tags);
         builder.keywords(entity.getKeywords() == null ?
                 Collections.emptyList() : Arrays.asList(entity.getKeywords()));
 
@@ -92,7 +91,7 @@ public class QuizzesServiceImpl implements QuizzesService {
         // Add user if exists
         if (entity.getUser() != null) {
             UserResponseDto userDto = UserResponseDto.builder()
-                    .userId(entity.getUser().getUserId()) 
+                    .userId(entity.getUser().getUserId())
                     .username(entity.getUser().getUsername())
                     .email(entity.getUser().getEmail())
                     .isActive(entity.getUser().getIsActive())
@@ -105,63 +104,15 @@ public class QuizzesServiceImpl implements QuizzesService {
         return builder.build();
     }
 
-    private QuizSummaryDto mapToSummaryDto(QuizzesEntity entity) {
-        List<TagResponseDto> tagDtos = entity.getQuizTags() == null ?
-                Collections.emptyList() :
-                entity.getQuizTags().stream()
-                        .map(quizTag -> TagResponseDto.builder()
-                                .id(quizTag.getTag().getId())
-                                .name(quizTag.getTag().getName())
-                                .description(quizTag.getTag().getDescription())
-                                .build())
-                        .collect(Collectors.toList());
-
-        QuizSummaryDto.QuizSummaryDtoBuilder builder = QuizSummaryDto.builder()
-                .id(entity.getId())
-                .title(entity.getTitle())
-                .slug(entity.getSlug())
-                .description(entity.getDescription())
-                .thumbnailUrl(entity.getThumbnailUrl())
-                .visibility(entity.getVisibility())
-                .difficulty(entity.getDifficulty())
-                .sourceType(entity.getSourceType())
-                .isAiGenerated(entity.getIsAiGenerated())
-                .aiModel(entity.getAiModel())
-                .estimatedTime(entity.getEstimatedTime())
-                .passingScore(entity.getPassingScore())
-                .maxAttempts(entity.getMaxAttempts())
-                .totalQuestions(entity.getTotalQuestions())
-                .totalPoints(entity.getTotalPoints())
-                .viewCount(entity.getViewCount())
-                .attemptCount(entity.getAttemptCount())
-                .completionCount(entity.getCompletionCount())
-                .avgScore(entity.getAvgScore())
-                .avgCompletionTime(entity.getAvgCompletionTime())
-                .bookmarkCount(entity.getBookmarkCount())
-                .shareCount(entity.getShareCount())
-                .isFeatured(entity.getIsFeatured())
-                .isTrending(entity.getIsTrending())
-                .isPremium(entity.getIsPremium())
-                .status(entity.getStatus().name())
-                .metaTitle(entity.getMetaTitle())
-                .metaDescription(entity.getMetaDescription())
-                .canonicalUrl(entity.getCanonicalUrl())
-                .publishedAt(entity.getPublishedAt())
-                .archivedAt(entity.getArchivedAt())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .tags(tagDtos);
-        builder.keywords(entity.getKeywords() == null ?
-                Collections.emptyList() : Arrays.asList(entity.getKeywords()));
-
-        return builder.build();
-    }
-
     @Override
     @Transactional(readOnly = true)
     public List<QuizSummaryDto> getAllQuizzes(Long userId) {
-        // Using direct DTO projection instead of fetching entities
-        return quizzesRepository.findSummariesByUserId(userId);
+
+        List<QuizSummaryDto> quizzes = quizzesRepository.findSummariesByUserId(userId);
+
+        enrichQuizzesWithTags(quizzes);
+
+        return quizzes;
     }
 
     @Override
@@ -184,15 +135,7 @@ public class QuizzesServiceImpl implements QuizzesService {
     @Override
     @Transactional
     public QuizResponseDto updateQuiz(Long quizId, QuizRequestDto quizRequestDto, Long userId) {
-        Optional<QuizzesEntity> quizOpt = quizzesRepository.findById(quizId);
-        if (quizOpt.isEmpty()) {
-            throw new RuntimeException("Quiz not found with id: " + quizId);
-        }
-
-        QuizzesEntity quiz = quizOpt.get();
-        if (!quiz.getUserId().equals(userId)) {
-            throw new RuntimeException("Access denied to update quiz with id: " + quizId);
-        }
+        QuizzesEntity quiz = findQuizAndVerifyUserAccess(quizId, userId);
 
         // Update basic fields
         quiz.setTitle(quizRequestDto.getTitle());
@@ -236,18 +179,16 @@ public class QuizzesServiceImpl implements QuizzesService {
 
     @Override
     public boolean deleteQuiz(Long quizId, Long userId) {
-        Optional<QuizzesEntity> quizOpt = quizzesRepository.findById(quizId);
-        if (quizOpt.isEmpty()) {
-            return false;
+        try {
+//            QuizzesEntity quiz = findQuizAndVerifyUserAccess(quizId, userId);
+            quizzesRepository.deleteById(quizId);
+            return true;
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("Quiz not found")) {
+                return false;
+            }
+            throw e;
         }
-
-        QuizzesEntity quiz = quizOpt.get();
-        if (!quiz.getUserId().equals(userId)) {
-            throw new RuntimeException("Access denied to delete quiz with id: " + quizId);
-        }
-
-        quizzesRepository.deleteById(quizId);
-        return true;
     }
 
 
@@ -259,7 +200,7 @@ public class QuizzesServiceImpl implements QuizzesService {
         List<QuizzesEntity> quizzes = quizzesRepository.findByTitleContaining(title);
         return quizzes.stream()
                 .filter(quiz -> quiz.getUserId().equals(userId) ||
-                               quiz.getVisibility() == com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC)
+                        quiz.getVisibility() == com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC)
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
@@ -296,7 +237,7 @@ public class QuizzesServiceImpl implements QuizzesService {
                 .metaDescription(quizRequestDto.getMetaDescription())
                 .canonicalUrl(quizRequestDto.getCanonicalUrl())
                 .keywords(quizRequestDto.getKeywords() != null ?
-                         quizRequestDto.getKeywords().toArray(new String[0]) : null)
+                        quizRequestDto.getKeywords().toArray(new String[0]) : null)
                 .visibility(quizRequestDto.getVisibility())
                 .status(QuizStatus.DRAFT)
                 .isPremium(quizRequestDto.getIsPremium())
@@ -366,38 +307,35 @@ public class QuizzesServiceImpl implements QuizzesService {
     }
 
     /**
-     * Calculate total questions from quiz data
+     * Extract questions list from quiz data safely
+     * @param quizData The quiz data map
+     * @return List of questions or empty list if not found/error
      */
-    private Integer calculateTotalQuestions(Map<String, Object> quizData) {
-        // Default implementation, adjust according to your actual quiz data structure
+    private List<?> extractQuestionsFromQuizData(Map<String, Object> quizData) {
         if (quizData == null || !quizData.containsKey("questions")) {
-            return 0;
+            return Collections.emptyList();
         }
 
         try {
-            List<?> questions = (List<?>) quizData.get("questions");
-            return questions.size();
+            return (List<?>) quizData.get("questions");
         } catch (Exception e) {
-            return 0;
+            return Collections.emptyList();
         }
+    }
+
+    /**
+     * Calculate total questions from quiz data
+     */
+    private Integer calculateTotalQuestions(Map<String, Object> quizData) {
+        return extractQuestionsFromQuizData(quizData).size();
     }
 
     /**
      * Calculate total points from quiz data
      */
     private Integer calculateTotalPoints(Map<String, Object> quizData) {
-        // Default implementation, adjust according to your actual quiz data structure
-        if (quizData == null || !quizData.containsKey("questions")) {
-            return 0;
-        }
-
-        try {
-            List<?> questions = (List<?>) quizData.get("questions");
-            // Assuming each question is worth 1 point
-            return questions.size();
-        } catch (Exception e) {
-            return 0;
-        }
+        // Assuming each question is worth 1 point
+        return extractQuestionsFromQuizData(quizData).size();
     }
 
 
@@ -485,8 +423,7 @@ public class QuizzesServiceImpl implements QuizzesService {
     private void applyArrayFieldUpdates(QuizzesEntity quiz, Map<String, Object> updates) {
         if (updates.containsKey("keywords")) {
             Object keywordsObj = updates.get("keywords");
-            if (keywordsObj instanceof List) {
-                List<?> keywordsList = (List<?>) keywordsObj;
+            if (keywordsObj instanceof List<?> keywordsList) {
                 String[] keywordsArray = keywordsList.stream()
                         .map(Object::toString)
                         .toArray(String[]::new);
@@ -647,14 +584,58 @@ public class QuizzesServiceImpl implements QuizzesService {
     @Override
     @Transactional(readOnly = true)
     public Page<QuizSummaryDto> getAllQuizzesPaginated(Long userId, Pageable pageable) {
-        // Using direct DTO projection for paginated results
-        return quizzesRepository.findSummariesByUserId(userId, pageable);
+        Page<QuizSummaryDto> page = quizzesRepository.findSummariesByUserId(userId, pageable);
+        enrichQuizzesWithTags(page.getContent());
+        return page;
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<QuizSummaryDto> searchQuizzesPaginated(String title, Long userId, Pageable pageable) {
         // Using direct DTO projection for search with pagination
-        return quizzesRepository.findSummariesByTitleAndUserOrPublic(title, userId, pageable);
+        Page<QuizSummaryDto> page = quizzesRepository.findSummariesByTitleAndUserOrPublic(title, userId, pageable);
+        enrichQuizzesWithTags(page.getContent());
+        return page;
+    }
+
+    /**
+     * Enriches quiz summary DTOs with their associated tags
+     * @param quizzes List of quiz summary DTOs to enrich
+     */
+    private void enrichQuizzesWithTags(List<QuizSummaryDto> quizzes) {
+        List<Long> ids = quizzes.stream().map(QuizSummaryDto::getId).toList();
+        if (!ids.isEmpty()) {
+            List<QuizTagLinkDto> rows = quizTagRepository.findTagsByQuizIds(ids);
+            Map<Long, List<TagResponseDto>> tagMap = rows.stream()
+                .collect(Collectors.groupingBy(
+                    QuizTagLinkDto::getQuizId,
+                    Collectors.mapping(r ->
+                        TagResponseDto.builder()
+                            .id(r.getTagId())
+                            .name(r.getTagName())
+                            .description(r.getTagDescription())
+                            .build(),
+                        Collectors.toList()
+                    )
+                ));
+
+            quizzes.forEach(dto ->
+                dto.setTags(tagMap.getOrDefault(dto.getId(), List.of()))
+            );
+        }
+    }
+    
+    private QuizzesEntity findQuizAndVerifyUserAccess(Long quizId, Long userId) {
+        Optional<QuizzesEntity> quizOpt = quizzesRepository.findById(quizId);
+        if (quizOpt.isEmpty()) {
+            throw new RuntimeException("Quiz not found with id: " + quizId);
+        }
+
+        QuizzesEntity quiz = quizOpt.get();
+        if (!quiz.getUserId().equals(userId)) {
+            throw new RuntimeException("Access denied to quiz with id: " + quizId);
+        }
+        
+        return quiz;
     }
 }

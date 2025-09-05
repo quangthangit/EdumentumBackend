@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.repository;
 
+import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizTagLinkDto;
 import com.EdumentumBackend.EdumentumBackend.entity.QuizTagEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.QuizTagId;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,4 +19,14 @@ public interface QuizTagRepository extends JpaRepository<QuizTagEntity, QuizTagI
     @Modifying
     @Query("DELETE FROM QuizTagEntity qt WHERE qt.quiz.id = :quizId AND qt.tag.id IN :tagIds")
     void deleteByQuizIdAndTagIdIn(Long quizId, Set<Long> tagIds);
+
+    @Query("""
+      select new com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizTagLinkDto(
+        qt.quiz.id, t.id, t.name, t.description
+      )
+      from QuizTagEntity qt
+      join qt.tag t
+      where qt.quiz.id in :quizIds
+    """)
+    List<QuizTagLinkDto> findTagsByQuizIds(List<Long> quizIds);
 }

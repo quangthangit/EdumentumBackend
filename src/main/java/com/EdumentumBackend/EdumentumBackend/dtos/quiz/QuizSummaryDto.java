@@ -8,8 +8,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 @Getter
 @Setter
 @NoArgsConstructor
@@ -61,7 +61,8 @@ public class QuizSummaryDto {
     private Boolean isPremium;
 
     // Tags
-    private List<TagResponseDto> tags;
+    @Builder.Default
+    private List<TagResponseDto> tags = new ArrayList<>();
 
     private LocalDateTime publishedAt;
     private LocalDateTime archivedAt;
