@@ -67,7 +67,7 @@ public class SlugUtil {
      * This method ensures a non-null, unique slug is always returned
      * @param title The title to convert to a slug
      * @param existsChecker Function to check if a slug already exists
-     * @param maxRetries Maximum number of retries before using fallback mechanism
+     * @param maxRetries Maximum number of retries before using fallback mechanism  
      * @return A guaranteed unique slug
      */
     public static String generateUniqueSlugWithRetry(String title, Function<String, Boolean> existsChecker, int maxRetries) {
