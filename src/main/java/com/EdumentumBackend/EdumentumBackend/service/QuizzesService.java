@@ -25,5 +25,5 @@ public interface QuizzesService {
 
     boolean deleteQuiz(Long quizId, Long userId);
 
-    List<QuizResponseDto> searchQuizzes(String title, Long userId);
+    List<QuizSummaryDto> searchQuizzes(String title, Long userId);
 }

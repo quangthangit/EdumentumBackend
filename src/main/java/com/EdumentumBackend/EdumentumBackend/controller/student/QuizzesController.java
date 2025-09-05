@@ -63,7 +63,7 @@ public class QuizzesController extends BaseQuizController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<QuizResponseDto>> searchQuizzes(@RequestParam String title) {
+    public ResponseEntity<List<QuizSummaryDto>> searchQuizzes(@RequestParam String title) {
         return doSearchQuizzes(title);
     }
 

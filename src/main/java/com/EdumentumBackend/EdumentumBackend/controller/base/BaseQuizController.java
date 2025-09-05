@@ -246,10 +246,10 @@ public abstract class BaseQuizController {
     /**
      * Search quizzes by title
      */
-    protected ResponseEntity<List<QuizResponseDto>> doSearchQuizzes(String title) {
+    protected ResponseEntity<List<QuizSummaryDto>> doSearchQuizzes(String title) {
         try {
             Long userId = getCurrentUserId();
-            List<QuizResponseDto> quizzes = quizzesService.searchQuizzes(title, userId);
+            List<QuizSummaryDto> quizzes = quizzesService.searchQuizzes(title, userId);
             return ResponseEntity.ok(quizzes);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
