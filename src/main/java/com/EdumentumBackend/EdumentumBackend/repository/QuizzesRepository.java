@@ -48,7 +48,7 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
     QuizzesEntity findBySlugWithTags(String slug);
 
     @Query("""
-      SELECT new QuizSummaryDto(
+      SELECT new  com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto(
         q.id, q.title, q.slug, q.description, q.thumbnailUrl,
         q.visibility, q.difficulty, q.totalQuestions, q.totalPoints,
         q.createdAt, q.updatedAt
@@ -60,7 +60,7 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
     List<QuizSummaryDto> findSummariesByUserId(Long userId);
 
     @Query("""
-      SELECT new QuizSummaryDto(
+      SELECT new  com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto(
         q.id, q.title, q.slug, q.description, q.thumbnailUrl,
         q.visibility, q.difficulty, q.totalQuestions, q.totalPoints,
         q.createdAt, q.updatedAt
@@ -71,14 +71,14 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
     Page<QuizSummaryDto> findSummariesByUserId(Long userId, Pageable pageable);
 
     @Query("""
-      SELECT new QuizSummaryDto(
+      SELECT new  com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto(
         q.id, q.title, q.slug, q.description, q.thumbnailUrl,
         q.visibility, q.difficulty, q.totalQuestions, q.totalPoints,
         q.createdAt, q.updatedAt
       )
       FROM QuizzesEntity q
       WHERE LOWER(q.title) LIKE LOWER(CONCAT('%', :title, '%'))
-        AND (q.userId = :userId OR q.visibility = VisibilityType.PUBLIC)
+        AND (q.userId = :userId OR q.visibility = com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC)
     """)
     Page<QuizSummaryDto> findSummariesByTitleAndUserOrPublic(String title, Long userId, Pageable pageable);
 }
