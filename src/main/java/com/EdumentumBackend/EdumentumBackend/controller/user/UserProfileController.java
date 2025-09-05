@@ -54,7 +54,7 @@ public class UserProfileController {
     }
 
     @PostMapping()
-    public ResponseEntity<?> getGroupById(
+    public ResponseEntity<?> updateProfile(
             @RequestParam(value = "imageUrl", required = false) MultipartFile imageUrl,
             @RequestParam(value = "bannerUrl", required = false) MultipartFile bannerUrl,
             @RequestParam(value = "username", required = false) String username
