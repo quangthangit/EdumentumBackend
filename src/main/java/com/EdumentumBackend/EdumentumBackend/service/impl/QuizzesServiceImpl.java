@@ -5,7 +5,6 @@ import com.EdumentumBackend.EdumentumBackend.dtos.quiz.*;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizTagLinkDto;
 import com.EdumentumBackend.EdumentumBackend.entity.*;
 import com.EdumentumBackend.EdumentumBackend.enums.QuizStatus;
-import com.EdumentumBackend.EdumentumBackend.enums.VisibilityType;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizTagRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizzesRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
@@ -31,8 +30,6 @@ public class QuizzesServiceImpl implements QuizzesService {
     private final UserRepository userRepository;
     private final TagsService tagsService;
     private final QuizTagRepository quizTagRepository;
-
-    private static final int MAX_SLUG_RETRIES = 5;
 
     private QuizResponseDto mapToResponseDto(QuizzesEntity entity) {
         List<TagResponseDto> tags = entity.getQuizTags() == null ?
@@ -104,57 +101,57 @@ public class QuizzesServiceImpl implements QuizzesService {
 
         return builder.build();
     }
-    private QuizSummaryDto mapToSummaryDto(QuizzesEntity entity) {
-        List<TagResponseDto> tags = entity.getQuizTags() == null ?
-                Collections.emptyList() :
-                entity.getQuizTags().stream()
-                        .map(quizTag -> TagResponseDto.builder()
-                                .id(quizTag.getTag().getId())
-                                .name(quizTag.getTag().getName())
-                                .description(quizTag.getTag().getDescription())
-                                .build())
-                        .collect(Collectors.toList());
-
-        QuizSummaryDto.QuizSummaryDtoBuilder builder = QuizSummaryDto.builder()
-                .id(entity.getId())
-                .title(entity.getTitle())
-                .slug(entity.getSlug())
-                .description(entity.getDescription())
-                .thumbnailUrl(entity.getThumbnailUrl())
-                .visibility(entity.getVisibility())
-                .difficulty(entity.getDifficulty())
-                .sourceType(entity.getSourceType())
-                .isAiGenerated(entity.getIsAiGenerated())
-                .aiModel(entity.getAiModel())
-                .estimatedTime(entity.getEstimatedTime())
-                .passingScore(entity.getPassingScore())
-                .maxAttempts(entity.getMaxAttempts())
-                .totalQuestions(entity.getTotalQuestions())
-                .totalPoints(entity.getTotalPoints())
-                .viewCount(entity.getViewCount())
-                .attemptCount(entity.getAttemptCount())
-                .completionCount(entity.getCompletionCount())
-                .avgScore(entity.getAvgScore())
-                .avgCompletionTime(entity.getAvgCompletionTime())
-                .bookmarkCount(entity.getBookmarkCount())
-                .shareCount(entity.getShareCount())
-                .isFeatured(entity.getIsFeatured())
-                .isTrending(entity.getIsTrending())
-                .isPremium(entity.getIsPremium())
-                .status(entity.getStatus().name())
-                .metaTitle(entity.getMetaTitle())
-                .metaDescription(entity.getMetaDescription())
-                .canonicalUrl(entity.getCanonicalUrl())
-                .publishedAt(entity.getPublishedAt())
-                .archivedAt(entity.getArchivedAt())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .tags(tags);
-        builder.keywords(entity.getKeywords() == null ?
-                Collections.emptyList() : Arrays.asList(entity.getKeywords()));
-
-        return builder.build();
-    }
+//    private QuizSummaryDto mapToSummaryDto(QuizzesEntity entity) {
+//        List<TagResponseDto> tags = entity.getQuizTags() == null ?
+//                Collections.emptyList() :
+//                entity.getQuizTags().stream()
+//                        .map(quizTag -> TagResponseDto.builder()
+//                                .id(quizTag.getTag().getId())
+//                                .name(quizTag.getTag().getName())
+//                                .description(quizTag.getTag().getDescription())
+//                                .build())
+//                        .collect(Collectors.toList());
+//
+//        QuizSummaryDto.QuizSummaryDtoBuilder builder = QuizSummaryDto.builder()
+//                .id(entity.getId())
+//                .title(entity.getTitle())
+//                .slug(entity.getSlug())
+//                .description(entity.getDescription())
+//                .thumbnailUrl(entity.getThumbnailUrl())
+//                .visibility(entity.getVisibility())
+//                .difficulty(entity.getDifficulty())
+//                .sourceType(entity.getSourceType())
+//                .isAiGenerated(entity.getIsAiGenerated())
+//                .aiModel(entity.getAiModel())
+//                .estimatedTime(entity.getEstimatedTime())
+//                .passingScore(entity.getPassingScore())
+//                .maxAttempts(entity.getMaxAttempts())
+//                .totalQuestions(entity.getTotalQuestions())
+//                .totalPoints(entity.getTotalPoints())
+//                .viewCount(entity.getViewCount())
+//                .attemptCount(entity.getAttemptCount())
+//                .completionCount(entity.getCompletionCount())
+//                .avgScore(entity.getAvgScore())
+//                .avgCompletionTime(entity.getAvgCompletionTime())
+//                .bookmarkCount(entity.getBookmarkCount())
+//                .shareCount(entity.getShareCount())
+//                .isFeatured(entity.getIsFeatured())
+//                .isTrending(entity.getIsTrending())
+//                .isPremium(entity.getIsPremium())
+//                .status(entity.getStatus().name())
+//                .metaTitle(entity.getMetaTitle())
+//                .metaDescription(entity.getMetaDescription())
+//                .canonicalUrl(entity.getCanonicalUrl())
+//                .publishedAt(entity.getPublishedAt())
+//                .archivedAt(entity.getArchivedAt())
+//                .createdAt(entity.getCreatedAt())
+//                .updatedAt(entity.getUpdatedAt())
+//                .tags(tags);
+//        builder.keywords(entity.getKeywords() == null ?
+//                Collections.emptyList() : Arrays.asList(entity.getKeywords()));
+//
+//        return builder.build();
+//    }
     @Override
     @Transactional(readOnly = true)
     public List<QuizSummaryDto> getAllQuizzes(Long userId) {
@@ -188,7 +185,6 @@ public class QuizzesServiceImpl implements QuizzesService {
     public QuizResponseDto updateQuiz(Long quizId, QuizRequestDto quizRequestDto, Long userId) {
         QuizzesEntity quiz = findQuizAndVerifyUserAccess(quizId, userId);
 
-        // Update basic fields
         quiz.setTitle(quizRequestDto.getTitle());
         quiz.setDescription(quizRequestDto.getDescription());
         quiz.setVisibility(quizRequestDto.getVisibility());
@@ -273,7 +269,7 @@ public class QuizzesServiceImpl implements QuizzesService {
             throw new RuntimeException("User not found with id: " + userId);
         }
 
-        String uniqueSlug = SlugUtil.generateUniqueSlugWithRetry(
+        String uniqueSlug = SlugUtil.toSlug(
                 quizRequestDto.getTitle()
         );
         QuizzesEntity quizEntity = QuizzesEntity.builder()
@@ -317,26 +313,7 @@ public class QuizzesServiceImpl implements QuizzesService {
         return mapToResponseDto(savedQuiz);
     }
 
-    private String generateUniqueSlug(String title) {
-        if (title == null || title.trim().isEmpty()) {
-            title = "quiz-" + System.currentTimeMillis(); // Fallback for empty titles
-        }
 
-        String slug = SlugUtil.toUniqueSlug(title);
-
-        if (!quizzesRepository.existsBySlug(slug)) {
-            return slug;
-        }
-
-        for (int i = 0; i < MAX_SLUG_RETRIES; i++) {
-            slug = SlugUtil.generateNewUniqueSlug(title);
-            if (!quizzesRepository.existsBySlug(slug)) {
-                return slug;
-            }
-        }
-
-        return SlugUtil.generateFallbackSlug(title);
-    }
 
 
     private void processQuizTags(QuizzesEntity quiz, List<TagRequestDto> tagRequests) {
@@ -441,9 +418,10 @@ public class QuizzesServiceImpl implements QuizzesService {
      */
     private void applyBasicFieldUpdates(QuizzesEntity quiz, Map<String, Object> updates) {
         // Handle title update (with slug generation)
+
         applyString(updates, "title", title -> {
             quiz.setTitle(title);
-            quiz.setSlug(generateUniqueSlug(title));
+            quiz.setSlug(SlugUtil.toSlug(title));
         });
 
         // Handle basic string fields
