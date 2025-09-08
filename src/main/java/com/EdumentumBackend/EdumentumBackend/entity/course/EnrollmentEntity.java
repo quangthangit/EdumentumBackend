@@ -3,9 +3,9 @@ package com.EdumentumBackend.EdumentumBackend.entity.course;
 import com.EdumentumBackend.EdumentumBackend.entity.BaseEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
 import com.EdumentumBackend.EdumentumBackend.enums.EnrollmentStatus;
+import org.hibernate.annotations.Formula;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -51,9 +51,8 @@ public class EnrollmentEntity extends BaseEntity {
     @Builder.Default
     private Integer completedExercises = 0;
     
-    @DecimalMin("0.0")
-    @DecimalMax("100.0")
-    @Column(nullable = false, precision = 5, scale = 2)
-    @Builder.Default
-    private BigDecimal progressPercentage = BigDecimal.ZERO;
+    @Formula("CASE WHEN (SELECT COUNT(*) FROM lessons l WHERE l.course_id = course_id) > 0 " +
+            "THEN (completed_lessons * 100.0) / (SELECT COUNT(*) FROM lessons l WHERE l.course_id = course_id) " +
+            "ELSE 0 END")
+    private Double progressPercentage;
 }

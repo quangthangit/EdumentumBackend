@@ -351,7 +351,7 @@ public class CourseServiceImpl implements CourseService {
                     (enrollment.getCompletedLessons() + enrollment.getCompletedExercises()) * 100.0 
                     / (totalLessons + totalExercises)
             ).setScale(2, RoundingMode.HALF_UP);
-            enrollment.setProgressPercentage(progress);
+            enrollment.setProgressPercentage(progress.doubleValue());
         }
 
         EnrollmentEntity updatedEnrollment = enrollmentRepository.save(enrollment);
