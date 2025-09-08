@@ -91,18 +91,64 @@ public class FlashcardServiceImpl implements FlashcardService {
     }
 
     @Override
-    public PaginatedResponse<FlashcardSetResponseDto> getAllFlashcardSets(Long userId, Pageable pageable) {
+    public PaginatedResponse<FlashcardSetResponseDto> getAllFlashcardSets(Long userId, Pageable pageable, String search, String sortBy) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
 
-        Page<FlashcardSetEntity> flashcardSetsPage = flashcardSetRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+        Page<FlashcardSetEntity> flashcardSetsPage;
+
+        boolean sortByTitle = "title".equalsIgnoreCase(sortBy);
+
+        if (search != null && !search.trim().isEmpty()) {
+            // Tìm kiếm theo title only
+            if (sortByTitle) {
+                flashcardSetsPage = flashcardSetRepository.findByUserAndTitleContainingIgnoreCaseOrderByTitleAsc(
+                    user, search.trim(), pageable);
+            } else {
+                // Mặc định hoặc sortBy=recent -> sort theo createdAt desc
+                flashcardSetsPage = flashcardSetRepository.findByUserAndTitleContainingIgnoreCaseOrderByCreatedAtDesc(
+                    user, search.trim(), pageable);
+            }
+        } else {
+            // Không có search
+            if (sortByTitle) {
+                flashcardSetsPage = flashcardSetRepository.findByUserOrderByTitleAsc(user, pageable);
+            } else {
+                // Mặc định hoặc sortBy=recent -> sort theo createdAt desc
+                flashcardSetsPage = flashcardSetRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+            }
+        }
+
         Page<FlashcardSetResponseDto> responsePage = flashcardSetsPage.map(this::convertToResponseDto);
         return PaginatedResponse.fromPage(responsePage);
     }
 
     @Override
-    public PaginatedResponse<FlashcardSetResponseDto> getPublicFlashcardSets(Pageable pageable) {
-        Page<FlashcardSetEntity> publicFlashcardSetsPage = flashcardSetRepository.findByIsPublicTrueOrderByCreatedAtDesc(pageable);
+    public PaginatedResponse<FlashcardSetResponseDto> getPublicFlashcardSets(Pageable pageable, String search, String sortBy) {
+        Page<FlashcardSetEntity> publicFlashcardSetsPage;
+
+        boolean sortByTitle = "title".equalsIgnoreCase(sortBy);
+
+        if (search != null && !search.trim().isEmpty()) {
+            // Tìm kiếm flashcard sets công khai theo title only
+            if (sortByTitle) {
+                publicFlashcardSetsPage = flashcardSetRepository.findByIsPublicTrueAndTitleContainingIgnoreCaseOrderByTitleAsc(
+                    search.trim(), pageable);
+            } else {
+                // Mặc định hoặc sortBy=recent -> sort theo createdAt desc
+                publicFlashcardSetsPage = flashcardSetRepository.findByIsPublicTrueAndTitleContainingIgnoreCaseOrderByCreatedAtDesc(
+                    search.trim(), pageable);
+            }
+        } else {
+            // Không có search
+            if (sortByTitle) {
+                publicFlashcardSetsPage = flashcardSetRepository.findByIsPublicTrueOrderByTitleAsc(pageable);
+            } else {
+                // Mặc định hoặc sortBy=recent -> sort theo createdAt desc
+                publicFlashcardSetsPage = flashcardSetRepository.findByIsPublicTrueOrderByCreatedAtDesc(pageable);
+            }
+        }
+
         Page<FlashcardSetResponseDto> responsePage = publicFlashcardSetsPage.map(this::convertToResponseDto);
         return PaginatedResponse.fromPage(responsePage);
     }
