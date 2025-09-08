@@ -2,6 +2,7 @@ package com.EdumentumBackend.EdumentumBackend.controller.base;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto;
 import com.EdumentumBackend.EdumentumBackend.service.QuizzesService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -45,10 +46,10 @@ public abstract class BaseQuizController {
     /**
      * Get all quizzes for the current user
      */
-    protected ResponseEntity<List<QuizResponseDto>> doGetAllQuizzes() {
+    protected ResponseEntity<List<QuizSummaryDto>> doGetAllQuizzes() {
         try {
             Long userId = getCurrentUserId();
-            List<QuizResponseDto> quizzes = quizzesService.getAllQuizzes(userId);
+            List<QuizSummaryDto> quizzes = quizzesService.getAllQuizzes(userId);
             return ResponseEntity.ok(quizzes);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -63,7 +64,7 @@ public abstract class BaseQuizController {
      * @param direction Sort direction (ASC or DESC)
      * @return Paginated list of quizzes
      */
-    protected ResponseEntity<Page<QuizResponseDto>> doGetAllQuizzesPaginated(
+    protected ResponseEntity<Page<QuizSummaryDto>> doGetAllQuizzesPaginated(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -72,7 +73,7 @@ public abstract class BaseQuizController {
             Long userId = getCurrentUserId();
             Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
             Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-            Page<QuizResponseDto> quizzes = quizzesService.getAllQuizzesPaginated(userId, pageable);
+            Page<QuizSummaryDto> quizzes = quizzesService.getAllQuizzesPaginated(userId, pageable);
             return ResponseEntity.ok(quizzes);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -88,7 +89,7 @@ public abstract class BaseQuizController {
      * @param direction Sort direction (ASC or DESC)
      * @return Paginated list of quizzes matching the search term
      */
-    protected ResponseEntity<Page<QuizResponseDto>> doSearchQuizzesPaginated(
+    protected ResponseEntity<Page<QuizSummaryDto>> doSearchQuizzesPaginated(
             @RequestParam String title,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -98,7 +99,7 @@ public abstract class BaseQuizController {
             Long userId = getCurrentUserId();
             Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
             Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-            Page<QuizResponseDto> quizzes = quizzesService.searchQuizzesPaginated(title, userId, pageable);
+            Page<QuizSummaryDto> quizzes = quizzesService.searchQuizzesPaginated(title, userId, pageable);
             return ResponseEntity.ok(quizzes);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -130,8 +131,8 @@ public abstract class BaseQuizController {
             // Verify that the slug matches to ensure proper URL
             if (!quiz.getSlug().equals(slug)) {
                 return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
-                    .header("Location", basePath + "/" + quizId + "/" + quiz.getSlug())
-                    .build();
+                        .header("Location", basePath + "/" + quizId + "/" + quiz.getSlug())
+                        .build();
             }
             return ResponseEntity.ok(quiz);
         } catch (RuntimeException e) {
@@ -160,16 +161,16 @@ public abstract class BaseQuizController {
      * Update a quiz with slug validation
      */
     protected ResponseEntity<QuizResponseDto> doUpdateQuizWithSlug(Long quizId, String slug,
-                                                                 @Valid QuizRequestDto quizRequestDto,
-                                                                 String basePath) {
+                                                                   @Valid QuizRequestDto quizRequestDto,
+                                                                   String basePath) {
         try {
             Long userId = getCurrentUserId();
             // Verify quiz exists and slug matches
             QuizResponseDto existingQuiz = quizzesService.getQuizById(quizId, userId);
             if (!existingQuiz.getSlug().equals(slug)) {
                 return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
-                    .header("Location", basePath + "/" + quizId + "/" + existingQuiz.getSlug())
-                    .build();
+                        .header("Location", basePath + "/" + quizId + "/" + existingQuiz.getSlug())
+                        .build();
             }
 
             QuizResponseDto updatedQuiz = quizzesService.updateQuiz(quizId, quizRequestDto, userId);
@@ -225,8 +226,8 @@ public abstract class BaseQuizController {
             QuizResponseDto existingQuiz = quizzesService.getQuizById(quizId, userId);
             if (!existingQuiz.getSlug().equals(slug)) {
                 return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
-                    .header("Location", basePath + "/" + quizId + "/" + existingQuiz.getSlug())
-                    .build();
+                        .header("Location", basePath + "/" + quizId + "/" + existingQuiz.getSlug())
+                        .build();
             }
 
             boolean deleted = quizzesService.deleteQuiz(quizId, userId);
@@ -245,10 +246,10 @@ public abstract class BaseQuizController {
     /**
      * Search quizzes by title
      */
-    protected ResponseEntity<List<QuizResponseDto>> doSearchQuizzes(String title) {
+    protected ResponseEntity<List<QuizSummaryDto>> doSearchQuizzes(String title) {
         try {
             Long userId = getCurrentUserId();
-            List<QuizResponseDto> quizzes = quizzesService.searchQuizzes(title, userId);
+            List<QuizSummaryDto> quizzes = quizzesService.searchQuizzes(title, userId);
             return ResponseEntity.ok(quizzes);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

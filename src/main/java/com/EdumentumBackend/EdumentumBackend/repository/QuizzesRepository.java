@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.repository;
 
+import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto;
 import com.EdumentumBackend.EdumentumBackend.entity.QuizzesEntity;
 import com.EdumentumBackend.EdumentumBackend.enums.VisibilityType;
 import org.springframework.data.domain.Page;
@@ -40,11 +41,44 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
             countQuery = "SELECT COUNT(DISTINCT q) FROM QuizzesEntity q WHERE q.userId = :userId")
     Page<QuizzesEntity> findByUserIdPageable(Long userId, Pageable pageable);
 
-    // Kiểm tra tồn tại của slug
     boolean existsBySlug(String slug);
 
-    // Tìm quiz theo slug kèm tags
     @Query("SELECT DISTINCT q FROM QuizzesEntity q LEFT JOIN FETCH q.quizTags qt LEFT JOIN FETCH qt.tag WHERE q.slug = :slug")
 
     QuizzesEntity findBySlugWithTags(String slug);
+
+    @Query("""
+      SELECT new  com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto(
+        q.id, q.title, q.slug, q.description, q.thumbnailUrl,
+        q.visibility, q.difficulty, q.totalQuestions, q.totalPoints,
+        q.createdAt, q.updatedAt
+      )
+      FROM QuizzesEntity q
+      WHERE q.userId = :userId
+      ORDER BY q.createdAt DESC
+    """)
+    List<QuizSummaryDto> findSummariesByUserId(Long userId);
+
+    @Query("""
+      SELECT new  com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto(
+        q.id, q.title, q.slug, q.description, q.thumbnailUrl,
+        q.visibility, q.difficulty, q.totalQuestions, q.totalPoints,
+        q.createdAt, q.updatedAt
+      )
+      FROM QuizzesEntity q
+      WHERE q.userId = :userId
+    """)
+    Page<QuizSummaryDto> findSummariesByUserId(Long userId, Pageable pageable);
+
+    @Query("""
+      SELECT new  com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto(
+        q.id, q.title, q.slug, q.description, q.thumbnailUrl,
+        q.visibility, q.difficulty, q.totalQuestions, q.totalPoints,
+        q.createdAt, q.updatedAt
+      )
+      FROM QuizzesEntity q
+      WHERE LOWER(q.title) LIKE LOWER(CONCAT('%', :title, '%'))
+        AND (q.userId = :userId OR q.visibility = com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC)
+    """)
+    Page<QuizSummaryDto> findSummariesByTitleAndUserOrPublic(String title, Long userId, Pageable pageable);
 }
