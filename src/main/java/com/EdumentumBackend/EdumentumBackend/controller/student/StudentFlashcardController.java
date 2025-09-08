@@ -46,13 +46,15 @@ public class StudentFlashcardController {
     @GetMapping
     public ResponseEntity<?> getAllFlashcardSets(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "6") int size
+            @RequestParam(defaultValue = "6") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String sortBy
     ) {
         try {
             Long userId = getCurrentUserId();
             Pageable pageable = PageRequest.of(page, size);
 
-            var result = flashcardService.getAllFlashcardSets(userId, pageable);
+            var result = flashcardService.getAllFlashcardSets(userId, pageable, search, sortBy);
 
             Map<String, Object> response = new HashMap<>();
             response.put("status", "success");
@@ -69,12 +71,14 @@ public class StudentFlashcardController {
     @GetMapping("/public")
     public ResponseEntity<?> getPublicFlashcardSets(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "6") int size
+            @RequestParam(defaultValue = "6") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String sortBy
     ) {
         try {
             Pageable pageable = PageRequest.of(page, size);
 
-            var result = flashcardService.getPublicFlashcardSets(pageable);
+            var result = flashcardService.getPublicFlashcardSets(pageable, search, sortBy);
 
             Map<String, Object> response = new HashMap<>();
             response.put("status", "success");
