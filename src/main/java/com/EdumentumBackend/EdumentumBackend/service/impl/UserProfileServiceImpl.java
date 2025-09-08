@@ -47,6 +47,7 @@ public class UserProfileServiceImpl implements UserProfileService {
                 .totalQuizzesCompleted(profile.getTotalQuizzesCompleted())
                 .totalFlashCardCompleted(profile.getTotalFlashCardCompleted())
                 .createdAt(user.getCreatedAt())
+                .maxStreak(profile.getMaxStreak())
                 .totalQuizzesCreated(profile.getTotalQuizzesCreated())
                 .username(user.getUsername())
                 .build();

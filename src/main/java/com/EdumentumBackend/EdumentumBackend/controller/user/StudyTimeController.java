@@ -3,18 +3,18 @@ package com.EdumentumBackend.EdumentumBackend.controller.user;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
 import com.EdumentumBackend.EdumentumBackend.service.redis.StudyTimeService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Map;
 
 @Controller
-@RequestMapping("/api/v1/user/ping")
+@RequestMapping("/api/v1/user/study-time")
 @RequiredArgsConstructor
 public class StudyTimeController {
 
@@ -27,8 +27,18 @@ public class StudyTimeController {
         long total = studyTimeService.getStudyTime(userId);
         return ResponseEntity.ok(Map.of(
                 "message", "Total time online",
-                "status" , "susses",
-                "data" ,  total
+                "status", "susses",
+                "data", total
+        ));
+    }
+
+    @GetMapping()
+    public ResponseEntity<?> getStudyTime() {
+        Long userId = getCurrentUserId();
+        return ResponseEntity.ok(Map.of(
+                "message", "Total time online",
+                "status", "susses",
+                "data", studyTimeService.getStudyMatrix(userId, 7)
         ));
     }
 
