@@ -50,9 +50,10 @@ public class EnrollmentEntity extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private Integer completedExercises = 0;
-    
+
+    @Builder.Default
     @Formula("CASE WHEN (SELECT COUNT(*) FROM lessons l WHERE l.course_id = course_id) > 0 " +
             "THEN (completed_lessons * 100.0) / (SELECT COUNT(*) FROM lessons l WHERE l.course_id = course_id) " +
             "ELSE 0 END")
-    private Double progressPercentage;
+    private Double progressPercentage = 0.0;
 }
