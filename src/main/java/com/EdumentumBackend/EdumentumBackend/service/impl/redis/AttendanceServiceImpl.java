@@ -27,26 +27,34 @@ public class AttendanceServiceImpl implements AttendanceService {
     private final ApplicationEventPublisher eventPublisher;
     @Override
     public boolean checkIn(Long userId) {
-        String today = LocalDate.now().toString();
-        String redisKey = "attendance:" + userId + ":" + today;
+        LocalDate today = LocalDate.now();
+        LocalDate yesterday = today.minusDays(1);
 
-        if (redisTemplate.hasKey(redisKey)) {
+        String todayKey = "attendance:" + userId + ":" + today;
+        String yesterdayKey = "attendance:" + userId + ":" + yesterday;
+
+        if (redisTemplate.hasKey(todayKey)) {
             return false;
         }
 
+        Boolean loggedYesterday = redisTemplate.hasKey(yesterdayKey);
+        System.out.println(loggedYesterday);
         try {
             UserEntity user = userRepository.findById(userId)
                     .orElseThrow(() -> new NotFoundException("User not found"));
+
             AttendanceEntity att = AttendanceEntity.builder()
                     .user(user)
-                    .localDate(today)
+                    .localDate(today.toString())
                     .build();
             attendanceRepository.save(att);
-            eventPublisher.publishEvent(new AttendanceCreatedEvent(this, userId));
+            eventPublisher.publishEvent(new AttendanceCreatedEvent(this, userId, loggedYesterday));
         } catch (DataIntegrityViolationException e) {
             return false;
         }
-        redisTemplate.opsForValue().set(redisKey, "1", 1, TimeUnit.DAYS);
+
+        redisTemplate.opsForValue().set(todayKey, "1", 2, TimeUnit.DAYS);
         return true;
     }
+
 }

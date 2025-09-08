@@ -14,6 +14,7 @@ public class UserProfileInfoResponseDto {
     private String username;
     private LocalDateTime createdAt;
     private int streak;
+    private int maxStreak;
     private LevelProgress levelProgress;
     private int totalStudyTime;
     private Long totalStudyTimeToday;
