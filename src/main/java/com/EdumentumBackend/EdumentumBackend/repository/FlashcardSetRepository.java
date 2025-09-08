@@ -14,4 +14,14 @@ public interface FlashcardSetRepository extends JpaRepository<FlashcardSetEntity
     Page<FlashcardSetEntity> findByIsPublicTrueOrderByCreatedAtDesc(Pageable pageable);
     Page<FlashcardSetEntity> findByUserOrderByCreatedAtDesc(UserEntity user, Pageable pageable);
     Optional<FlashcardSetEntity> findByIdAndUser(Long id, UserEntity user);
+    Page<FlashcardSetEntity> findByUserAndTitleContainingIgnoreCaseOrderByCreatedAtDesc(
+        UserEntity user, String title, Pageable pageable);
+    Page<FlashcardSetEntity> findByUserAndTitleContainingIgnoreCaseOrderByTitleAsc(
+        UserEntity user, String title, Pageable pageable);
+    Page<FlashcardSetEntity> findByUserOrderByTitleAsc(UserEntity user, Pageable pageable);
+    Page<FlashcardSetEntity> findByIsPublicTrueAndTitleContainingIgnoreCaseOrderByCreatedAtDesc(
+        String title, Pageable pageable);
+    Page<FlashcardSetEntity> findByIsPublicTrueAndTitleContainingIgnoreCaseOrderByTitleAsc(
+        String title, Pageable pageable);
+    Page<FlashcardSetEntity> findByIsPublicTrueOrderByTitleAsc(Pageable pageable);
 }
