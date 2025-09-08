@@ -12,7 +12,8 @@ WHERE a.title ILIKE 'Check-in%'
 ON CONFLICT (user_id, achievement_id) DO UPDATE
                                              SET current_value = EXCLUDED.current_value,
                                              achieved = EXCLUDED.achieved,
-                                             updated_at = NOW();
+                                             updated_at = NOW()
+                                         WHERE user_achievements.achieved = FALSE; -- 🔥 chỉ update nếu chưa hoàn thành
 
 RETURN NEW;
 END;
