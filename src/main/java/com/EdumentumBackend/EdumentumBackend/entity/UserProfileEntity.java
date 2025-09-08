@@ -24,6 +24,7 @@ public class UserProfileEntity {
     private UserEntity user;
 
     private int streak;
+    private int maxStreak;
 
     @Enumerated(EnumType.STRING)
     private LevelProgress levelProgress;

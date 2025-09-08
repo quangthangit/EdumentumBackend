@@ -27,8 +27,19 @@ public class UserProfileEventListener {
     @EventListener
     @Transactional
     public void handleAttendanceCreated(AttendanceCreatedEvent event) {
-        updateProfileCounter(event.getUserId(),
-                profile -> profile.setTotalAttendance(profile.getTotalAttendance() + 1));
+        updateProfileCounter(event.getUserId(), profile -> {
+            profile.setTotalAttendance(profile.getTotalAttendance() + 1);
+
+            if (event.getLoggedYesterday()) {
+                profile.setStreak(profile.getStreak() + 1);
+            } else {
+                profile.setStreak(1);
+            }
+
+            if (profile.getStreak() > profile.getMaxStreak()) {
+                profile.setMaxStreak(profile.getStreak());
+            }
+        });
     }
 
     @EventListener

@@ -16,5 +16,6 @@ public class UserProfileEntityListener {
         entity.setTotalFlashCardCreated(0);
         entity.setTotalStudyTime(0);
         entity.setTotalAttendance(0);
+        entity.setMaxStreak(0);
     }
 }
