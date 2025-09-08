@@ -1,7 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.controller.teacher;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseCreateRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseDetailResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseUpdateRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.EnrollmentResponseDto;
@@ -9,13 +8,11 @@ import com.EdumentumBackend.EdumentumBackend.dtos.course.ExerciseCreateRequestDt
 import com.EdumentumBackend.EdumentumBackend.dtos.course.ExerciseResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.LessonCreateRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.LessonResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.RatingCreateRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.RatingResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.ResourceCreateRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.ResourceResponseDto;
 import com.EdumentumBackend.EdumentumBackend.enums.CourseLevel;
 import com.EdumentumBackend.EdumentumBackend.enums.CourseStatus;
-import com.EdumentumBackend.EdumentumBackend.enums.EnrollmentStatus;
 import com.EdumentumBackend.EdumentumBackend.service.CourseService;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -36,11 +33,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/teacher/courses")
 @CrossOrigin(origins = "*")
-public class CourseController {
+public class TeacherCourseController {
 
     private final CourseService courseService;
 
-    public CourseController(CourseService courseService) {
+    public TeacherCourseController(CourseService courseService) {
         this.courseService = courseService;
     }
 
@@ -83,7 +80,7 @@ public class CourseController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         Long teacherId = ((CustomUserDetails) userDetails).getUserId();
-        CourseDetailResponseDto response = courseService.getCourseById(courseId, teacherId);
+        Object response = courseService.getCourseById(courseId, teacherId);
 
         return ResponseEntity.ok(Map.of(
                 "status", "success",
@@ -162,34 +159,6 @@ public class CourseController {
                 )
         ));
     };
-//     @GetMapping("/my-courses")
-//     public ResponseEntity<Map<String, Object>> getTeacherCourses(
-//             @RequestParam(defaultValue = "PUBLISHED") CourseStatus status,
-//             @RequestParam(defaultValue = "0") int page,
-//             @RequestParam(defaultValue = "10") int size,
-//             @RequestParam(defaultValue = "createdAt") String sortBy,
-//             @RequestParam(defaultValue = "desc") String sortDir,
-//             @AuthenticationPrincipal UserDetails userDetails) {
-        
-//         Long teacherId = ((CustomUserDetails) userDetails).getUserId();
-//         Sort sort = sortDir.equalsIgnoreCase("desc") ? 
-//                    Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-//         Pageable pageable = PageRequest.of(page, size, sort);
-        
-//         Page<CourseResponseDto> response = courseService.getTeacherCourses(teacherId, status, pageable);
-        
-//         return ResponseEntity.ok(Map.of(
-//                 "status", "success",
-//                 "data", response.getContent(),
-//                 "pagination", Map.of(
-//                         "currentPage", response.getNumber(),
-//                         "totalPages", response.getTotalPages(),
-//                         "totalElements", response.getTotalElements(),
-//                         "hasNext", response.hasNext(),
-//                         "hasPrevious", response.hasPrevious()
-//                 )
-//         ));
-//     }
 
     @GetMapping("/published")
     public ResponseEntity<Map<String, Object>> getPublishedCourses(
@@ -535,58 +504,6 @@ public class CourseController {
 
     // Enrollment Management Endpoints
 
-    @PostMapping("/{courseId}/enroll")
-    public ResponseEntity<Map<String, Object>> enrollInCourse(
-            @PathVariable Long courseId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        Long studentId = ((CustomUserDetails) userDetails).getUserId();
-        EnrollmentResponseDto response = courseService.enrollInCourse(courseId, studentId);
-        
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                "status", "success",
-                "message", "Successfully enrolled in course",
-                "data", response
-        ));
-    }
-
-    @DeleteMapping("/{courseId}/enroll")
-    public ResponseEntity<Map<String, Object>> unenrollFromCourse(
-            @PathVariable Long courseId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        Long studentId = ((CustomUserDetails) userDetails).getUserId();
-        courseService.unenrollFromCourse(courseId, studentId);
-        
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "message", "Successfully unenrolled from course"
-        ));
-    }
-
-    @GetMapping("/student/my-enrollments")
-    public ResponseEntity<Map<String, Object>> getStudentEnrollments(
-            @RequestParam(required = false) EnrollmentStatus status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        Long studentId = ((CustomUserDetails) userDetails).getUserId();
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        
-        Page<EnrollmentResponseDto> response = courseService.getStudentEnrollments(studentId, status, pageable);
-        
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "data", response.getContent(),
-                "pagination", Map.of(
-                        "currentPage", response.getNumber(),
-                        "totalPages", response.getTotalPages(),
-                        "totalElements", response.getTotalElements()
-                )
-        ));
-    }
-
     @GetMapping("/{courseId}/enrollments")
     public ResponseEntity<Map<String, Object>> getCourseEnrollments(
             @PathVariable Long courseId,
@@ -628,52 +545,6 @@ public class CourseController {
 
     // Rating Management Endpoints
 
-    @PostMapping("/{courseId}/ratings")
-    public ResponseEntity<Map<String, Object>> rateCourse(
-            @PathVariable Long courseId,
-            @Valid @RequestBody RatingCreateRequestDto request,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        Long studentId = ((CustomUserDetails) userDetails).getUserId();
-        RatingResponseDto response = courseService.rateCourse(courseId, request, studentId);
-        
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                "status", "success",
-                "message", "Course rated successfully",
-                "data", response
-        ));
-    }
-
-    @PatchMapping("/{courseId}/ratings")
-    public ResponseEntity<Map<String, Object>> updateCourseRating(
-            @PathVariable Long courseId,
-            @Valid @RequestBody RatingCreateRequestDto request,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        Long studentId = ((CustomUserDetails) userDetails).getUserId();
-        RatingResponseDto response = courseService.updateCourseRating(courseId, request, studentId);
-        
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "message", "Rating updated successfully",
-                "data", response
-        ));
-    }
-
-    @DeleteMapping("/{courseId}/ratings")
-    public ResponseEntity<Map<String, Object>> deleteCourseRating(
-            @PathVariable Long courseId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        Long studentId = ((CustomUserDetails) userDetails).getUserId();
-        courseService.deleteCourseRating(courseId, studentId);
-        
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "message", "Rating deleted successfully"
-        ));
-    }
-
     @GetMapping("/{courseId}/ratings")
     public ResponseEntity<Map<String, Object>> getCourseRatings(
             @PathVariable Long courseId,
@@ -693,26 +564,4 @@ public class CourseController {
                 )
         ));
     }
-
-    @GetMapping("/{courseId}/ratings/my-rating")
-    public ResponseEntity<Map<String, Object>> getUserCourseRating(
-            @PathVariable Long courseId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        Long studentId = ((CustomUserDetails) userDetails).getUserId();
-        RatingResponseDto response = courseService.getUserCourseRating(courseId, studentId);
-        
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "data", response
-        ));
-    }
-
-    // Helper method to extract user ID from authentication
-//     private Long getUserId(UserDetails userDetails) {
-//         if (userDetails instanceof CustomUserDetails customUserDetails) {
-//             return customUserDetails.getUserId();
-//         }
-//         throw new IllegalStateException("User details is not an instance of CustomUserDetails");
-//     }
 }
