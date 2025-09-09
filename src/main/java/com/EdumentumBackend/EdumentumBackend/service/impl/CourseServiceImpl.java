@@ -1,18 +1,20 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseCreateRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseDetailResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseUpdateRequestDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.course.EnrolledStudentCourseDetailDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.EnrollmentResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.ExerciseCreateRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.ExerciseResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.LessonCreateRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.LessonResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.course.PublicCourseDetailDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.RatingCreateRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.RatingResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.ResourceCreateRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.ResourceResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.course.TeacherCourseDetailDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseTagResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.TeacherSummaryResponseDto;
 import com.EdumentumBackend.EdumentumBackend.entity.*;
@@ -28,7 +30,10 @@ import com.EdumentumBackend.EdumentumBackend.exception.*;
 import com.EdumentumBackend.EdumentumBackend.repository.*;
 import com.EdumentumBackend.EdumentumBackend.service.CourseService;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Sort;
+
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -51,13 +56,13 @@ public class CourseServiceImpl implements CourseService {
     private final RatingRepository ratingRepository;
 
     public CourseServiceImpl(CourseRepository courseRepository,
-                           UserRepository userRepository,
-                           CourseTagRepository TagCourseRepository,
-                           LessonRepository lessonRepository,
-                           ExerciseRepository exerciseRepository,
-                           ResourceRepository resourceRepository,
-                           EnrollmentRepository enrollmentRepository,
-                           RatingRepository ratingRepository) {
+            UserRepository userRepository,
+            CourseTagRepository TagCourseRepository,
+            LessonRepository lessonRepository,
+            ExerciseRepository exerciseRepository,
+            ResourceRepository resourceRepository,
+            EnrollmentRepository enrollmentRepository,
+            RatingRepository ratingRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.TagCourseRepository = TagCourseRepository;
@@ -66,6 +71,23 @@ public class CourseServiceImpl implements CourseService {
         this.resourceRepository = resourceRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.ratingRepository = ratingRepository;
+    }
+
+    private RatingResponseDto convertToRatingResponse(RatingEntity entity) {
+        return RatingResponseDto.builder()
+                .ratingId(entity.getRatingId())
+                .rating(entity.getRating())
+                .comment(entity.getComment())
+                .studentName(entity.getStudent().getUsername())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    private List<RatingResponseDto> convertToRatingResponses(List<RatingEntity> entities) {
+        return entities.stream()
+                .map(this::convertToRatingResponse)
+                .collect(Collectors.toList());
     }
 
     // Course Management
@@ -85,7 +107,7 @@ public class CourseServiceImpl implements CourseService {
                 .courseLevel(request.getCourseLevel())
                 .thumbnailUrl(request.getThumbnailUrl())
                 .price(request.getPrice() != null ? request.getPrice() : BigDecimal.ZERO)
-                .status(request.getCourseStatus() != null ? request.getCourseStatus() : CourseStatus.DRAFT)
+                .courseStatus(request.getCourseStatus() != null ? request.getCourseStatus() : CourseStatus.DRAFT)
                 .teacher(teacher)
                 .courseTags(tags)
                 .build();
@@ -114,6 +136,9 @@ public class CourseServiceImpl implements CourseService {
         if (request.getThumbnailUrl() != null) {
             course.setThumbnailUrl(request.getThumbnailUrl());
         }
+        if (request.getCourseStatus() != null) {
+            course.setCourseStatus(request.getCourseStatus());
+        }
         if (request.getPrice() != null) {
             if (request.getPrice().compareTo(BigDecimal.ZERO) < 0) {
                 throw new BadRequestException("Price cannot be negative");
@@ -129,44 +154,113 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public CourseDetailResponseDto getCourseById(Long courseId, Long userId) {
+    public Object getCourseDetailByUser(Long courseId, Long userId) {
         CourseEntity course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new NotFoundException("Course not found with id: " + courseId));
 
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
 
-        // Check access permissions
-        boolean isTeacher = course.getTeacher().getUserId().equals(userId);
-        boolean isPublished = course.getStatus() == CourseStatus.PUBLISHED;
+        if (course.getTeacher().getUserId().equals(userId)) {
+            return getTeacherCourseDetail(courseId, userId);
+        }
+
         boolean isEnrolled = enrollmentRepository.existsByStudentAndCourse(user, course);
-
-        if (!isTeacher && !isPublished && !isEnrolled) {
-            throw new BadRequestException("Access denied: You don't have permission to view this course");
-        }
-
-        CourseDetailResponseDto response = CourseDetailResponseDto.builder()
-                .course(convertToCourseResponse(course))
-                .lessons(convertToLessonResponses(lessonRepository.findByCourseOrderByOrderIndex(course)))
-                .exercises(convertToExerciseResponses(exerciseRepository.findByCourseOrderByOrderIndex(course)))
-                .resources(convertToResourceResponses(resourceRepository.findByCourseOrderByOrderIndex(course)))
-                .isEnrolled(isEnrolled)
-                .build();
-
         if (isEnrolled) {
-            EnrollmentEntity enrollment = enrollmentRepository.findByStudentAndCourse(user, course).orElse(null);
-            if (enrollment != null) {
-                response.setEnrollmentStatus(enrollment.getStatus());
-                response.setProgressPercentage(enrollment.getProgressPercentage());
-            }
+            return getEnrolledStudentCourseDetail(courseId, userId);
         }
 
-        RatingEntity userRating = ratingRepository.findByStudentAndCourse(user, course).orElse(null);
-        if (userRating != null) {
-            response.setUserRating(convertToRatingResponse(userRating));
+        // Case 3: Public course (only if published)
+        if (course.getCourseStatus() == CourseStatus.PUBLISHED) {
+            return getPublicCourseDetail(courseId);
         }
 
-        return response;
+        // Otherwise, no access
+        throw new BadRequestException("Access denied: You don't have permission to view this course");
+    }
+
+    @Override
+    public TeacherCourseDetailDto getTeacherCourseDetail(Long courseId, Long teacherId) {
+        CourseEntity course = getCourseByIdAndTeacher(courseId, teacherId);
+
+        List<LessonResponseDto> lessons = convertToLessonResponses(
+                lessonRepository.findByCourseOrderByOrderIndex(course));
+        List<ExerciseResponseDto> exercises = convertToExerciseResponses(
+                exerciseRepository.findByCourseOrderByOrderIndex(course));
+        List<ResourceResponseDto> resources = convertToResourceResponses(
+                resourceRepository.findByCourseOrderByOrderIndex(course));
+
+        Pageable pageable = PageRequest.of(0, 5, Sort.by("createdAt").descending());
+        Page<RatingEntity> recentRatings = ratingRepository.findByCourse(course, pageable);
+
+        return TeacherCourseDetailDto.builder()
+                .course(convertToCourseResponse(course))
+                .lessons(lessons)
+                .exercises(exercises)
+                .resources(resources)
+                .totalEnrollments(course.getTotalEnrollments())
+                .averageRating(course.getAverageRating())
+                .recentRatings(convertToRatingResponses(recentRatings.getContent()))
+                .build();
+    }
+
+    @Override
+    public EnrolledStudentCourseDetailDto getEnrolledStudentCourseDetail(Long courseId, Long studentId) {
+        CourseEntity course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new NotFoundException("Course not found"));
+
+        UserEntity student = userRepository.findById(studentId)
+                .orElseThrow(() -> new NotFoundException("Student not found"));
+
+        EnrollmentEntity enrollment = enrollmentRepository.findByStudentAndCourse(student, course)
+                .orElseThrow(() -> new NotFoundException("Enrollment not found"));
+
+        List<LessonResponseDto> lessons = convertToLessonResponses(
+                lessonRepository.findByCourseOrderByOrderIndex(course));
+        List<ExerciseResponseDto> exercises = convertToExerciseResponses(
+                exerciseRepository.findByCourseOrderByOrderIndex(course));
+        List<ResourceResponseDto> resources = convertToResourceResponses(
+                resourceRepository.findByCourseOrderByOrderIndex(course));
+
+        RatingEntity userRating = ratingRepository.findByStudentAndCourse(student, course).orElse(null);
+
+        return EnrolledStudentCourseDetailDto.builder()
+                .course(convertToCourseResponse(course))
+                .lessons(lessons)
+                .exercises(exercises)
+                .resources(resources)
+                .enrollmentStatus(enrollment.getStatus())
+                .progressPercentage(enrollment.getProgressPercentage())
+                .completedLessons(enrollment.getCompletedLessons())
+                .completedExercises(enrollment.getCompletedExercises())
+                .userRating(userRating != null ? convertToRatingResponse(userRating) : null)
+                .build();
+    }
+
+    @Override
+    public PublicCourseDetailDto getPublicCourseDetail(Long courseId) {
+        CourseEntity course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new NotFoundException("Course not found"));
+
+        if (course.getCourseStatus() != CourseStatus.PUBLISHED) {
+            throw new BadRequestException("Course is not published");
+        }
+
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
+        Page<RatingEntity> ratings = ratingRepository.findByCourse(course, pageable);
+
+        Long totalLessons = lessonRepository.countByCourseId(course.getCourseId());
+        Long totalExercises = exerciseRepository.countByCourseId(course.getCourseId());
+
+        return PublicCourseDetailDto.builder()
+                .course(convertToCourseResponse(course))
+                .shortDescription(course.getShortDescription())
+                .ratings(convertToRatingResponses(ratings.getContent()))
+                .averageRating(course.getAverageRating())
+                .totalEnrollments(course.getTotalEnrollments())
+                .totalLessons(totalLessons.intValue())
+                .totalExercises(totalExercises.intValue())
+                .build();
     }
 
     @Override
@@ -180,12 +274,12 @@ public class CourseServiceImpl implements CourseService {
     @Transactional
     public CourseResponseDto publishCourse(Long courseId, Long teacherId) {
         CourseEntity course = getCourseByIdAndTeacher(courseId, teacherId);
-        
-        if (course.getStatus() == CourseStatus.PUBLISHED) {
+
+        if (course.getCourseStatus() == CourseStatus.PUBLISHED) {
             throw new BadRequestException("Course is already published");
         }
 
-        course.setStatus(CourseStatus.PUBLISHED);
+        course.setCourseStatus(CourseStatus.PUBLISHED);
         CourseEntity updatedCourse = courseRepository.save(course);
         return convertToCourseResponse(updatedCourse);
     }
@@ -194,24 +288,24 @@ public class CourseServiceImpl implements CourseService {
     @Transactional
     public CourseResponseDto archiveCourse(Long courseId, Long teacherId) {
         CourseEntity course = getCourseByIdAndTeacher(courseId, teacherId);
-        course.setStatus(CourseStatus.ARCHIVED);
+        course.setCourseStatus(CourseStatus.ARCHIVED);
         CourseEntity updatedCourse = courseRepository.save(course);
         return convertToCourseResponse(updatedCourse);
     }
 
     // Course Queries
     @Override
-    public Page<CourseResponseDto> getTeacherCourses(Long teacherId, CourseStatus status, Pageable pageable) {
+    public Page<CourseResponseDto> getTeacherCourses(Long teacherId, CourseStatus courseStatus, Pageable pageable) {
         UserEntity teacher = userRepository.findById(teacherId)
                 .orElseThrow(() -> new NotFoundException("Teacher not found with id: " + teacherId));
-        
-        Page<CourseEntity> courses = courseRepository.findByTeacherAndStatus(teacher, status, pageable);
+
+        Page<CourseEntity> courses = courseRepository.findByTeacherAndCourseStatus(teacher, courseStatus, pageable);
         return courses.map(this::convertToCourseResponse);
     }
 
     @Override
     public Page<CourseResponseDto> getPublishedCourses(Pageable pageable) {
-        Page<CourseEntity> courses = courseRepository.findByStatus(CourseStatus.PUBLISHED, pageable);
+        Page<CourseEntity> courses = courseRepository.findByCourseStatus(CourseStatus.PUBLISHED, pageable);
         return courses.map(this::convertToCourseResponse);
     }
 
@@ -225,7 +319,8 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public Page<CourseResponseDto> filterCourses(CourseLevel level, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
+    public Page<CourseResponseDto> filterCourses(CourseLevel level, BigDecimal minPrice, BigDecimal maxPrice,
+            Pageable pageable) {
         Page<CourseEntity> courses = courseRepository.findByFilters(level, minPrice, maxPrice, pageable);
         return courses.map(this::convertToCourseResponse);
     }
@@ -253,7 +348,8 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public Page<CourseResponseDto> getFreeCourses(Pageable pageable) {
-        Page<CourseEntity> courses = courseRepository.findByStatusAndPrice(CourseStatus.PUBLISHED, BigDecimal.ZERO, pageable);
+        Page<CourseEntity> courses = courseRepository.findByCourseStatusAndPrice(CourseStatus.PUBLISHED, BigDecimal.ZERO,
+                pageable);
         return courses.map(this::convertToCourseResponse);
     }
 
@@ -267,7 +363,7 @@ public class CourseServiceImpl implements CourseService {
         CourseEntity course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new NotFoundException("Course not found with id: " + courseId));
 
-        if (course.getStatus() != CourseStatus.PUBLISHED) {
+        if (course.getCourseStatus() != CourseStatus.PUBLISHED) {
             throw new CourseEnrollmentException("Cannot enroll in unpublished course");
         }
 
@@ -286,7 +382,7 @@ public class CourseServiceImpl implements CourseService {
                 .build();
 
         EnrollmentEntity savedEnrollment = enrollmentRepository.save(enrollment);
-        
+
         // Update course enrollment count
         course.setTotalEnrollments(course.getTotalEnrollments() + 1);
         courseRepository.save(course);
@@ -307,14 +403,15 @@ public class CourseServiceImpl implements CourseService {
                 .orElseThrow(() -> new NotFoundException("Enrollment not found"));
 
         enrollmentRepository.delete(enrollment);
-        
+
         // Update course enrollment count
         course.setTotalEnrollments(Math.max(0, course.getTotalEnrollments() - 1));
         courseRepository.save(course);
     }
 
     @Override
-    public Page<EnrollmentResponseDto> getStudentEnrollments(Long studentId, EnrollmentStatus status, Pageable pageable) {
+    public Page<EnrollmentResponseDto> getStudentEnrollments(Long studentId, EnrollmentStatus status,
+            Pageable pageable) {
         UserEntity student = userRepository.findById(studentId)
                 .orElseThrow(() -> new NotFoundException("Student not found with id: " + studentId));
 
@@ -331,7 +428,8 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional
-    public EnrollmentResponseDto updateEnrollmentProgress(Long enrollmentId, Integer completedLessons, Integer completedExercises) {
+    public EnrollmentResponseDto updateEnrollmentProgress(Long enrollmentId, Integer completedLessons,
+            Integer completedExercises) {
         EnrollmentEntity enrollment = enrollmentRepository.findById(enrollmentId)
                 .orElseThrow(() -> new NotFoundException("Enrollment not found with id: " + enrollmentId));
 
@@ -345,12 +443,12 @@ public class CourseServiceImpl implements CourseService {
         // Calculate progress percentage
         Long totalLessons = lessonRepository.countByCourseId(enrollment.getCourse().getCourseId());
         Long totalExercises = exerciseRepository.countByCourseId(enrollment.getCourse().getCourseId());
-        
+
         if (totalLessons + totalExercises > 0) {
             BigDecimal progress = BigDecimal.valueOf(
-                    (enrollment.getCompletedLessons() + enrollment.getCompletedExercises()) * 100.0 
-                    / (totalLessons + totalExercises)
-            ).setScale(2, RoundingMode.HALF_UP);
+                    (enrollment.getCompletedLessons() + enrollment.getCompletedExercises()) * 100.0
+                            / (totalLessons + totalExercises))
+                    .setScale(2, RoundingMode.HALF_UP);
             enrollment.setProgressPercentage(progress.doubleValue());
         }
 
@@ -384,10 +482,10 @@ public class CourseServiceImpl implements CourseService {
                 .build();
 
         RatingEntity savedRating = ratingRepository.save(rating);
-        
+
         // Update course average rating
         updateCourseAverageRating(course);
-        
+
         return convertToRatingResponse(savedRating);
     }
 
@@ -407,10 +505,10 @@ public class CourseServiceImpl implements CourseService {
         rating.setComment(request.getComment());
 
         RatingEntity updatedRating = ratingRepository.save(rating);
-        
+
         // Update course average rating
         updateCourseAverageRating(course);
-        
+
         return convertToRatingResponse(updatedRating);
     }
 
@@ -427,7 +525,7 @@ public class CourseServiceImpl implements CourseService {
                 .orElseThrow(() -> new NotFoundException("Rating not found for this course"));
 
         ratingRepository.delete(rating);
-        
+
         // Update course average rating
         updateCourseAverageRating(course);
     }
@@ -460,7 +558,7 @@ public class CourseServiceImpl implements CourseService {
     @Transactional
     public LessonResponseDto createLesson(Long courseId, LessonCreateRequestDto request, Long teacherId) {
         CourseEntity course = getCourseByIdAndTeacher(courseId, teacherId);
-        
+
         LessonEntity lesson = LessonEntity.builder()
                 .title(request.getTitle())
                 .content(request.getContent())
@@ -484,11 +582,16 @@ public class CourseServiceImpl implements CourseService {
             throw new BadRequestException("You can only update lessons from your own courses");
         }
 
-        if (request.getTitle() != null) lesson.setTitle(request.getTitle());
-        if (request.getContent() != null) lesson.setContent(request.getContent());
-        if (request.getOrderIndex() != null) lesson.setOrderIndex(request.getOrderIndex());
-        if (request.getVideoUrl() != null) lesson.setVideoUrl(request.getVideoUrl());
-        if (request.getDurationMinutes() != null) lesson.setDurationMinutes(request.getDurationMinutes());
+        if (request.getTitle() != null)
+            lesson.setTitle(request.getTitle());
+        if (request.getContent() != null)
+            lesson.setContent(request.getContent());
+        if (request.getOrderIndex() != null)
+            lesson.setOrderIndex(request.getOrderIndex());
+        if (request.getVideoUrl() != null)
+            lesson.setVideoUrl(request.getVideoUrl());
+        if (request.getDurationMinutes() != null)
+            lesson.setDurationMinutes(request.getDurationMinutes());
 
         LessonEntity updatedLesson = lessonRepository.save(lesson);
         return convertToLessonResponse(updatedLesson);
@@ -517,8 +620,8 @@ public class CourseServiceImpl implements CourseService {
 
         // Check access
         boolean canAccess = course.getTeacher().getUserId().equals(userId) ||
-                           course.getStatus() == CourseStatus.PUBLISHED ||
-                           enrollmentRepository.existsByStudentAndCourse(user, course);
+                course.getCourseStatus() == CourseStatus.PUBLISHED ||
+                enrollmentRepository.existsByStudentAndCourse(user, course);
 
         if (!canAccess) {
             throw new BadRequestException("Access denied");
@@ -533,7 +636,7 @@ public class CourseServiceImpl implements CourseService {
     @Transactional
     public ExerciseResponseDto createExercise(Long courseId, ExerciseCreateRequestDto request, Long teacherId) {
         CourseEntity course = getCourseByIdAndTeacher(courseId, teacherId);
-        
+
         ExerciseEntity exercise = ExerciseEntity.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
@@ -556,10 +659,14 @@ public class CourseServiceImpl implements CourseService {
             throw new BadRequestException("You can only update exercises from your own courses");
         }
 
-        if (request.getTitle() != null) exercise.setTitle(request.getTitle());
-        if (request.getDescription() != null) exercise.setDescription(request.getDescription());
-        if (request.getInstructions() != null) exercise.setInstructions(request.getInstructions());
-        if (request.getOrderIndex() != null) exercise.setOrderIndex(request.getOrderIndex());
+        if (request.getTitle() != null)
+            exercise.setTitle(request.getTitle());
+        if (request.getDescription() != null)
+            exercise.setDescription(request.getDescription());
+        if (request.getInstructions() != null)
+            exercise.setInstructions(request.getInstructions());
+        if (request.getOrderIndex() != null)
+            exercise.setOrderIndex(request.getOrderIndex());
 
         ExerciseEntity updatedExercise = exerciseRepository.save(exercise);
         return convertToExerciseResponse(updatedExercise);
@@ -588,8 +695,8 @@ public class CourseServiceImpl implements CourseService {
 
         // Check access
         boolean canAccess = course.getTeacher().getUserId().equals(userId) ||
-                           course.getStatus() == CourseStatus.PUBLISHED ||
-                           enrollmentRepository.existsByStudentAndCourse(user, course);
+                course.getCourseStatus() == CourseStatus.PUBLISHED ||
+                enrollmentRepository.existsByStudentAndCourse(user, course);
 
         if (!canAccess) {
             throw new BadRequestException("Access denied");
@@ -604,7 +711,7 @@ public class CourseServiceImpl implements CourseService {
     @Transactional
     public ResourceResponseDto createResource(Long courseId, ResourceCreateRequestDto request, Long teacherId) {
         CourseEntity course = getCourseByIdAndTeacher(courseId, teacherId);
-        
+
         ResourceEntity resource = ResourceEntity.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
@@ -628,11 +735,16 @@ public class CourseServiceImpl implements CourseService {
             throw new BadRequestException("You can only update resources from your own courses");
         }
 
-        if (request.getTitle() != null) resource.setTitle(request.getTitle());
-        if (request.getDescription() != null) resource.setDescription(request.getDescription());
-        if (request.getResourceType() != null) resource.setResourceType(request.getResourceType());
-        if (request.getUrl() != null) resource.setUrl(request.getUrl());
-        if (request.getOrderIndex() != null) resource.setOrderIndex(request.getOrderIndex());
+        if (request.getTitle() != null)
+            resource.setTitle(request.getTitle());
+        if (request.getDescription() != null)
+            resource.setDescription(request.getDescription());
+        if (request.getResourceType() != null)
+            resource.setResourceType(request.getResourceType());
+        if (request.getUrl() != null)
+            resource.setUrl(request.getUrl());
+        if (request.getOrderIndex() != null)
+            resource.setOrderIndex(request.getOrderIndex());
 
         ResourceEntity updatedResource = resourceRepository.save(resource);
         return convertToResourceResponse(updatedResource);
@@ -661,8 +773,8 @@ public class CourseServiceImpl implements CourseService {
 
         // Check access
         boolean canAccess = course.getTeacher().getUserId().equals(userId) ||
-                           course.getStatus() == CourseStatus.PUBLISHED ||
-                           enrollmentRepository.existsByStudentAndCourse(user, course);
+                course.getCourseStatus() == CourseStatus.PUBLISHED ||
+                enrollmentRepository.existsByStudentAndCourse(user, course);
 
         if (!canAccess) {
             throw new BadRequestException("Access denied");
@@ -676,11 +788,11 @@ public class CourseServiceImpl implements CourseService {
     private CourseEntity getCourseByIdAndTeacher(Long courseId, Long teacherId) {
         CourseEntity course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new NotFoundException("Course not found with id: " + courseId));
-        
+
         if (!course.getTeacher().getUserId().equals(teacherId)) {
             throw new BadRequestException("You can only access your own courses");
         }
-        
+
         return course;
     }
 
@@ -708,8 +820,7 @@ public class CourseServiceImpl implements CourseService {
         ratingRepository.findAverageRatingByCourseId(course.getCourseId())
                 .ifPresentOrElse(
                         avgRating -> course.setAverageRating(avgRating),
-                        () -> course.setAverageRating(null)
-                );
+                        () -> course.setAverageRating(null));
         courseRepository.save(course);
     }
 
@@ -721,7 +832,7 @@ public class CourseServiceImpl implements CourseService {
                 .shortDescription(entity.getShortDescription())
                 .fullDescription(entity.getFullDescription())
                 .courseLevel(entity.getCourseLevel())
-                .status(entity.getStatus())
+                .courseStatus(entity.getCourseStatus())
                 .thumbnailUrl(entity.getThumbnailUrl())
                 .price(entity.getPrice())
                 .teacher(convertToTeacherSummaryResponse(entity.getTeacher()))
@@ -828,17 +939,6 @@ public class CourseServiceImpl implements CourseService {
                 .completedExercises(entity.getCompletedExercises())
                 .progressPercentage(entity.getProgressPercentage())
                 .enrolledAt(entity.getCreatedAt())
-                .build();
-    }
-
-    private RatingResponseDto convertToRatingResponse(RatingEntity entity) {
-        return RatingResponseDto.builder()
-                .ratingId(entity.getRatingId())
-                .rating(entity.getRating())
-                .comment(entity.getComment())
-                .studentName(entity.getStudent().getUsername())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
                 .build();
     }
 }

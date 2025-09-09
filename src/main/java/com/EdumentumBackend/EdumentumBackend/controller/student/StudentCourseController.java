@@ -12,21 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.EnrollmentResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.RatingCreateRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.RatingResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.course.*;
 import com.EdumentumBackend.EdumentumBackend.enums.CourseLevel;
 import com.EdumentumBackend.EdumentumBackend.enums.EnrollmentStatus;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
@@ -38,29 +26,47 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/v1/student/courses")
 @CrossOrigin(origins = "*")
 public class StudentCourseController {
-        private final CourseService courseService;
+
+    private final CourseService courseService;
 
     public StudentCourseController(CourseService courseService) {
         this.courseService = courseService;
     }
 
-    // Get course details
+    // Course Detail
 
-        @GetMapping("/{courseId}")
-    public ResponseEntity<Map<String, Object>> getCourseById(
+    @GetMapping("/{courseId}")
+    public ResponseEntity<Map<String, Object>> getCourseDetail(
             @PathVariable Long courseId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         Long studentId = ((CustomUserDetails) userDetails).getUserId();
-        Object response = courseService.getCourseById(courseId, studentId);
+        Object response = courseService.getCourseDetailByUser(courseId, studentId);
 
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "data", response
         ));
     }
-    // Courses Browsing Endpoints
-    
+
+    // Get enrolled course detail
+    @GetMapping("/{courseId}/enrolled-detail")
+    public ResponseEntity<Map<String, Object>> getEnrolledCourseDetail(
+            @PathVariable Long courseId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Long studentId = ((CustomUserDetails) userDetails).getUserId();
+        EnrolledStudentCourseDetailDto response =
+                courseService.getEnrolledStudentCourseDetail(courseId, studentId);
+
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "data", response
+        ));
+    }
+
+    //  Browsing Courses
+
     @GetMapping("/search")
     public ResponseEntity<Map<String, Object>> searchCourses(
             @RequestParam String keyword,
@@ -68,13 +74,14 @@ public class StudentCourseController {
             @RequestParam(defaultValue = "6") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
-        
-        Sort sort = sortDir.equalsIgnoreCase("desc") ? 
-                   Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        
+
         Page<CourseResponseDto> response = courseService.searchCourses(keyword, pageable);
-        
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "data", response.getContent(),
@@ -97,13 +104,15 @@ public class StudentCourseController {
             @RequestParam(defaultValue = "6") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
-        
-        Sort sort = sortDir.equalsIgnoreCase("desc") ? 
-                   Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        
-        Page<CourseResponseDto> response = courseService.filterCourses(level, minPrice, maxPrice, pageable);
-        
+
+        Page<CourseResponseDto> response =
+                courseService.filterCourses(level, minPrice, maxPrice, pageable);
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "data", response.getContent(),
@@ -122,10 +131,10 @@ public class StudentCourseController {
             @RequestParam List<String> tagCourseNames,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "6") int size) {
-        
+
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<CourseResponseDto> response = courseService.getCoursesByTags(tagCourseNames, pageable);
-        
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "data", response.getContent(),
@@ -141,10 +150,10 @@ public class StudentCourseController {
     public ResponseEntity<Map<String, Object>> getPopularCourses(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "6") int size) {
-        
+
         Pageable pageable = PageRequest.of(page, size);
         Page<CourseResponseDto> response = courseService.getPopularCourses(pageable);
-        
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "data", response.getContent(),
@@ -160,10 +169,10 @@ public class StudentCourseController {
     public ResponseEntity<Map<String, Object>> getHighlyRatedCourses(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
-        
+
         Pageable pageable = PageRequest.of(page, size);
         Page<CourseResponseDto> response = courseService.getHighlyRatedCourses(pageable);
-        
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "data", response.getContent(),
@@ -179,10 +188,10 @@ public class StudentCourseController {
     public ResponseEntity<Map<String, Object>> getFreeCourses(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
-        
+
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<CourseResponseDto> response = courseService.getFreeCourses(pageable);
-        
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "data", response.getContent(),
@@ -194,16 +203,16 @@ public class StudentCourseController {
         ));
     }
 
-    // Enrollments Endpoints
+    // Enrollment Management
 
     @PostMapping("/{courseId}/enroll")
     public ResponseEntity<Map<String, Object>> enrollInCourse(
             @PathVariable Long courseId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         Long studentId = ((CustomUserDetails) userDetails).getUserId();
         EnrollmentResponseDto response = courseService.enrollInCourse(courseId, studentId);
-        
+
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "status", "success",
                 "message", "Successfully enrolled in course",
@@ -215,28 +224,29 @@ public class StudentCourseController {
     public ResponseEntity<Map<String, Object>> unenrollFromCourse(
             @PathVariable Long courseId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         Long studentId = ((CustomUserDetails) userDetails).getUserId();
         courseService.unenrollFromCourse(courseId, studentId);
-        
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "message", "Successfully unenrolled from course"
         ));
     }
 
-    @GetMapping("/student/my-enrollments")
+    @GetMapping("/my-enrollments")
     public ResponseEntity<Map<String, Object>> getStudentEnrollments(
-            @RequestParam(required = false) EnrollmentStatus status,
+            @RequestParam(required = false) EnrollmentStatus enrollmentStatus,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         Long studentId = ((CustomUserDetails) userDetails).getUserId();
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        
-        Page<EnrollmentResponseDto> response = courseService.getStudentEnrollments(studentId, status, pageable);
-        
+
+        Page<EnrollmentResponseDto> response =
+                courseService.getStudentEnrollments(studentId, enrollmentStatus, pageable);
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "data", response.getContent(),
@@ -248,15 +258,15 @@ public class StudentCourseController {
         ));
     }
 
-        @PatchMapping("/enrollments/{enrollmentId}/progress")
+    @PatchMapping("/enrollments/{enrollmentId}/progress")
     public ResponseEntity<Map<String, Object>> updateEnrollmentProgress(
             @PathVariable Long enrollmentId,
             @RequestParam(required = false) Integer completedLessons,
             @RequestParam(required = false) Integer completedExercises) {
-        
-        EnrollmentResponseDto response = courseService.updateEnrollmentProgress(
-                enrollmentId, completedLessons, completedExercises);
-        
+
+        EnrollmentResponseDto response =
+                courseService.updateEnrollmentProgress(enrollmentId, completedLessons, completedExercises);
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "message", "Progress updated successfully",
@@ -264,17 +274,17 @@ public class StudentCourseController {
         ));
     }
 
-    // Ratings Endpoints
+    // Ratings Management
 
-        @PostMapping("/{courseId}/ratings")
+    @PostMapping("/{courseId}/ratings")
     public ResponseEntity<Map<String, Object>> rateCourse(
             @PathVariable Long courseId,
             @Valid @RequestBody RatingCreateRequestDto request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         Long studentId = ((CustomUserDetails) userDetails).getUserId();
         RatingResponseDto response = courseService.rateCourse(courseId, request, studentId);
-        
+
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "status", "success",
                 "message", "Course rated successfully",
@@ -287,10 +297,10 @@ public class StudentCourseController {
             @PathVariable Long courseId,
             @Valid @RequestBody RatingCreateRequestDto request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         Long studentId = ((CustomUserDetails) userDetails).getUserId();
         RatingResponseDto response = courseService.updateCourseRating(courseId, request, studentId);
-        
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "message", "Rating updated successfully",
@@ -302,25 +312,25 @@ public class StudentCourseController {
     public ResponseEntity<Map<String, Object>> deleteCourseRating(
             @PathVariable Long courseId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         Long studentId = ((CustomUserDetails) userDetails).getUserId();
         courseService.deleteCourseRating(courseId, studentId);
-        
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "message", "Rating deleted successfully"
         ));
     }
 
-        @GetMapping("/{courseId}/ratings")
+    @GetMapping("/{courseId}/ratings")
     public ResponseEntity<Map<String, Object>> getCourseRatings(
             @PathVariable Long courseId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
+
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<RatingResponseDto> response = courseService.getCourseRatings(courseId, pageable);
-        
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "data", response.getContent(),
@@ -336,10 +346,10 @@ public class StudentCourseController {
     public ResponseEntity<Map<String, Object>> getUserCourseRating(
             @PathVariable Long courseId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         Long studentId = ((CustomUserDetails) userDetails).getUserId();
         RatingResponseDto response = courseService.getUserCourseRating(courseId, studentId);
-        
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "data", response
