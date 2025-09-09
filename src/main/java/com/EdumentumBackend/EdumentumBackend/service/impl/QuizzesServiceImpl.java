@@ -231,8 +231,8 @@ public class QuizzesServiceImpl implements QuizzesService {
     @Override
     public boolean deleteQuiz(Long quizId, Long userId) {
         try {
-//            QuizzesEntity quiz = findQuizAndVerifyUserAccess(quizId, userId);
-            quizzesRepository.deleteById(quizId);
+            QuizzesEntity quiz = findQuizAndVerifyUserAccess(quizId, userId);
+            quizzesRepository.delete(quiz);
             return true;
         } catch (RuntimeException e) {
             if (e.getMessage().contains("Quiz not found")) {
