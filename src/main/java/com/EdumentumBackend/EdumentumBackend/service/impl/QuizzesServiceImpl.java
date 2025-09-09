@@ -15,7 +15,9 @@ import com.EdumentumBackend.EdumentumBackend.utils.SlugUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -259,7 +261,8 @@ public class QuizzesServiceImpl implements QuizzesService {
     @Override
     @Transactional(readOnly = true)
     public List<QuizSummaryDto> searchQuizzes(String title, Long userId) {
-        var page = quizzesRepository.findSummariesByTitleAndUserOrPublic(title, userId, Pageable.unpaged());
+        Pageable defaultPage = PageRequest.of(0, 20, Sort.by("createdAt").descending());
+        var page = quizzesRepository.findSummariesByTitleAndUserOrPublic(title, userId, defaultPage);
         List<QuizSummaryDto> result = page.getContent();
         enrichQuizzesWithTags(result);
         return result;
