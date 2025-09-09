@@ -19,7 +19,7 @@ public class CourseResponseDto {
     private String shortDescription;
     private String fullDescription;
     private CourseLevel courseLevel;
-    private CourseStatus status;
+    private CourseStatus courseStatus;
     private String thumbnailUrl;
     private BigDecimal price;
     private TeacherSummaryResponseDto teacher;
