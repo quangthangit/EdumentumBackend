@@ -120,17 +120,15 @@ public class QuizzesServiceImpl implements QuizzesService {
     @Override
     @Transactional(readOnly = true)
     public QuizResponseDto getQuizById(Long quizId, Long userId) {
-        // We still need the full entity for the single quiz detail view
-        QuizzesEntity quiz = quizzesRepository.findByIdWithTags(quizId);
-        if (quiz == null) {
+        Optional<QuizzesEntity> quizOpt = quizzesRepository.findDetailByIdWithAccess(quizId, userId);
+        if (quizOpt.isEmpty()) {
             throw new RuntimeException("Quiz not found with id: " + quizId);
         }
 
-        // Check if user owns the quiz or if it's public
+        QuizzesEntity quiz = quizOpt.get();
         if (!quiz.getUserId().equals(userId) && quiz.getVisibility() != com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC) {
             throw new RuntimeException("Access denied to quiz with id: " + quizId);
         }
-
         return mapToResponseDto(quiz);
     }
 
@@ -601,16 +599,10 @@ public class QuizzesServiceImpl implements QuizzesService {
     }
     
     private QuizzesEntity findQuizAndVerifyUserAccess(Long quizId, Long userId) {
-        Optional<QuizzesEntity> quizOpt = quizzesRepository.findById(quizId);
+        Optional<QuizzesEntity> quizOpt = quizzesRepository.findDetailByIdAndUserId(quizId, userId);
         if (quizOpt.isEmpty()) {
-            throw new RuntimeException("Quiz not found with id: " + quizId);
+            throw new RuntimeException("Quiz not found with id: " + quizId + " or access denied");
         }
-
-        QuizzesEntity quiz = quizOpt.get();
-        if (!quiz.getUserId().equals(userId)) {
-            throw new RuntimeException("Access denied to quiz with id: " + quizId);
-        }
-        
-        return quiz;
+        return quizOpt.get();
     }
 }
