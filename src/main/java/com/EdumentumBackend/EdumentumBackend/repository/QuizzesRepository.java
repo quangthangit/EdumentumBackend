@@ -5,12 +5,14 @@ import com.EdumentumBackend.EdumentumBackend.entity.QuizzesEntity;
 import com.EdumentumBackend.EdumentumBackend.enums.VisibilityType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
@@ -32,12 +34,36 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
     @Query("SELECT DISTINCT q FROM QuizzesEntity q JOIN q.quizTags qt WHERE qt.tag.id IN :tagIds AND q.visibility = :visibility")
     Page<QuizzesEntity> findByTagIdsAndVisibility(List<Long> tagIds, VisibilityType visibility, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"quizTags", "quizTags.tag", "user"})
+    @Query("""
+        SELECT q FROM QuizzesEntity q
+        WHERE q.id = :id
+    """)
+    Optional<QuizzesEntity> findDetailForStudent(@Param("id") Long id);
+
+    @EntityGraph(attributePaths = {"quizTags", "quizTags.tag", "user"})
+    @Query("""
+        SELECT q FROM QuizzesEntity q
+        WHERE q.id = :id AND q.userId = :userId
+    """)
+    Optional<QuizzesEntity> findDetailByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
+
+    @EntityGraph(attributePaths = {"quizTags", "quizTags.tag", "user"})
+    @Query("""
+        SELECT q FROM QuizzesEntity q
+        WHERE q.id = :id 
+        AND (q.userId = :userId OR q.visibility = com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC)
+    """)
+    Optional<QuizzesEntity> findDetailByIdWithAccess(@Param("id") Long id, @Param("userId") Long userId);
+
+
+    @Deprecated
     @Query("""
         SELECT q FROM QuizzesEntity q
         LEFT JOIN FETCH q.quizTags qt
         LEFT JOIN FETCH qt.tag t
         WHERE q.id = :id
-""")
+    """)
     QuizzesEntity findByIdWithTags(@Param("id") Long id);
 
     @Query("SELECT DISTINCT q FROM QuizzesEntity q LEFT JOIN FETCH q.quizTags qt LEFT JOIN FETCH qt.tag WHERE q.userId = :userId")
