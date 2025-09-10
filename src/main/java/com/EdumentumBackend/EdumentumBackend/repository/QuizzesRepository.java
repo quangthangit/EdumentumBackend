@@ -33,11 +33,11 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
     Page<QuizzesEntity> findByTagIdsAndVisibility(List<Long> tagIds, VisibilityType visibility, Pageable pageable);
 
     @Query("""
-      SELECT DISTINCT q FROM QuizzesEntity q 
-      LEFT JOIN FETCH q.quizTags qt 
-      LEFT JOIN FETCH qt.tag t
-      WHERE q.id = :id
-    """)
+        SELECT q FROM QuizzesEntity q
+        LEFT JOIN FETCH q.quizTags qt
+        LEFT JOIN FETCH qt.tag t
+        WHERE q.id = :id
+""")
     QuizzesEntity findByIdWithTags(@Param("id") Long id);
 
     @Query("SELECT DISTINCT q FROM QuizzesEntity q LEFT JOIN FETCH q.quizTags qt LEFT JOIN FETCH qt.tag WHERE q.userId = :userId")

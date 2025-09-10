@@ -106,57 +106,6 @@ public class QuizzesServiceImpl implements QuizzesService {
 
         return builder.build();
     }
-//    private QuizSummaryDto mapToSummaryDto(QuizzesEntity entity) {
-//        List<TagResponseDto> tags = entity.getQuizTags() == null ?
-//                Collections.emptyList() :
-//                entity.getQuizTags().stream()
-//                        .map(quizTag -> TagResponseDto.builder()
-//                                .id(quizTag.getTag().getId())
-//                                .name(quizTag.getTag().getName())
-//                                .description(quizTag.getTag().getDescription())
-//                                .build())
-//                        .collect(Collectors.toList());
-//
-//        QuizSummaryDto.QuizSummaryDtoBuilder builder = QuizSummaryDto.builder()
-//                .id(entity.getId())
-//                .title(entity.getTitle())
-//                .slug(entity.getSlug())
-//                .description(entity.getDescription())
-//                .thumbnailUrl(entity.getThumbnailUrl())
-//                .visibility(entity.getVisibility())
-//                .difficulty(entity.getDifficulty())
-//                .sourceType(entity.getSourceType())
-//                .isAiGenerated(entity.getIsAiGenerated())
-//                .aiModel(entity.getAiModel())
-//                .estimatedTime(entity.getEstimatedTime())
-//                .passingScore(entity.getPassingScore())
-//                .maxAttempts(entity.getMaxAttempts())
-//                .totalQuestions(entity.getTotalQuestions())
-//                .totalPoints(entity.getTotalPoints())
-//                .viewCount(entity.getViewCount())
-//                .attemptCount(entity.getAttemptCount())
-//                .completionCount(entity.getCompletionCount())
-//                .avgScore(entity.getAvgScore())
-//                .avgCompletionTime(entity.getAvgCompletionTime())
-//                .bookmarkCount(entity.getBookmarkCount())
-//                .shareCount(entity.getShareCount())
-//                .isFeatured(entity.getIsFeatured())
-//                .isTrending(entity.getIsTrending())
-//                .isPremium(entity.getIsPremium())
-//                .status(entity.getStatus().name())
-//                .metaTitle(entity.getMetaTitle())
-//                .metaDescription(entity.getMetaDescription())
-//                .canonicalUrl(entity.getCanonicalUrl())
-//                .publishedAt(entity.getPublishedAt())
-//                .archivedAt(entity.getArchivedAt())
-//                .createdAt(entity.getCreatedAt())
-//                .updatedAt(entity.getUpdatedAt())
-//                .tags(tags);
-//        builder.keywords(entity.getKeywords() == null ?
-//                Collections.emptyList() : Arrays.asList(entity.getKeywords()));
-//
-//        return builder.build();
-//    }
     @Override
     @Transactional(readOnly = true)
     public List<QuizSummaryDto> getAllQuizzes(Long userId) {
@@ -243,20 +192,6 @@ public class QuizzesServiceImpl implements QuizzesService {
             throw e;
         }
     }
-
-
-//    @Override
-//    @Transactional(readOnly = true)
-//    public List<QuizSummaryDto> searchQuizzes(String title, Long userId) {
-//        List<QuizzesEntity> quizzes = quizzesRepository.findByTitleContaining(title);
-//
-//        List<QuizSummaryDto> result = quizzes.stream()
-//                .filter(q -> Objects.equals(q.getUserId(), userId))
-//                .map(this::mapToSummaryDto)
-//                .collect(Collectors.toList());
-//        enrichQuizzesWithTags(result);
-//        return result;
-//    }
 
     @Override
     @Transactional(readOnly = true)
