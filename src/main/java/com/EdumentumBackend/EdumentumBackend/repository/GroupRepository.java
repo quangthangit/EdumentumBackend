@@ -16,9 +16,9 @@ import java.util.Optional;
 @Repository
 public interface GroupRepository extends JpaRepository<GroupEntity, Long> {
     @Query("SELECT new com.EdumentumBackend.EdumentumBackend.dtos.group.GroupResponseDto(" +
-            "g.id, g.name, g.description, g.isPublic, g.owner.id, g.owner.username, g.memberCount, g.memberLimit, g.key, g.createdAt, g.contributionPoints, g.tier) " +
+            "g.id, g.name, g.description, g.isPublic, g.owner.userId, g.owner.username, g.memberCount, g.memberLimit, g.key, g.createdAt, g.contributionPoints, g.tier) " +
             "FROM GroupEntity g " +
-            "LEFT JOIN GroupMemberEntity gm ON gm.group = g AND gm.user.id = :userId " +
+            "LEFT JOIN GroupMemberEntity gm ON gm.group = g AND gm.user.userId = :userId " +
             "WHERE g.isPublic = true AND gm.id IS NULL " +
             "AND (LOWER(g.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "     OR LOWER(g.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
