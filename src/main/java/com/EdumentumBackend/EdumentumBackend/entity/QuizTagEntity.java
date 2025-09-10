@@ -6,7 +6,14 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name="quiz_tags")
+@Table(
+        name = "quiz_tags",
+        indexes = {
+                @Index(name = "idx_quiz_tags_quiz", columnList = "quiz_id"),
+                @Index(name = "idx_quiz_tags_tag",  columnList = "tag_id"),
+                @Index(name = "idx_quiz_tags_q_created", columnList = "quiz_id,created_at")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor

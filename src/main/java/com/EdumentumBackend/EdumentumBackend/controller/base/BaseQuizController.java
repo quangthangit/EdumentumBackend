@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.controller.base;
 
+import com.EdumentumBackend.EdumentumBackend.dtos.common.ApiResponse;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto;
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-
 
 public abstract class BaseQuizController {
 
@@ -33,26 +33,29 @@ public abstract class BaseQuizController {
     /**
      * Create a new quiz
      */
-    protected ResponseEntity<QuizResponseDto> doCreateQuiz(@Valid @RequestBody QuizRequestDto quizRequestDto) {
+    protected ResponseEntity<ApiResponse<QuizResponseDto>> doCreateQuiz(@Valid @RequestBody QuizRequestDto quizRequestDto) {
         try {
             Long userId = getCurrentUserId();
             QuizResponseDto createdQuiz = quizzesService.createQuiz(quizRequestDto, userId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdQuiz);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.created(createdQuiz, "Quiz created successfully"));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to create quiz: " + e.getMessage(), 400));
         }
     }
 
     /**
      * Get all quizzes for the current user
      */
-    protected ResponseEntity<List<QuizSummaryDto>> doGetAllQuizzes() {
+    protected ResponseEntity<ApiResponse<List<QuizSummaryDto>>> doGetAllQuizzes() {
         try {
             Long userId = getCurrentUserId();
             List<QuizSummaryDto> quizzes = quizzesService.getAllQuizzes(userId);
-            return ResponseEntity.ok(quizzes);
+            return ResponseEntity.ok(ApiResponse.success(quizzes, "Quizzes retrieved successfully"));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to retrieve quizzes: " + e.getMessage(), 500));
         }
     }
 
@@ -64,7 +67,7 @@ public abstract class BaseQuizController {
      * @param direction Sort direction (ASC or DESC)
      * @return Paginated list of quizzes
      */
-    protected ResponseEntity<Page<QuizSummaryDto>> doGetAllQuizzesPaginated(
+    protected ResponseEntity<ApiResponse<Page<QuizSummaryDto>>> doGetAllQuizzesPaginated(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -74,9 +77,10 @@ public abstract class BaseQuizController {
             Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
             Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
             Page<QuizSummaryDto> quizzes = quizzesService.getAllQuizzesPaginated(userId, pageable);
-            return ResponseEntity.ok(quizzes);
+            return ResponseEntity.ok(ApiResponse.success(quizzes, "Paginated quizzes retrieved successfully"));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to retrieve paginated quizzes: " + e.getMessage(), 500));
         }
     }
 
@@ -89,7 +93,7 @@ public abstract class BaseQuizController {
      * @param direction Sort direction (ASC or DESC)
      * @return Paginated list of quizzes matching the search term
      */
-    protected ResponseEntity<Page<QuizSummaryDto>> doSearchQuizzesPaginated(
+    protected ResponseEntity<ApiResponse<Page<QuizSummaryDto>>> doSearchQuizzesPaginated(
             @RequestParam String title,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -100,31 +104,34 @@ public abstract class BaseQuizController {
             Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
             Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
             Page<QuizSummaryDto> quizzes = quizzesService.searchQuizzesPaginated(title, userId, pageable);
-            return ResponseEntity.ok(quizzes);
+            return ResponseEntity.ok(ApiResponse.success(quizzes, "Search results retrieved successfully"));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to search quizzes: " + e.getMessage(), 500));
         }
     }
 
     /**
      * Get a quiz by ID
      */
-    protected ResponseEntity<QuizResponseDto> doGetQuizById(Long quizId) {
+    protected ResponseEntity<ApiResponse<QuizResponseDto>> doGetQuizById(Long quizId) {
         try {
             Long userId = getCurrentUserId();
             QuizResponseDto quiz = quizzesService.getQuizById(quizId, userId);
-            return ResponseEntity.ok(quiz);
+            return ResponseEntity.ok(ApiResponse.success(quiz, "Quiz retrieved successfully"));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Quiz not found: " + e.getMessage(), 404));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to retrieve quiz: " + e.getMessage(), 500));
         }
     }
 
     /**
      * Get a quiz by ID and slug
      */
-    protected ResponseEntity<QuizResponseDto> doGetQuizByIdAndSlug(Long quizId, String slug, String basePath) {
+    protected ResponseEntity<ApiResponse<QuizResponseDto>> doGetQuizByIdAndSlug(Long quizId, String slug, String basePath) {
         try {
             Long userId = getCurrentUserId();
             QuizResponseDto quiz = quizzesService.getQuizById(quizId, userId);
@@ -132,35 +139,39 @@ public abstract class BaseQuizController {
             if (!quiz.getSlug().equals(slug)) {
                 return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
                         .header("Location", basePath + "/" + quizId + "/" + quiz.getSlug())
-                        .build();
+                        .body(ApiResponse.error("Quiz moved to correct URL", 301));
             }
-            return ResponseEntity.ok(quiz);
+            return ResponseEntity.ok(ApiResponse.success(quiz, "Quiz retrieved successfully"));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Quiz not found: " + e.getMessage(), 404));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to retrieve quiz: " + e.getMessage(), 500));
         }
     }
 
     /**
      * Update a quiz
      */
-    protected ResponseEntity<QuizResponseDto> doUpdateQuiz(Long quizId, @Valid QuizRequestDto quizRequestDto) {
+    protected ResponseEntity<ApiResponse<QuizResponseDto>> doUpdateQuiz(Long quizId, @Valid QuizRequestDto quizRequestDto) {
         try {
             Long userId = getCurrentUserId();
             QuizResponseDto updatedQuiz = quizzesService.updateQuiz(quizId, quizRequestDto, userId);
-            return ResponseEntity.ok(updatedQuiz);
+            return ResponseEntity.ok(ApiResponse.success(updatedQuiz, "Quiz updated successfully"));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Quiz not found: " + e.getMessage(), 404));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to update quiz: " + e.getMessage(), 400));
         }
     }
 
     /**
      * Update a quiz with slug validation
      */
-    protected ResponseEntity<QuizResponseDto> doUpdateQuizWithSlug(Long quizId, String slug,
+    protected ResponseEntity<ApiResponse<QuizResponseDto>> doUpdateQuizWithSlug(Long quizId, String slug,
                                                                    @Valid QuizRequestDto quizRequestDto,
                                                                    String basePath) {
         try {
@@ -170,56 +181,63 @@ public abstract class BaseQuizController {
             if (!existingQuiz.getSlug().equals(slug)) {
                 return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
                         .header("Location", basePath + "/" + quizId + "/" + existingQuiz.getSlug())
-                        .build();
+                        .body(ApiResponse.error("Quiz moved to correct URL", 301));
             }
 
             QuizResponseDto updatedQuiz = quizzesService.updateQuiz(quizId, quizRequestDto, userId);
-            return ResponseEntity.ok(updatedQuiz);
+            return ResponseEntity.ok(ApiResponse.success(updatedQuiz, "Quiz updated successfully"));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Quiz not found: " + e.getMessage(), 404));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to update quiz: " + e.getMessage(), 400));
         }
     }
 
     /**
      * Patch update a quiz
      */
-    protected ResponseEntity<QuizResponseDto> doPatchQuiz(Long quizId, Map<String, Object> updates) {
+    protected ResponseEntity<ApiResponse<QuizResponseDto>> doPatchQuiz(Long quizId, Map<String, Object> updates) {
         try {
             Long userId = getCurrentUserId();
             QuizResponseDto updatedQuiz = quizzesService.patchQuiz(quizId, userId, updates);
-            return ResponseEntity.ok(updatedQuiz);
+            return ResponseEntity.ok(ApiResponse.success(updatedQuiz, "Quiz patched successfully"));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Quiz not found: " + e.getMessage(), 404));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to patch quiz: " + e.getMessage(), 500));
         }
     }
 
     /**
      * Delete a quiz
      */
-    protected ResponseEntity<Void> doDeleteQuiz(Long quizId) {
+    protected ResponseEntity<ApiResponse<Void>> doDeleteQuiz(Long quizId) {
         try {
             Long userId = getCurrentUserId();
             boolean deleted = quizzesService.deleteQuiz(quizId, userId);
             if (deleted) {
-                return ResponseEntity.noContent().build();
+                return ResponseEntity.ok(ApiResponse.success(null, "Quiz deleted successfully"));
             } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error("Quiz not found", 404));
             }
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access denied: " + e.getMessage(), 403));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to delete quiz: " + e.getMessage(), 500));
         }
     }
 
     /**
      * Delete a quiz with slug validation
      */
-    protected ResponseEntity<Void> doDeleteQuizWithSlug(Long quizId, String slug, String basePath) {
+    protected ResponseEntity<ApiResponse<Void>> doDeleteQuizWithSlug(Long quizId, String slug, String basePath) {
         try {
             Long userId = getCurrentUserId();
             // Verify quiz exists and slug matches
@@ -227,32 +245,36 @@ public abstract class BaseQuizController {
             if (!existingQuiz.getSlug().equals(slug)) {
                 return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
                         .header("Location", basePath + "/" + quizId + "/" + existingQuiz.getSlug())
-                        .build();
+                        .body(ApiResponse.error("Quiz moved to correct URL", 301));
             }
 
             boolean deleted = quizzesService.deleteQuiz(quizId, userId);
             if (deleted) {
-                return ResponseEntity.noContent().build();
+                return ResponseEntity.ok(ApiResponse.success(null, "Quiz deleted successfully"));
             } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error("Quiz not found", 404));
             }
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access denied: " + e.getMessage(), 403));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to delete quiz: " + e.getMessage(), 500));
         }
     }
 
     /**
      * Search quizzes by title
      */
-    protected ResponseEntity<List<QuizSummaryDto>> doSearchQuizzes(String title) {
+    protected ResponseEntity<ApiResponse<List<QuizSummaryDto>>> doSearchQuizzes(String title) {
         try {
             Long userId = getCurrentUserId();
             List<QuizSummaryDto> quizzes = quizzesService.searchQuizzes(title, userId);
-            return ResponseEntity.ok(quizzes);
+            return ResponseEntity.ok(ApiResponse.success(quizzes, "Search completed successfully"));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to search quizzes: " + e.getMessage(), 500));
         }
     }
 }
