@@ -122,6 +122,37 @@ To be updated
 #### Author : Cong Bien
 ##### Done: 40%
 
+<<<<<<< HEAD
+| Method  | URL                                                                  | Description                                | Status    |
+|---------|----------------------------------------------------------------------|--------------------------------------------|-----------|
+| GET     | `/api/v1/student/courses/{courseId}`                                 | Get course details by ID (student view)    | (Done)    |
+| GET     | `/api/v1/student/courses/search`                                     | Search courses                             | (Done)    |
+| GET     | `/api/v1/student/courses/filter`                                     | Filter courses by level/price              | (Done)    |
+| GET     | `/api/v1/student/courses/tags`                                       | Get courses by tag(s)                      | (Done)    |
+| GET     | `/api/v1/student/courses/popular`                                    | Get popular courses                        | (pending) |
+| GET     | `/api/v1/student/courses/highly-rated`                               | Get highly rated courses                   | (pending) |
+| GET     | `/api/v1/student/courses/free`                                       | Get free courses                           | (Done)    |
+| POST    | `/api/v1/student/courses/{courseId}/enroll`                          | Enroll in a course                         | (Done)    |
+| DELETE  | `/api/v1/student/courses/{courseId}/enroll`                          | Unenroll from a course                     | (pending) |
+| GET     | `/api/v1/student/courses/student/my-enrollments`                     | Get student's enrollments                  | (pending) |
+| PATCH   | `/api/v1/student/courses/enrollments/{enrollmentId}/progress`        | Update enrollment progress                 | (pending) |
+| POST    | `/api/v1/student/courses/{courseId}/ratings`                         | Rate a course                              | (pending) |
+| PATCH   | `/api/v1/student/courses/{courseId}/ratings`                         | Update rating                              | (pending) |
+| DELETE  | `/api/v1/student/courses/{courseId}/ratings`                         | Delete rating                              | (pending) |
+| GET     | `/api/v1/student/courses/{courseId}/ratings`                         | Get course ratings                         | (pending) |
+| GET     | `/api/v1/student/courses/{courseId}/ratings/my-rating`               | Get student's own rating for the course    | (pending) |
+
+## 12. Achivement
+#### Author : Quang Thang
+##### Done: 100%
+| Method | URL                              | Description        | Status  |
+|--------|----------------------------------|--------------------|---------|
+| GET    | `/api/v1/user/achievement`       | View Achievement   | (Done)  |
+| POST   | `/api/v1/admin/achievement`      | Create Achievement | (Done)  |
+| PATCH  | `/api/v1/admin/achievement/{id}` | Update Achievement | (Done)  |
+| DELETE | `/api/v1/admin/achievement/{id}` | Delete Achievement | (Done)  |
+
+=======
 | Method  | URL                                                                  | Description                              | Status |
 |---------|----------------------------------------------------------------------|------------------------------------------|--------|
 | GET     | `/api/v1/student/courses/{courseId}`                                 | Get course details by ID (student view)  | (Done) |
@@ -150,6 +181,7 @@ To be updated
 | DELETE | `/api/v1/admin/achievement/{id} | Delete Achievement | (Done)  |
 #### Author : Quang Thang
 ##### Done: 100%
+>>>>>>> 4b39afea9aeb59caa3bc0edf053a4026e79cc6a1
 Còn bổ sung thêm các achievement và các trigger đi theo từng achievement
 
 ## 13. Planner
@@ -170,6 +202,24 @@ Còn bổ sung thêm các achievement và các trigger đi theo từng achieveme
 
 To be updated
 
+<<<<<<< HEAD
+| Endpoint                | Method  | Description                                 | Auth    | Status     |
+|-------------------------|---------|---------------------------------------------|---------|------------|
+| /                       | POST    | Create new quiz set                         | Bearer  | (Done)     |
+| /                       | GET     | Get all quizzes (current user)              | Bearer  | (Done)     |
+| /paginated              | GET     | Get all quizzes (paginated + sort)          | Bearer  | (Done)     |
+| /search                 | GET     | Search quizzes by title (non-paginated)     | Bearer  | (Done)     |
+| /search/paginated       | GET     | Search quizzes by title (paginated + sort)  | Bearer  | (Done)     |
+| /{id}                   | GET     | Get quiz set details by ID                  | Bearer  | (Done)     |
+| /{id}/{slug}            | GET     | Get quiz;                                   | Bearer  | (Done)     |
+| /public                 | GET     | Get quizzes with status PUBLIC              | Public  | (Done)     |
+| /{id}                   | PUT     | Update quiz by ID (replace)                 | Bearer  | (Done)     |
+| /{id}                   | PATCH   | Patch update quiz by ID (partial)           | Bearer  | (Done)     |
+| /{id}                   | DELETE  | Delete quiz by ID                           | Bearer  | (Done)     |
+| /{id}/{slug}            | DELETE  | Delete quiz by ID with slug validation      | Bearer  | (Done)     |
+| /ai/extract             | POST    | Extract question bank from text/file/url    | Bearer  | ()         |
+| /ai/generate            | POST    | Generate quiz from content + params         | Bearer  | ()         |
+=======
 | Endpoint              | Method | Description                                 | Auth    | Status     |
 |-----------------------| ------ |---------------------------------------------|---------|------------|
 | /                     | POST   | Create new quiz set                         | Bearer  | (Done)     |
@@ -186,6 +236,7 @@ To be updated
 | /{id}/{slug}          | DELETE | Delete quiz by ID with slug validation      | Bearer  | (Done)     |
 | /ai/extract           | POST   | Extract question bank from text/file/url    | Bearer  | ()         |
 | /ai/generate          | POST   | Generate quiz from content + params         | Bearer  | ()         |
+>>>>>>> 4b39afea9aeb59caa3bc0edf053a4026e79cc6a1
 
 ## 16. Pomodoro
 
@@ -221,6 +272,39 @@ To be updated
 #### Author : Cong Bien
 ##### Done: 50%
 
+<<<<<<< HEAD
+| Method   | URL                                                           | Description                                    | Status      |
+|----------|---------------------------------------------------------------|------------------------------------------------|-------------|
+| POST     | `/api/v1/teacher/courses`                                     | Create new course                              | (Done)      |
+| PATCH    | `/api/v1/teacher/courses/{courseId}`                          | Update course by ID                            | (Done)      |
+| GET      | `/api/v1/teacher/courses/{courseId}`                          | Get teacher's course details                   | (Done)      |
+| DELETE   | `/api/v1/teacher/courses/{courseId}`                          | Delete course                                  | (Done)      |
+| PATCH    | `/api/v1/teacher/courses/{courseId}/publish`                  | Publish course                                 | (Done)      |
+| PATCH    | `/api/v1/teacher/courses/{courseId}/archive`                  | Archive course                                 | (Done)      |
+| GET      | `/api/v1/teacher/courses/my-courses`                          | Get teacher's courses (with status filter)     | (Done)      |
+| GET      | `/api/v1/teacher/courses/published`                           | Get all published courses                      | (Done)      |
+| GET      | `/api/v1/teacher/courses/search`                              | Search courses                                 | (Done)      |
+| GET      | `/api/v1/teacher/courses/filter`                              | Filter courses by level/price                  | (Done)      |
+| GET      | `/api/v1/teacher/courses/tags`                                | Get courses by tag(s)                          | (Done)      |
+| GET      | `/api/v1/teacher/courses/popular`                             | Get popular courses                            | (pending)   |
+| GET      | `/api/v1/teacher/courses/highly-rated`                        | Get highly rated courses                       | (pending)   |
+| GET      | `/api/v1/teacher/courses/free`                                | Get free courses                               | (Done)      |
+| POST     | `/api/v1/teacher/courses/{courseId}/lessons`                  | Create lesson                                  | (Done)      |
+| PATCH    | `/api/v1/teacher/courses/lessons/{lessonId}`                  | Update lesson                                  | (Done)      |
+| DELETE   | `/api/v1/teacher/courses/lessons/{lessonId}`                  | Delete lesson                                  | (Done)      |
+| GET      | `/api/v1/teacher/courses/{courseId}/lessons`                  | Get lessons of a course                        | (Done)      |
+| POST     | `/api/v1/teacher/courses/{courseId}/exercises`                | Create exercise                                | (Done)      |
+| PATCH    | `/api/v1/teacher/courses/exercises/{exerciseId}`              | Update exercise                                | (Done)      |
+| DELETE   | `/api/v1/teacher/courses/exercises/{exerciseId}`              | Delete exercise                                | (Done)      |
+| GET      | `/api/v1/teacher/courses/{courseId}/exercises`                | Get exercises of a course                      | (pending)   |
+| POST     | `/api/v1/teacher/courses/{courseId}/resources`                | Create resource                                | (pending)   |
+| PATCH    | `/api/v1/teacher/courses/resources/{resourceId}`              | Update resource                                | (pending)   |
+| DELETE   | `/api/v1/teacher/courses/resources/{resourceId}`              | Delete resource                                | (pending)   |
+| GET      | `/api/v1/teacher/courses/{courseId}/resources`                | Get resources of a course                      | (pending)   |
+| GET      | `/api/v1/teacher/courses/{courseId}/enrollments`              | Get enrollments of a course                    | (pending)   |
+| PATCH    | `/api/v1/teacher/courses/enrollments/{enrollmentId}/progress` | Update enrollment progress                     | (pending)   |
+| GET      | `/api/v1/teacher/courses/{courseId}/ratings`                  | Get ratings of a course                        | (pending)   |
+=======
 | Method  | URL                                                           | Description                                | Status  |
 |---------|---------------------------------------------------------------|--------------------------------------------|---------|
 | POST    | `/api/v1/teacher/courses`                                     | Create new course                          | (Done) |
@@ -252,3 +336,4 @@ To be updated
 | GET     | `/api/v1/teacher/courses/{courseId}/enrollments`              | Get enrollments of a course                | (pending) |
 | PATCH   | `/api/v1/teacher/courses/enrollments/{enrollmentId}/progress` | Update enrollment progress                 | (pending) |
 | GET     | `/api/v1/teacher/courses/{courseId}/ratings`                  | Get ratings of a course    
+>>>>>>> 4b39afea9aeb59caa3bc0edf053a4026e79cc6a1
