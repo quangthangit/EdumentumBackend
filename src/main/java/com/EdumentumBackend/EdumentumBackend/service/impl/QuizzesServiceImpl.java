@@ -567,7 +567,6 @@ public class QuizzesServiceImpl implements QuizzesService {
     @Override
     @Transactional(readOnly = true)
     public Page<QuizSummaryDto> searchQuizzesPaginated(String title, Long userId, Pageable pageable) {
-        // Using direct DTO projection for search with pagination
         Page<QuizSummaryDto> page = quizzesRepository.findSummariesByTitleAndUserOrPublic(title, userId, pageable);
         enrichQuizzesWithTags(page.getContent());
         return page;
