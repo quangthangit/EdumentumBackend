@@ -8,6 +8,7 @@ import com.EdumentumBackend.EdumentumBackend.entity.FlashcardEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.FlashcardSetEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
 import com.EdumentumBackend.EdumentumBackend.enums.FlashcardType;
+import com.EdumentumBackend.EdumentumBackend.event.FlashCardCreatedEvent;
 import com.EdumentumBackend.EdumentumBackend.exception.BadRequestException;
 import com.EdumentumBackend.EdumentumBackend.exception.NotFoundException;
 import com.EdumentumBackend.EdumentumBackend.repository.FlashcardCategoryRepository;
@@ -16,6 +17,7 @@ import com.EdumentumBackend.EdumentumBackend.repository.FlashcardSetRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
 import com.EdumentumBackend.EdumentumBackend.service.FlashcardService;
 import jakarta.transaction.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,15 +33,18 @@ public class FlashcardServiceImpl implements FlashcardService {
     private final FlashcardRepository flashcardRepository;
     private final FlashcardCategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public FlashcardServiceImpl(FlashcardSetRepository flashcardSetRepository,
                                 FlashcardRepository flashcardRepository,
                                 FlashcardCategoryRepository categoryRepository,
-                                UserRepository userRepository) {
+                                UserRepository userRepository,
+                                ApplicationEventPublisher eventPublisher) {
         this.flashcardSetRepository = flashcardSetRepository;
         this.flashcardRepository = flashcardRepository;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -72,6 +77,7 @@ public class FlashcardServiceImpl implements FlashcardService {
                 .build();
 
         FlashcardSetEntity savedFlashcardSet = flashcardSetRepository.save(flashcardSet);
+        eventPublisher.publishEvent(new FlashCardCreatedEvent(this, userId));
 
         if (flashcardSetRequestDto.getFlashcards() != null && !flashcardSetRequestDto.getFlashcards().isEmpty()) {
             // Validate flashcards based on type
