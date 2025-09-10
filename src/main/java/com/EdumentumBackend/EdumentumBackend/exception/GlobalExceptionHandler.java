@@ -59,4 +59,15 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(CourseEnrollmentException.class)
+    public ResponseEntity<Map<String, Object>> handleCourseEnrollmentException(CourseEnrollmentException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("status", "error");
+        body.put("message", ex.getMessage());
+        body.put("errorCode", "ENROLLMENT_FAILED");
+        body.put("timestamp", LocalDateTime.now());
+
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+    }
 }

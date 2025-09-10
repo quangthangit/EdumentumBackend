@@ -19,6 +19,6 @@ public class EnrollmentResponseDto {
     private BigDecimal paidAmount;
     private Integer completedLessons;
     private Integer completedExercises;
-    private BigDecimal progressPercentage;
+    private Double progressPercentage;
     private LocalDateTime enrolledAt;
 }

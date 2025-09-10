@@ -24,16 +24,16 @@ public interface CourseRepository extends JpaRepository<CourseEntity, Long> {
        List<CourseEntity> findByTeacherUserId(Long teacherId);
 
        // Find published courses
-       Page<CourseEntity> findByStatus(CourseStatus status, Pageable pageable);
+       Page<CourseEntity> findByCourseStatus(CourseStatus courseStatus, Pageable pageable);
 
        // Search courses
-       @Query("SELECT c FROM CourseEntity c WHERE c.status = 'PUBLISHED' AND " +
+       @Query("SELECT c FROM CourseEntity c WHERE c.courseStatus = 'PUBLISHED' AND " +
                      "(LOWER(c.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                      "LOWER(c.shortDescription) LIKE LOWER(CONCAT('%', :keyword, '%')))")
        Page<CourseEntity> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
        // Filter courses
-       @Query("SELECT c FROM CourseEntity c WHERE c.status = 'PUBLISHED' " +
+       @Query("SELECT c FROM CourseEntity c WHERE c.courseStatus = 'PUBLISHED' " +
                      "AND (:level IS NULL OR c.courseLevel = :level) " +
                      "AND (:minPrice IS NULL OR c.price >= :minPrice) " +
                      "AND (:maxPrice IS NULL OR c.price <= :maxPrice)")
@@ -43,22 +43,22 @@ public interface CourseRepository extends JpaRepository<CourseEntity, Long> {
                      Pageable pageable);
 
        // Filter courses by teacherId
-       @Query("SELECT c FROM CourseEntity c WHERE c.teacher = :teacher AND c.status = :status")
-       Page<CourseEntity> findByTeacherAndStatus(@Param("teacher") UserEntity teacher,
-                     @Param("status") CourseStatus status, Pageable pageable);
+       @Query("SELECT c FROM CourseEntity c WHERE c.teacher = :teacher AND c.courseStatus = :courseStatus")
+       Page<CourseEntity> findByTeacherAndCourseStatus(@Param("teacher") UserEntity teacher,
+                     @Param("courseStatus") CourseStatus courseStatus, Pageable pageable);
 
        // Find courses by tags
-       @Query("SELECT DISTINCT c FROM CourseEntity c JOIN c.courseTags t WHERE c.status = 'PUBLISHED' AND t.name IN :tagNames")
+       @Query("SELECT DISTINCT c FROM CourseEntity c JOIN c.courseTags t WHERE c.courseStatus = 'PUBLISHED' AND t.name IN :tagNames")
        Page<CourseEntity> findByTagNames(@Param("tagNames") List<String> tagNames, Pageable pageable);
 
        // Popular courses (most enrolled)
-       @Query("SELECT c FROM CourseEntity c WHERE c.status = 'PUBLISHED' ORDER BY c.totalEnrollments DESC")
+       @Query("SELECT c FROM CourseEntity c WHERE c.courseStatus = 'PUBLISHED' ORDER BY c.totalEnrollments DESC")
        Page<CourseEntity> findPopularCourses(Pageable pageable);
 
        // Highly rated courses
-       @Query("SELECT c FROM CourseEntity c WHERE c.status = 'PUBLISHED' AND c.averageRating IS NOT NULL ORDER BY c.averageRating DESC")
+       @Query("SELECT c FROM CourseEntity c WHERE c.courseStatus = 'PUBLISHED' AND c.averageRating IS NOT NULL ORDER BY c.averageRating DESC")
        Page<CourseEntity> findHighlyRatedCourses(Pageable pageable);
 
        // Free courses
-       Page<CourseEntity> findByStatusAndPrice(CourseStatus status, BigDecimal price, Pageable pageable);
+       Page<CourseEntity> findByCourseStatusAndPrice(CourseStatus courseStatus, BigDecimal price, Pageable pageable);
 }

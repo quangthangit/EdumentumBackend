@@ -1,7 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.service;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseCreateRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseDetailResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseUpdateRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.EnrollmentResponseDto;
@@ -13,6 +12,9 @@ import com.EdumentumBackend.EdumentumBackend.dtos.course.RatingCreateRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.RatingResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.ResourceCreateRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.course.ResourceResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.course.TeacherCourseDetailDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.course.EnrolledStudentCourseDetailDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.course.PublicCourseDetailDto;
 import com.EdumentumBackend.EdumentumBackend.enums.CourseLevel;
 import com.EdumentumBackend.EdumentumBackend.enums.CourseStatus;
 import com.EdumentumBackend.EdumentumBackend.enums.EnrollmentStatus;
@@ -29,7 +31,15 @@ public interface CourseService {
     
     CourseResponseDto updateCourse(Long courseId, CourseUpdateRequestDto request, Long teacherId);
     
-    CourseDetailResponseDto getCourseById(Long courseId, Long userId);
+    // Course Detail Methods - Updated to use specific DTOs
+    TeacherCourseDetailDto getTeacherCourseDetail(Long courseId, Long teacherId);
+    
+    EnrolledStudentCourseDetailDto getEnrolledStudentCourseDetail(Long courseId, Long studentId);
+    
+    PublicCourseDetailDto getPublicCourseDetail(Long courseId);
+    
+    // Generic method that determines which DTO to return based on user context
+    Object getCourseDetailByUser(Long courseId, Long userId);
     
     void deleteCourse(Long courseId, Long teacherId);
     

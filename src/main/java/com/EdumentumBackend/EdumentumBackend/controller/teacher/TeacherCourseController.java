@@ -1,21 +1,8 @@
 package com.EdumentumBackend.EdumentumBackend.controller.teacher;
 
-import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseCreateRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseDetailResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.CourseUpdateRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.EnrollmentResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.ExerciseCreateRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.ExerciseResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.LessonCreateRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.LessonResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.RatingCreateRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.RatingResponseDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.ResourceCreateRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.course.ResourceResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.course.*;
 import com.EdumentumBackend.EdumentumBackend.enums.CourseLevel;
 import com.EdumentumBackend.EdumentumBackend.enums.CourseStatus;
-import com.EdumentumBackend.EdumentumBackend.enums.EnrollmentStatus;
 import com.EdumentumBackend.EdumentumBackend.service.CourseService;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -36,11 +23,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/teacher/courses")
 @CrossOrigin(origins = "*")
-public class CourseController {
+public class TeacherCourseController {
 
     private final CourseService courseService;
 
-    public CourseController(CourseService courseService) {
+    public TeacherCourseController(CourseService courseService) {
         this.courseService = courseService;
     }
 
@@ -50,10 +37,10 @@ public class CourseController {
     public ResponseEntity<Map<String, Object>> createCourse(
             @Valid @RequestBody CourseCreateRequestDto request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         Long teacherId = ((CustomUserDetails) userDetails).getUserId();
         CourseResponseDto response = courseService.createCourse(request, teacherId);
-        
+
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "status", "success",
                 "message", "Course created successfully",
@@ -66,10 +53,10 @@ public class CourseController {
             @PathVariable Long courseId,
             @Valid @RequestBody CourseUpdateRequestDto request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         Long teacherId = ((CustomUserDetails) userDetails).getUserId();
         CourseResponseDto response = courseService.updateCourse(courseId, request, teacherId);
-        
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "message", "Course updated successfully",
@@ -78,12 +65,12 @@ public class CourseController {
     }
 
     @GetMapping("/{courseId}")
-    public ResponseEntity<Map<String, Object>> getCourseById(
+    public ResponseEntity<Map<String, Object>> getCourseDetail(
             @PathVariable Long courseId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         Long teacherId = ((CustomUserDetails) userDetails).getUserId();
-        CourseDetailResponseDto response = courseService.getCourseById(courseId, teacherId);
+        TeacherCourseDetailDto response = courseService.getTeacherCourseDetail(courseId, teacherId);
 
         return ResponseEntity.ok(Map.of(
                 "status", "success",
@@ -95,10 +82,10 @@ public class CourseController {
     public ResponseEntity<Map<String, Object>> deleteCourse(
             @PathVariable Long courseId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         Long teacherId = ((CustomUserDetails) userDetails).getUserId();
         courseService.deleteCourse(courseId, teacherId);
-        
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "message", "Course deleted successfully"
@@ -109,10 +96,10 @@ public class CourseController {
     public ResponseEntity<Map<String, Object>> publishCourse(
             @PathVariable Long courseId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         Long teacherId = ((CustomUserDetails) userDetails).getUserId();
         CourseResponseDto response = courseService.publishCourse(courseId, teacherId);
-        
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "message", "Course published successfully",
@@ -124,10 +111,10 @@ public class CourseController {
     public ResponseEntity<Map<String, Object>> archiveCourse(
             @PathVariable Long courseId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         Long teacherId = ((CustomUserDetails) userDetails).getUserId();
         CourseResponseDto response = courseService.archiveCourse(courseId, teacherId);
-        
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "message", "Course archived successfully",
@@ -136,22 +123,20 @@ public class CourseController {
     }
 
     // Course Query Endpoints
-@GetMapping("/my-courses")
+
+    @GetMapping("/my-courses")
     public ResponseEntity<Map<String, Object>> getTeacherCourses(
-            @RequestParam(defaultValue = "PUBLISHED") CourseStatus status,
+            @RequestParam(defaultValue = "PUBLISHED") CourseStatus courseStatus,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "6") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         Long teacherId = ((CustomUserDetails) userDetails).getUserId();
-        System.out.println("Getting courses for teacher: " + teacherId + " with status: " + status);
-        
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDir), sortBy));
-        Page<CourseResponseDto> response = courseService.getTeacherCourses(teacherId, status, pageable);
-        
-        System.out.println("Found " + response.getTotalElements() + " courses");
-        
+        Page<CourseResponseDto> response = courseService.getTeacherCourses(teacherId, courseStatus, pageable);
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "data", response.getContent(),
@@ -161,35 +146,7 @@ public class CourseController {
                         "totalElements", response.getTotalElements()
                 )
         ));
-    };
-//     @GetMapping("/my-courses")
-//     public ResponseEntity<Map<String, Object>> getTeacherCourses(
-//             @RequestParam(defaultValue = "PUBLISHED") CourseStatus status,
-//             @RequestParam(defaultValue = "0") int page,
-//             @RequestParam(defaultValue = "10") int size,
-//             @RequestParam(defaultValue = "createdAt") String sortBy,
-//             @RequestParam(defaultValue = "desc") String sortDir,
-//             @AuthenticationPrincipal UserDetails userDetails) {
-        
-//         Long teacherId = ((CustomUserDetails) userDetails).getUserId();
-//         Sort sort = sortDir.equalsIgnoreCase("desc") ? 
-//                    Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-//         Pageable pageable = PageRequest.of(page, size, sort);
-        
-//         Page<CourseResponseDto> response = courseService.getTeacherCourses(teacherId, status, pageable);
-        
-//         return ResponseEntity.ok(Map.of(
-//                 "status", "success",
-//                 "data", response.getContent(),
-//                 "pagination", Map.of(
-//                         "currentPage", response.getNumber(),
-//                         "totalPages", response.getTotalPages(),
-//                         "totalElements", response.getTotalElements(),
-//                         "hasNext", response.hasNext(),
-//                         "hasPrevious", response.hasPrevious()
-//                 )
-//         ));
-//     }
+    }
 
     @GetMapping("/published")
     public ResponseEntity<Map<String, Object>> getPublishedCourses(
@@ -221,7 +178,7 @@ public class CourseController {
     public ResponseEntity<Map<String, Object>> searchCourses(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "6") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         
@@ -250,7 +207,7 @@ public class CourseController {
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "6") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         
@@ -277,7 +234,7 @@ public class CourseController {
     public ResponseEntity<Map<String, Object>> getCoursesByTags(
             @RequestParam List<String> tagCourseNames,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
+            @RequestParam(defaultValue = "6") int size) {
         
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<CourseResponseDto> response = courseService.getCoursesByTags(tagCourseNames, pageable);
@@ -296,8 +253,8 @@ public class CourseController {
     @GetMapping("/popular")
     public ResponseEntity<Map<String, Object>> getPopularCourses(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
-        
+            @RequestParam(defaultValue = "6") int size) {
+
         Pageable pageable = PageRequest.of(page, size);
         Page<CourseResponseDto> response = courseService.getPopularCourses(pageable);
         
@@ -315,8 +272,8 @@ public class CourseController {
     @GetMapping("/highly-rated")
     public ResponseEntity<Map<String, Object>> getHighlyRatedCourses(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
-        
+            @RequestParam(defaultValue = "6") int size) {
+
         Pageable pageable = PageRequest.of(page, size);
         Page<CourseResponseDto> response = courseService.getHighlyRatedCourses(pageable);
         
@@ -334,7 +291,7 @@ public class CourseController {
     @GetMapping("/free")
     public ResponseEntity<Map<String, Object>> getFreeCourses(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
+            @RequestParam(defaultValue = "6") int size) {
         
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<CourseResponseDto> response = courseService.getFreeCourses(pageable);
@@ -352,15 +309,15 @@ public class CourseController {
 
     // Lesson Management Endpoints
 
-    @PostMapping("/{courseId}/lessons")
+   @PostMapping("/{courseId}/lessons")
     public ResponseEntity<Map<String, Object>> createLesson(
             @PathVariable Long courseId,
             @Valid @RequestBody LessonCreateRequestDto request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
+
         Long teacherId = ((CustomUserDetails) userDetails).getUserId();
         LessonResponseDto response = courseService.createLesson(courseId, request, teacherId);
-        
+
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "status", "success",
                 "message", "Lesson created successfully",
@@ -535,58 +492,6 @@ public class CourseController {
 
     // Enrollment Management Endpoints
 
-    @PostMapping("/{courseId}/enroll")
-    public ResponseEntity<Map<String, Object>> enrollInCourse(
-            @PathVariable Long courseId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        Long studentId = ((CustomUserDetails) userDetails).getUserId();
-        EnrollmentResponseDto response = courseService.enrollInCourse(courseId, studentId);
-        
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                "status", "success",
-                "message", "Successfully enrolled in course",
-                "data", response
-        ));
-    }
-
-    @DeleteMapping("/{courseId}/enroll")
-    public ResponseEntity<Map<String, Object>> unenrollFromCourse(
-            @PathVariable Long courseId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        Long studentId = ((CustomUserDetails) userDetails).getUserId();
-        courseService.unenrollFromCourse(courseId, studentId);
-        
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "message", "Successfully unenrolled from course"
-        ));
-    }
-
-    @GetMapping("/student/my-enrollments")
-    public ResponseEntity<Map<String, Object>> getStudentEnrollments(
-            @RequestParam(required = false) EnrollmentStatus status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        Long studentId = ((CustomUserDetails) userDetails).getUserId();
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        
-        Page<EnrollmentResponseDto> response = courseService.getStudentEnrollments(studentId, status, pageable);
-        
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "data", response.getContent(),
-                "pagination", Map.of(
-                        "currentPage", response.getNumber(),
-                        "totalPages", response.getTotalPages(),
-                        "totalElements", response.getTotalElements()
-                )
-        ));
-    }
-
     @GetMapping("/{courseId}/enrollments")
     public ResponseEntity<Map<String, Object>> getCourseEnrollments(
             @PathVariable Long courseId,
@@ -628,61 +533,15 @@ public class CourseController {
 
     // Rating Management Endpoints
 
-    @PostMapping("/{courseId}/ratings")
-    public ResponseEntity<Map<String, Object>> rateCourse(
-            @PathVariable Long courseId,
-            @Valid @RequestBody RatingCreateRequestDto request,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        Long studentId = ((CustomUserDetails) userDetails).getUserId();
-        RatingResponseDto response = courseService.rateCourse(courseId, request, studentId);
-        
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                "status", "success",
-                "message", "Course rated successfully",
-                "data", response
-        ));
-    }
-
-    @PatchMapping("/{courseId}/ratings")
-    public ResponseEntity<Map<String, Object>> updateCourseRating(
-            @PathVariable Long courseId,
-            @Valid @RequestBody RatingCreateRequestDto request,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        Long studentId = ((CustomUserDetails) userDetails).getUserId();
-        RatingResponseDto response = courseService.updateCourseRating(courseId, request, studentId);
-        
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "message", "Rating updated successfully",
-                "data", response
-        ));
-    }
-
-    @DeleteMapping("/{courseId}/ratings")
-    public ResponseEntity<Map<String, Object>> deleteCourseRating(
-            @PathVariable Long courseId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        Long studentId = ((CustomUserDetails) userDetails).getUserId();
-        courseService.deleteCourseRating(courseId, studentId);
-        
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "message", "Rating deleted successfully"
-        ));
-    }
-
-    @GetMapping("/{courseId}/ratings")
+     @GetMapping("/{courseId}/ratings")
     public ResponseEntity<Map<String, Object>> getCourseRatings(
             @PathVariable Long courseId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        
+            @RequestParam(defaultValue = "5") int size) {
+
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<RatingResponseDto> response = courseService.getCourseRatings(courseId, pageable);
-        
+
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "data", response.getContent(),
@@ -693,26 +552,4 @@ public class CourseController {
                 )
         ));
     }
-
-    @GetMapping("/{courseId}/ratings/my-rating")
-    public ResponseEntity<Map<String, Object>> getUserCourseRating(
-            @PathVariable Long courseId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        Long studentId = ((CustomUserDetails) userDetails).getUserId();
-        RatingResponseDto response = courseService.getUserCourseRating(courseId, studentId);
-        
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "data", response
-        ));
-    }
-
-    // Helper method to extract user ID from authentication
-//     private Long getUserId(UserDetails userDetails) {
-//         if (userDetails instanceof CustomUserDetails customUserDetails) {
-//             return customUserDetails.getUserId();
-//         }
-//         throw new IllegalStateException("User details is not an instance of CustomUserDetails");
-//     }
 }
