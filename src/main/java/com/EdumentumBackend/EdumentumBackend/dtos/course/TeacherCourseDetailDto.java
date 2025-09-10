@@ -1,22 +1,18 @@
 package com.EdumentumBackend.EdumentumBackend.dtos.course;
 
-import com.EdumentumBackend.EdumentumBackend.enums.EnrollmentStatus;
 import lombok.*;
-
 import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CourseDetailResponseDto {
-
+public class TeacherCourseDetailDto {
     private CourseResponseDto course;
     private List<LessonResponseDto> lessons;
     private List<ExerciseResponseDto> exercises;
     private List<ResourceResponseDto> resources;
-    private Boolean isEnrolled;
-    private EnrollmentStatus enrollmentStatus;
-    private Double progressPercentage;
-    private RatingResponseDto userRating;
+    private Integer totalEnrollments;
+    private Double averageRating;
+    private List<RatingResponseDto> recentRatings;
 }

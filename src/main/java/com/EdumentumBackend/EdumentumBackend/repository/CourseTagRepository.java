@@ -21,6 +21,6 @@ public interface CourseTagRepository extends JpaRepository<CourseTagEntity, Long
     List<CourseTagEntity> searchByName(@Param("keyword") String keyword);
     
     // Popular tags (used in most courses)
-    @Query("SELECT t FROM CourseTagEntity t JOIN t.courses c WHERE c.status = 'PUBLISHED' GROUP BY t ORDER BY COUNT(c) DESC")
+    @Query("SELECT t FROM CourseTagEntity t JOIN t.courses c WHERE c.courseStatus = 'PUBLISHED' GROUP BY t ORDER BY COUNT(c) DESC")
     List<CourseTagEntity> findPopularTags(Pageable pageable);
 }
