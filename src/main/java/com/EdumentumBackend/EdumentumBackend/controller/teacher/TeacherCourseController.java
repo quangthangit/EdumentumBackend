@@ -178,7 +178,7 @@ public class TeacherCourseController {
     public ResponseEntity<Map<String, Object>> searchCourses(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "6") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         
@@ -207,7 +207,7 @@ public class TeacherCourseController {
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "6") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         
@@ -234,7 +234,7 @@ public class TeacherCourseController {
     public ResponseEntity<Map<String, Object>> getCoursesByTags(
             @RequestParam List<String> tagCourseNames,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
+            @RequestParam(defaultValue = "6") int size) {
         
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<CourseResponseDto> response = courseService.getCoursesByTags(tagCourseNames, pageable);
@@ -253,8 +253,8 @@ public class TeacherCourseController {
     @GetMapping("/popular")
     public ResponseEntity<Map<String, Object>> getPopularCourses(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
-        
+            @RequestParam(defaultValue = "6") int size) {
+
         Pageable pageable = PageRequest.of(page, size);
         Page<CourseResponseDto> response = courseService.getPopularCourses(pageable);
         
@@ -272,8 +272,8 @@ public class TeacherCourseController {
     @GetMapping("/highly-rated")
     public ResponseEntity<Map<String, Object>> getHighlyRatedCourses(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
-        
+            @RequestParam(defaultValue = "6") int size) {
+
         Pageable pageable = PageRequest.of(page, size);
         Page<CourseResponseDto> response = courseService.getHighlyRatedCourses(pageable);
         
@@ -291,7 +291,7 @@ public class TeacherCourseController {
     @GetMapping("/free")
     public ResponseEntity<Map<String, Object>> getFreeCourses(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
+            @RequestParam(defaultValue = "6") int size) {
         
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<CourseResponseDto> response = courseService.getFreeCourses(pageable);
@@ -537,7 +537,7 @@ public class TeacherCourseController {
     public ResponseEntity<Map<String, Object>> getCourseRatings(
             @PathVariable Long courseId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "5") int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<RatingResponseDto> response = courseService.getCourseRatings(courseId, pageable);

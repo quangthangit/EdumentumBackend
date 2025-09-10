@@ -168,7 +168,7 @@ public class StudentCourseController {
     @GetMapping("/highly-rated")
     public ResponseEntity<Map<String, Object>> getHighlyRatedCourses(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
+            @RequestParam(defaultValue = "6") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<CourseResponseDto> response = courseService.getHighlyRatedCourses(pageable);
@@ -187,7 +187,7 @@ public class StudentCourseController {
     @GetMapping("/free")
     public ResponseEntity<Map<String, Object>> getFreeCourses(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
+            @RequestParam(defaultValue = "6") int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<CourseResponseDto> response = courseService.getFreeCourses(pageable);
@@ -238,7 +238,7 @@ public class StudentCourseController {
     public ResponseEntity<Map<String, Object>> getStudentEnrollments(
             @RequestParam(required = false) EnrollmentStatus enrollmentStatus,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "6") int size,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         Long studentId = ((CustomUserDetails) userDetails).getUserId();
@@ -326,7 +326,7 @@ public class StudentCourseController {
     public ResponseEntity<Map<String, Object>> getCourseRatings(
             @PathVariable Long courseId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "5") int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<RatingResponseDto> response = courseService.getCourseRatings(courseId, pageable);
