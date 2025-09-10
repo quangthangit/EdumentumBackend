@@ -3,6 +3,7 @@ package com.EdumentumBackend.EdumentumBackend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import com.EdumentumBackend.EdumentumBackend.enums.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -13,7 +14,16 @@ import java.util.Map;
 import java.util.Set;
 
 @Entity
-@Table(name = "quizzes")
+@Table(
+        name = "quizzes",
+        indexes = {
+                @Index(name = "idx_quizzes_user",       columnList = "user_id"),
+                @Index(name = "idx_quizzes_status",     columnList = "status"),
+                @Index(name = "idx_quizzes_visibility", columnList = "visibility"),
+                @Index(name = "idx_quizzes_published",  columnList = "published_at"),
+                @Index(name = "idx_quizzes_created",    columnList = "created_at")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -168,6 +178,7 @@ public class QuizzesEntity extends BaseEntity {
     @Column(name = "archived_at")
     private LocalDateTime archivedAt;
 
-    @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @BatchSize(size = 50)
     private Set<QuizTagEntity> quizTags = new HashSet<>();
 }

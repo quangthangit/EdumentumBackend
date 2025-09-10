@@ -114,7 +114,6 @@ public class UserGroupController {
         response.put("status", "success");
         response.put("message", "Group updated successfully");
         response.put("data", result.getData());
-        response.put("pagination", result.getPagination());
 
         return ResponseEntity.ok(response);
     }

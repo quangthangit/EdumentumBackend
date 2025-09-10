@@ -8,6 +8,7 @@ import com.EdumentumBackend.EdumentumBackend.entity.FlashcardEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.FlashcardSetEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
 import com.EdumentumBackend.EdumentumBackend.enums.FlashcardType;
+import com.EdumentumBackend.EdumentumBackend.event.FlashCardCreatedEvent;
 import com.EdumentumBackend.EdumentumBackend.exception.BadRequestException;
 import com.EdumentumBackend.EdumentumBackend.exception.NotFoundException;
 import com.EdumentumBackend.EdumentumBackend.repository.FlashcardCategoryRepository;
@@ -16,6 +17,7 @@ import com.EdumentumBackend.EdumentumBackend.repository.FlashcardSetRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
 import com.EdumentumBackend.EdumentumBackend.service.FlashcardService;
 import jakarta.transaction.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,15 +33,18 @@ public class FlashcardServiceImpl implements FlashcardService {
     private final FlashcardRepository flashcardRepository;
     private final FlashcardCategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public FlashcardServiceImpl(FlashcardSetRepository flashcardSetRepository,
                                 FlashcardRepository flashcardRepository,
                                 FlashcardCategoryRepository categoryRepository,
-                                UserRepository userRepository) {
+                                UserRepository userRepository,
+                                ApplicationEventPublisher eventPublisher) {
         this.flashcardSetRepository = flashcardSetRepository;
         this.flashcardRepository = flashcardRepository;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -72,6 +77,7 @@ public class FlashcardServiceImpl implements FlashcardService {
                 .build();
 
         FlashcardSetEntity savedFlashcardSet = flashcardSetRepository.save(flashcardSet);
+        eventPublisher.publishEvent(new FlashCardCreatedEvent(this, userId));
 
         if (flashcardSetRequestDto.getFlashcards() != null && !flashcardSetRequestDto.getFlashcards().isEmpty()) {
             // Validate flashcards based on type
@@ -91,18 +97,64 @@ public class FlashcardServiceImpl implements FlashcardService {
     }
 
     @Override
-    public PaginatedResponse<FlashcardSetResponseDto> getAllFlashcardSets(Long userId, Pageable pageable) {
+    public PaginatedResponse<FlashcardSetResponseDto> getAllFlashcardSets(Long userId, Pageable pageable, String search, String sortBy) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
 
-        Page<FlashcardSetEntity> flashcardSetsPage = flashcardSetRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+        Page<FlashcardSetEntity> flashcardSetsPage;
+
+        boolean sortByTitle = "title".equalsIgnoreCase(sortBy);
+
+        if (search != null && !search.trim().isEmpty()) {
+            // Tìm kiếm theo title only
+            if (sortByTitle) {
+                flashcardSetsPage = flashcardSetRepository.findByUserAndTitleContainingIgnoreCaseOrderByTitleAsc(
+                    user, search.trim(), pageable);
+            } else {
+                // Mặc định hoặc sortBy=recent -> sort theo createdAt desc
+                flashcardSetsPage = flashcardSetRepository.findByUserAndTitleContainingIgnoreCaseOrderByCreatedAtDesc(
+                    user, search.trim(), pageable);
+            }
+        } else {
+            // Không có search
+            if (sortByTitle) {
+                flashcardSetsPage = flashcardSetRepository.findByUserOrderByTitleAsc(user, pageable);
+            } else {
+                // Mặc định hoặc sortBy=recent -> sort theo createdAt desc
+                flashcardSetsPage = flashcardSetRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+            }
+        }
+
         Page<FlashcardSetResponseDto> responsePage = flashcardSetsPage.map(this::convertToResponseDto);
         return PaginatedResponse.fromPage(responsePage);
     }
 
     @Override
-    public PaginatedResponse<FlashcardSetResponseDto> getPublicFlashcardSets(Pageable pageable) {
-        Page<FlashcardSetEntity> publicFlashcardSetsPage = flashcardSetRepository.findByIsPublicTrueOrderByCreatedAtDesc(pageable);
+    public PaginatedResponse<FlashcardSetResponseDto> getPublicFlashcardSets(Pageable pageable, String search, String sortBy) {
+        Page<FlashcardSetEntity> publicFlashcardSetsPage;
+
+        boolean sortByTitle = "title".equalsIgnoreCase(sortBy);
+
+        if (search != null && !search.trim().isEmpty()) {
+            // Tìm kiếm flashcard sets công khai theo title only
+            if (sortByTitle) {
+                publicFlashcardSetsPage = flashcardSetRepository.findByIsPublicTrueAndTitleContainingIgnoreCaseOrderByTitleAsc(
+                    search.trim(), pageable);
+            } else {
+                // Mặc định hoặc sortBy=recent -> sort theo createdAt desc
+                publicFlashcardSetsPage = flashcardSetRepository.findByIsPublicTrueAndTitleContainingIgnoreCaseOrderByCreatedAtDesc(
+                    search.trim(), pageable);
+            }
+        } else {
+            // Không có search
+            if (sortByTitle) {
+                publicFlashcardSetsPage = flashcardSetRepository.findByIsPublicTrueOrderByTitleAsc(pageable);
+            } else {
+                // Mặc định hoặc sortBy=recent -> sort theo createdAt desc
+                publicFlashcardSetsPage = flashcardSetRepository.findByIsPublicTrueOrderByCreatedAtDesc(pageable);
+            }
+        }
+
         Page<FlashcardSetResponseDto> responsePage = publicFlashcardSetsPage.map(this::convertToResponseDto);
         return PaginatedResponse.fromPage(responsePage);
     }

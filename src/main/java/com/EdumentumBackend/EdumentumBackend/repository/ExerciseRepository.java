@@ -16,6 +16,8 @@ public interface ExerciseRepository extends JpaRepository<ExerciseEntity, Long> 
     
     List<ExerciseEntity> findByCourse_CourseIdOrderByOrderIndex(Long courseId);
     
+    List<ExerciseEntity> findByLesson_LessonIdOrderByOrderIndex(Long lessonId);
+    
     @Query("SELECT COUNT(e) FROM ExerciseEntity e WHERE e.course.courseId = :courseId")
     Long countByCourseId(@Param("courseId") Long courseId);
 }

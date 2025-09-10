@@ -2,6 +2,7 @@ package com.EdumentumBackend.EdumentumBackend.controller.student;
 
 import com.EdumentumBackend.EdumentumBackend.controller.base.BaseQuizController;
 import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.common.ApiResponse;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto;
@@ -41,16 +42,17 @@ public class StudentQuizzesController extends BaseQuizController {
     }
 
     @PostMapping
-    public ResponseEntity<QuizResponseDto> createQuiz(@Valid @RequestBody QuizRequestDto quizRequestDto) {
+    public ResponseEntity<ApiResponse<QuizResponseDto>> createQuiz(@Valid @RequestBody QuizRequestDto quizRequestDto) {
         return doCreateQuiz(quizRequestDto);
     }
 
     @GetMapping
-    public ResponseEntity<List<QuizSummaryDto>> getAllQuizzes() {
+    public ResponseEntity<ApiResponse<List<QuizSummaryDto>>> getAllQuizzes() {
         return doGetAllQuizzes();
     }
+
     @GetMapping("/page")
-    public ResponseEntity<Page<QuizSummaryDto>> getAllQuizzesPaginated(
+    public ResponseEntity<ApiResponse<Page<QuizSummaryDto>>> getAllQuizzesPaginated(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "6") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -58,26 +60,25 @@ public class StudentQuizzesController extends BaseQuizController {
         return doGetAllQuizzesPaginated(page, size, sortBy, direction);
     }
 
-
     @GetMapping("/{quizId}")
-    public ResponseEntity<QuizResponseDto> getQuizById(@PathVariable Long quizId) {
+    public ResponseEntity<ApiResponse<QuizResponseDto>> getQuizById(@PathVariable Long quizId) {
         return doGetQuizById(quizId);
     }
 
     @GetMapping("/{quizId}/{slug}")
-    public ResponseEntity<QuizResponseDto> getQuizByIdAndSlug(@PathVariable Long quizId, @PathVariable String slug) {
+    public ResponseEntity<ApiResponse<QuizResponseDto>> getQuizByIdAndSlug(@PathVariable Long quizId, @PathVariable String slug) {
         return doGetQuizByIdAndSlug(quizId, slug, BASE_PATH);
     }
 
     @PutMapping("/{quizId}")
-    public ResponseEntity<QuizResponseDto> updateQuiz(
+    public ResponseEntity<ApiResponse<QuizResponseDto>> updateQuiz(
             @PathVariable Long quizId,
             @Valid @RequestBody QuizRequestDto quizRequestDto) {
         return doUpdateQuiz(quizId, quizRequestDto);
     }
 
     @PutMapping("/{quizId}/{slug}")
-    public ResponseEntity<QuizResponseDto> updateQuizWithSlug(
+    public ResponseEntity<ApiResponse<QuizResponseDto>> updateQuizWithSlug(
             @PathVariable Long quizId,
             @PathVariable String slug,
             @Valid @RequestBody QuizRequestDto quizRequestDto) {
@@ -85,27 +86,27 @@ public class StudentQuizzesController extends BaseQuizController {
     }
 
     @PatchMapping("/{quizId}")
-    public ResponseEntity<QuizResponseDto> patchQuiz(@PathVariable Long quizId, @RequestBody Map<String, Object> updates) {
+    public ResponseEntity<ApiResponse<QuizResponseDto>> patchQuiz(@PathVariable Long quizId, @RequestBody Map<String, Object> updates) {
         return doPatchQuiz(quizId, updates);
     }
 
     @DeleteMapping("/{quizId}")
-    public ResponseEntity<Void> deleteQuiz(@PathVariable Long quizId) {
+    public ResponseEntity<ApiResponse<Void>> deleteQuiz(@PathVariable Long quizId) {
         return doDeleteQuiz(quizId);
     }
 
     @DeleteMapping("/{quizId}/{slug}")
-    public ResponseEntity<Void> deleteQuizWithSlug(@PathVariable Long quizId, @PathVariable String slug) {
+    public ResponseEntity<ApiResponse<Void>> deleteQuizWithSlug(@PathVariable Long quizId, @PathVariable String slug) {
         return doDeleteQuizWithSlug(quizId, slug, BASE_PATH);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<QuizSummaryDto>> searchQuizzes(@RequestParam String title) {
+    public ResponseEntity<ApiResponse<List<QuizSummaryDto>>> searchQuizzes(@RequestParam String title) {
         return doSearchQuizzes(title);
     }
 
     @GetMapping("/search/page")
-    public ResponseEntity<Page<QuizSummaryDto>> searchQuizzesPaginated(
+    public ResponseEntity<ApiResponse<Page<QuizSummaryDto>>> searchQuizzesPaginated(
             @RequestParam String title,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "6") int size,

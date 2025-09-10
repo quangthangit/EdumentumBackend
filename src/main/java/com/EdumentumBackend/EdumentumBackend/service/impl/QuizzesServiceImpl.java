@@ -15,7 +15,9 @@ import com.EdumentumBackend.EdumentumBackend.utils.SlugUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -104,57 +106,6 @@ public class QuizzesServiceImpl implements QuizzesService {
 
         return builder.build();
     }
-//    private QuizSummaryDto mapToSummaryDto(QuizzesEntity entity) {
-//        List<TagResponseDto> tags = entity.getQuizTags() == null ?
-//                Collections.emptyList() :
-//                entity.getQuizTags().stream()
-//                        .map(quizTag -> TagResponseDto.builder()
-//                                .id(quizTag.getTag().getId())
-//                                .name(quizTag.getTag().getName())
-//                                .description(quizTag.getTag().getDescription())
-//                                .build())
-//                        .collect(Collectors.toList());
-//
-//        QuizSummaryDto.QuizSummaryDtoBuilder builder = QuizSummaryDto.builder()
-//                .id(entity.getId())
-//                .title(entity.getTitle())
-//                .slug(entity.getSlug())
-//                .description(entity.getDescription())
-//                .thumbnailUrl(entity.getThumbnailUrl())
-//                .visibility(entity.getVisibility())
-//                .difficulty(entity.getDifficulty())
-//                .sourceType(entity.getSourceType())
-//                .isAiGenerated(entity.getIsAiGenerated())
-//                .aiModel(entity.getAiModel())
-//                .estimatedTime(entity.getEstimatedTime())
-//                .passingScore(entity.getPassingScore())
-//                .maxAttempts(entity.getMaxAttempts())
-//                .totalQuestions(entity.getTotalQuestions())
-//                .totalPoints(entity.getTotalPoints())
-//                .viewCount(entity.getViewCount())
-//                .attemptCount(entity.getAttemptCount())
-//                .completionCount(entity.getCompletionCount())
-//                .avgScore(entity.getAvgScore())
-//                .avgCompletionTime(entity.getAvgCompletionTime())
-//                .bookmarkCount(entity.getBookmarkCount())
-//                .shareCount(entity.getShareCount())
-//                .isFeatured(entity.getIsFeatured())
-//                .isTrending(entity.getIsTrending())
-//                .isPremium(entity.getIsPremium())
-//                .status(entity.getStatus().name())
-//                .metaTitle(entity.getMetaTitle())
-//                .metaDescription(entity.getMetaDescription())
-//                .canonicalUrl(entity.getCanonicalUrl())
-//                .publishedAt(entity.getPublishedAt())
-//                .archivedAt(entity.getArchivedAt())
-//                .createdAt(entity.getCreatedAt())
-//                .updatedAt(entity.getUpdatedAt())
-//                .tags(tags);
-//        builder.keywords(entity.getKeywords() == null ?
-//                Collections.emptyList() : Arrays.asList(entity.getKeywords()));
-//
-//        return builder.build();
-//    }
     @Override
     @Transactional(readOnly = true)
     public List<QuizSummaryDto> getAllQuizzes(Long userId) {
@@ -169,17 +120,15 @@ public class QuizzesServiceImpl implements QuizzesService {
     @Override
     @Transactional(readOnly = true)
     public QuizResponseDto getQuizById(Long quizId, Long userId) {
-        // We still need the full entity for the single quiz detail view
-        QuizzesEntity quiz = quizzesRepository.findByIdWithTags(quizId);
-        if (quiz == null) {
+        Optional<QuizzesEntity> quizOpt = quizzesRepository.findDetailByIdWithAccess(quizId, userId);
+        if (quizOpt.isEmpty()) {
             throw new RuntimeException("Quiz not found with id: " + quizId);
         }
 
-        // Check if user owns the quiz or if it's public
+        QuizzesEntity quiz = quizOpt.get();
         if (!quiz.getUserId().equals(userId) && quiz.getVisibility() != com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC) {
             throw new RuntimeException("Access denied to quiz with id: " + quizId);
         }
-
         return mapToResponseDto(quiz);
     }
 
@@ -231,8 +180,8 @@ public class QuizzesServiceImpl implements QuizzesService {
     @Override
     public boolean deleteQuiz(Long quizId, Long userId) {
         try {
-//            QuizzesEntity quiz = findQuizAndVerifyUserAccess(quizId, userId);
-            quizzesRepository.deleteById(quizId);
+            QuizzesEntity quiz = findQuizAndVerifyUserAccess(quizId, userId);
+            quizzesRepository.delete(quiz);
             return true;
         } catch (RuntimeException e) {
             if (e.getMessage().contains("Quiz not found")) {
@@ -242,24 +191,11 @@ public class QuizzesServiceImpl implements QuizzesService {
         }
     }
 
-
-//    @Override
-//    @Transactional(readOnly = true)
-//    public List<QuizSummaryDto> searchQuizzes(String title, Long userId) {
-//        List<QuizzesEntity> quizzes = quizzesRepository.findByTitleContaining(title);
-//
-//        List<QuizSummaryDto> result = quizzes.stream()
-//                .filter(q -> Objects.equals(q.getUserId(), userId))
-//                .map(this::mapToSummaryDto)
-//                .collect(Collectors.toList());
-//        enrichQuizzesWithTags(result);
-//        return result;
-//    }
-
     @Override
     @Transactional(readOnly = true)
     public List<QuizSummaryDto> searchQuizzes(String title, Long userId) {
-        var page = quizzesRepository.findSummariesByTitleAndUserOrPublic(title, userId, Pageable.unpaged());
+        Pageable defaultPage = PageRequest.of(0, 20, Sort.by("createdAt").descending());
+        var page = quizzesRepository.findSummariesByTitleAndUserOrPublic(title, userId, defaultPage);
         List<QuizSummaryDto> result = page.getContent();
         enrichQuizzesWithTags(result);
         return result;
@@ -629,7 +565,6 @@ public class QuizzesServiceImpl implements QuizzesService {
     @Override
     @Transactional(readOnly = true)
     public Page<QuizSummaryDto> searchQuizzesPaginated(String title, Long userId, Pageable pageable) {
-        // Using direct DTO projection for search with pagination
         Page<QuizSummaryDto> page = quizzesRepository.findSummariesByTitleAndUserOrPublic(title, userId, pageable);
         enrichQuizzesWithTags(page.getContent());
         return page;
@@ -664,16 +599,10 @@ public class QuizzesServiceImpl implements QuizzesService {
     }
     
     private QuizzesEntity findQuizAndVerifyUserAccess(Long quizId, Long userId) {
-        Optional<QuizzesEntity> quizOpt = quizzesRepository.findById(quizId);
+        Optional<QuizzesEntity> quizOpt = quizzesRepository.findDetailByIdAndUserId(quizId, userId);
         if (quizOpt.isEmpty()) {
-            throw new RuntimeException("Quiz not found with id: " + quizId);
+            throw new RuntimeException("Quiz not found with id: " + quizId + " or access denied");
         }
-
-        QuizzesEntity quiz = quizOpt.get();
-        if (!quiz.getUserId().equals(userId)) {
-            throw new RuntimeException("Access denied to quiz with id: " + quizId);
-        }
-        
-        return quiz;
+        return quizOpt.get();
     }
 }
