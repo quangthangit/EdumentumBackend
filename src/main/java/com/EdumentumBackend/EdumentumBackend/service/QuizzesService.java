@@ -3,6 +3,7 @@ package com.EdumentumBackend.EdumentumBackend.service;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizListDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.List;
@@ -16,6 +17,11 @@ public interface QuizzesService {
     Page<QuizSummaryDto> getAllQuizzesPaginated(Long userId, Pageable pageable);
 
     Page<QuizSummaryDto> searchQuizzesPaginated(String title, Long userId, Pageable pageable);
+
+    // New methods for optimized quiz listing with attempt statistics
+    Page<QuizListDto> getAllQuizzes(Long userId, Pageable pageable);
+
+    Page<QuizListDto> searchQuizzes(String title, Long userId, Pageable pageable);
 
     QuizResponseDto getQuizById(Long quizId, Long userId);
 

@@ -3,6 +3,7 @@ package com.EdumentumBackend.EdumentumBackend.controller.student;
 import com.EdumentumBackend.EdumentumBackend.controller.base.BaseQuizController;
 import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.common.ApiResponse;
+import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizListDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto;
@@ -51,15 +52,6 @@ public class StudentQuizzesController extends BaseQuizController {
         return doGetAllQuizzes();
     }
 
-    @GetMapping("/page")
-    public ResponseEntity<ApiResponse<Page<QuizSummaryDto>>> getAllQuizzesPaginated(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "6") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "DESC") String direction) {
-        return doGetAllQuizzesPaginated(page, size, sortBy, direction);
-    }
-
     @GetMapping("/{quizId}")
     public ResponseEntity<ApiResponse<QuizResponseDto>> getQuizById(@PathVariable Long quizId) {
         return doGetQuizById(quizId);
@@ -105,13 +97,42 @@ public class StudentQuizzesController extends BaseQuizController {
         return doSearchQuizzes(title);
     }
 
-    @GetMapping("/search/page")
-    public ResponseEntity<ApiResponse<Page<QuizSummaryDto>>> searchQuizzesPaginated(
+//    @GetMapping("/page")
+//    public ResponseEntity<ApiResponse<Page<QuizSummaryDto>>> getAllQuizzesPaginated(
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "6") int size,
+//            @RequestParam(defaultValue = "createdAt") String sortBy,
+//            @RequestParam(defaultValue = "DESC") String direction) {
+//        return doGetAllQuizzesPaginated(page, size, sortBy, direction);
+//    }
+//
+//    @GetMapping("/search/page")
+//    public ResponseEntity<ApiResponse<Page<QuizSummaryDto>>> searchQuizzesPaginated(
+//            @RequestParam String title,
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "6") int size,
+//            @RequestParam(defaultValue = "createdAt") String sortBy,
+//            @RequestParam(defaultValue = "DESC") String direction) {
+//        return doSearchQuizzesPaginated(title, page, size, sortBy, direction);
+//    }
+
+
+    @GetMapping("/page")
+    public ResponseEntity<ApiResponse<Page<QuizListDto>>> getAllQuizzes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction) {
+        return doGetAllQuizzes(page, size, sortBy, direction);
+    }
+
+    @GetMapping("/search/list")
+    public ResponseEntity<ApiResponse<Page<QuizListDto>>> searchQuizzes(
             @RequestParam String title,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "6") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String direction) {
-        return doSearchQuizzesPaginated(title, page, size, sortBy, direction);
+        return doSearchQuizzes(title, page, size, sortBy, direction);
     }
 }
