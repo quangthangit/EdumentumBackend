@@ -42,7 +42,8 @@ public class StudentFlashcardCategoryController {
     @GetMapping
     public ResponseEntity<?> getAllCategories() {
         try {
-            List<FlashcardCategoryResponseDto> result = categoryService.getAllActiveCategories();
+            Long userId = getCurrentUserId();
+            List<FlashcardCategoryResponseDto> result = categoryService.getAllActiveCategoriesByUser(userId);
 
             Map<String, Object> response = new HashMap<>();
             response.put("status", "success");
@@ -58,7 +59,8 @@ public class StudentFlashcardCategoryController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getCategoryById(@PathVariable Long id) {
         try {
-            FlashcardCategoryResponseDto dto = categoryService.getCategoryById(id);
+            Long userId = getCurrentUserId();
+            FlashcardCategoryResponseDto dto = categoryService.getCategoryById(id, userId);
 
             return ResponseEntity.ok(Map.of(
                     "status", "success",
