@@ -2,10 +2,10 @@ package com.EdumentumBackend.EdumentumBackend.service.impl;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.*;
-import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizTagLinkDto;
 import com.EdumentumBackend.EdumentumBackend.entity.*;
 import com.EdumentumBackend.EdumentumBackend.enums.QuizStatus;
 import com.EdumentumBackend.EdumentumBackend.event.QuizCreatedEvent;
+import com.EdumentumBackend.EdumentumBackend.repository.QuizAttemptRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizTagRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizzesRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
@@ -34,6 +34,7 @@ public class QuizzesServiceImpl implements QuizzesService {
     private final UserRepository userRepository;
     private final TagsService tagsService;
     private final QuizTagRepository quizTagRepository;
+    private final QuizAttemptRepository quizAttemptRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     private QuizResponseDto mapToResponseDto(QuizzesEntity entity) {
@@ -111,8 +112,6 @@ public class QuizzesServiceImpl implements QuizzesService {
     public List<QuizSummaryDto> getAllQuizzes(Long userId) {
 
         List<QuizSummaryDto> quizzes = quizzesRepository.findSummariesByUserId(userId);
-
-        enrichQuizzesWithTags(quizzes);
 
         return quizzes;
     }
@@ -197,7 +196,6 @@ public class QuizzesServiceImpl implements QuizzesService {
         Pageable defaultPage = PageRequest.of(0, 20, Sort.by("createdAt").descending());
         var page = quizzesRepository.findSummariesByTitleAndUserOrPublic(title, userId, defaultPage);
         List<QuizSummaryDto> result = page.getContent();
-        enrichQuizzesWithTags(result);
         return result;
     }
     @Override
@@ -232,7 +230,7 @@ public class QuizzesServiceImpl implements QuizzesService {
                 .keywords(quizRequestDto.getKeywords() != null ?
                         quizRequestDto.getKeywords().toArray(new String[0]) : null)
                 .visibility(quizRequestDto.getVisibility())
-                .status(QuizStatus.DRAFT)
+                .status(QuizStatus.PUBLISHED)
                 .isPremium(quizRequestDto.getIsPremium())
                 .totalQuestions(calculateTotalQuestions(quizRequestDto.getQuizData()))
                 .totalPoints(calculateTotalPoints(quizRequestDto.getQuizData()))
@@ -430,6 +428,7 @@ public class QuizzesServiceImpl implements QuizzesService {
                 .map(tagsService::getOrCreateTag)
                 .toList();
 
+
         Set<Long> newIds = resolved.stream().map(TagResponseDto::getId).collect(Collectors.toSet());
         Set<Long> curIds = quiz.getQuizTags() == null ? Collections.emptySet() :
                 quiz.getQuizTags().stream().map(qt -> qt.getTag().getId()).collect(Collectors.toSet());
@@ -558,44 +557,55 @@ public class QuizzesServiceImpl implements QuizzesService {
     @Transactional(readOnly = true)
     public Page<QuizSummaryDto> getAllQuizzesPaginated(Long userId, Pageable pageable) {
         Page<QuizSummaryDto> page = quizzesRepository.findSummariesByUserId(userId, pageable);
-        enrichQuizzesWithTags(page.getContent());
         return page;
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<QuizSummaryDto> searchQuizzesPaginated(String title, Long userId, Pageable pageable) {
-        Page<QuizSummaryDto> page = quizzesRepository.findSummariesByTitleAndUserOrPublic(title, userId, pageable);
-        enrichQuizzesWithTags(page.getContent());
+        Page<QuizSummaryDto> pageList = quizzesRepository.findSummariesByTitleAndUserOrPublic(title, userId, pageable);
+        return pageList;
+    }
+
+    // New optimized methods for quiz listing with attempt statistics
+    @Override
+    @Transactional(readOnly = true)
+    public Page<QuizListDto> getAllQuizzes(Long userId, Pageable pageable) {
+        Page<QuizListDto> page = quizzesRepository.findQuizListByUserId(userId, pageable);
+        enrichQuizzesWithAttemptStats(page.getContent(), userId);
         return page;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<QuizListDto> searchQuizzes(String title, Long userId, Pageable pageable) {
+        Page<QuizListDto> page = quizzesRepository.findQuizListByTitleAndUserOrPublic(title, userId, pageable);
+        enrichQuizzesWithAttemptStats(page.getContent(), userId);
+        return page;
+    }
 
-    /**
-     * Enriches quiz summary DTOs with their associated tags
-     * @param quizzes List of quiz summary DTOs to enrich
-     */
-    private void enrichQuizzesWithTags(List<QuizSummaryDto> quizzes) {
-        List<Long> ids = quizzes.stream().map(QuizSummaryDto::getId).toList();
-        if (!ids.isEmpty()) {
-            List<QuizTagLinkDto> rows = quizTagRepository.findTagsByQuizIds(ids);
-            Map<Long, List<TagResponseDto>> tagMap = rows.stream()
-                .collect(Collectors.groupingBy(
-                    QuizTagLinkDto::getQuizId,
-                    Collectors.mapping(r ->
-                        TagResponseDto.builder()
-                            .id(r.getTagId())
-                            .name(r.getTagName())
-                            .description(r.getTagDescription())
-                            .build(),
-                        Collectors.toList()
-                    )
+    private void enrichQuizzesWithAttemptStats(List<QuizListDto> quizzes, Long userId) {
+        if (quizzes.isEmpty()) return;
+
+        List<Long> quizIds = quizzes.stream().map(QuizListDto::getId).toList();
+        List<Map<String, Object>> attemptStats = quizAttemptRepository.findAttemptStatsByUserAndQuizIds(userId, quizIds);
+
+        Map<Long, Map<String, Object>> statsMap = attemptStats.stream()
+                .collect(Collectors.toMap(
+                    stats -> (Long) stats.get("quizId"),
+                    stats -> stats
                 ));
 
-            quizzes.forEach(dto ->
-                dto.setTags(tagMap.getOrDefault(dto.getId(), List.of()))
-            );
-        }
+        // Enrich each quiz with attempt statistics
+        quizzes.forEach(quiz -> {
+            Map<String, Object> stats = statsMap.get(quiz.getId());
+            if (stats != null) {
+                quiz.setLastAttemptAt((LocalDateTime) stats.get("lastAttemptAt"));
+                quiz.setTotalAttempts(((Number) stats.get("totalAttempts")).intValue());
+                quiz.setBestCorrectAnswers(((Number) stats.get("bestCorrectAnswers")).intValue());
+            }
+
+        });
     }
     
     private QuizzesEntity findQuizAndVerifyUserAccess(Long quizId, Long userId) {

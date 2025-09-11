@@ -126,14 +126,12 @@ public class QuizAttemptEntity extends BaseEntity {
     @Column(name = "certificate_url", length = 500)
     private String certificateUrl;
 
-    // (Tuỳ chọn)
     @Column(name = "study_session_id")
     private java.util.UUID studySessionId;
 
     @Column(name = "pomodoro_session_id")
     private java.util.UUID pomodoroSessionId;
 
-    // (Gợi ý) liên kết ngược — chỉ đọc
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_id", insertable = false, updatable = false)
     private QuizzesEntity quiz;
