@@ -5,7 +5,7 @@ import lombok.*;
 
 @Entity
 @Table(name = "note_tags",
-        uniqueConstraints = {@UniqueConstraint(columnNames = {"note_id", "tag_id"})})
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"note_id", "tag_name"})})
 @Getter
 @Setter
 @Builder
@@ -21,9 +21,7 @@ public class NoteTagEntity extends BaseEntity {
     @JoinColumn(name = "note_id", nullable = false)
     private NoteEntity note;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tag_id", nullable = false)
-    private TagEntity tag;
+    @Column(name = "tag_name", nullable = false)
+    private String tagName;
 }
-
 
