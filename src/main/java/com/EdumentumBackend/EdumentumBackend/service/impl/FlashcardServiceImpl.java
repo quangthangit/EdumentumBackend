@@ -59,11 +59,11 @@ public class FlashcardServiceImpl implements FlashcardService {
             throw new BadRequestException("FlashcardType type is required");
         }
 
-        // Get category if provided
+        // Get category if provided and validate it belongs to the user
         FlashcardCategoryEntity category = null;
         if (flashcardSetRequestDto.getCategoryId() != null) {
-            category = categoryRepository.findById(flashcardSetRequestDto.getCategoryId())
-                    .orElseThrow(() -> new NotFoundException("Category not found with id: " + flashcardSetRequestDto.getCategoryId()));
+            category = categoryRepository.findByIdAndUserUserId(flashcardSetRequestDto.getCategoryId(), userId)
+                    .orElseThrow(() -> new NotFoundException("Category not found with id: " + flashcardSetRequestDto.getCategoryId() + " for user: " + userId));
         }
 
         FlashcardSetEntity flashcardSet = FlashcardSetEntity.builder()
@@ -194,8 +194,8 @@ public class FlashcardServiceImpl implements FlashcardService {
         }
 
         if (flashcardSetRequestDto.getCategoryId() != null) {
-            FlashcardCategoryEntity category = categoryRepository.findById(flashcardSetRequestDto.getCategoryId())
-                    .orElseThrow(() -> new NotFoundException("Category not found with id: " + flashcardSetRequestDto.getCategoryId()));
+            FlashcardCategoryEntity category = categoryRepository.findByIdAndUserUserId(flashcardSetRequestDto.getCategoryId(), userId)
+                    .orElseThrow(() -> new NotFoundException("Category not found with id: " + flashcardSetRequestDto.getCategoryId() + " for user: " + userId));
             flashcardSet.setCategory(category);
         }
 
