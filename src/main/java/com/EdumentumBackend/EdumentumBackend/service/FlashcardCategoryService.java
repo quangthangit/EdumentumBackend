@@ -10,6 +10,6 @@ public interface FlashcardCategoryService {
     FlashcardCategoryResponseDto createCategory(FlashcardCategoryRequestDto requestDto, Long userId);
     FlashcardCategoryResponseDto updateCategory(Long id, FlashcardCategoryRequestDto requestDto, Long userId);
     void deleteCategory(Long id, Long userId);
-    FlashcardCategoryResponseDto getCategoryById(Long id);
-    List<FlashcardCategoryResponseDto> getAllActiveCategories();
+    FlashcardCategoryResponseDto getCategoryById(Long id, Long userId);
+    List<FlashcardCategoryResponseDto> getAllActiveCategoriesByUser(Long userId);
 }

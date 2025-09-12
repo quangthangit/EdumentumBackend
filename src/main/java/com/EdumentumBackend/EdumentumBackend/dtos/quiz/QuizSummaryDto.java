@@ -85,4 +85,23 @@ public class QuizSummaryDto {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
+
+    public QuizSummaryDto(Long id, String title, String slug, String description, String thumbnailUrl,
+                      VisibilityType visibility, DifficultyLevel difficulty,
+                      Integer totalQuestions, Integer totalPoints,
+                      String[] keywords,
+                      LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.title = title;
+        this.slug = slug;
+        this.description = description;
+        this.thumbnailUrl = thumbnailUrl;
+        this.visibility = visibility;
+        this.difficulty = difficulty;
+        this.totalQuestions = totalQuestions;
+        this.totalPoints = totalPoints;
+        this.keywords = keywords != null ? List.of(keywords) : new ArrayList<>();
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 }

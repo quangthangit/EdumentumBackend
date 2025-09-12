@@ -4,6 +4,7 @@ import com.EdumentumBackend.EdumentumBackend.dtos.common.ApiResponse;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizListDto;
 import com.EdumentumBackend.EdumentumBackend.service.QuizzesService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -275,6 +276,48 @@ public abstract class BaseQuizController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to search quizzes: " + e.getMessage(), 500));
+        }
+    }
+
+    // New optimized methods for quiz listing with attempt statistics
+    /**
+     * Get all quizzes with attempt statistics (optimized)
+     */
+    protected ResponseEntity<ApiResponse<Page<QuizListDto>>> doGetAllQuizzes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction) {
+        try {
+            Long userId = getCurrentUserId();
+            Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
+            Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+            Page<QuizListDto> quizzes = quizzesService.getAllQuizzes(userId, pageable);
+            return ResponseEntity.ok(ApiResponse.success(quizzes, " quiz list retrieved successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to retrieve optimized quiz list: " + e.getMessage(), 500));
+        }
+    }
+
+    /**
+     * Search quizzes with attempt statistics (optimized)
+     */
+    protected ResponseEntity<ApiResponse<Page<QuizListDto>>> doSearchQuizzes(
+            @RequestParam String title,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction) {
+        try {
+            Long userId = getCurrentUserId();
+            Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
+            Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+            Page<QuizListDto> quizzes = quizzesService.searchQuizzes(title, userId, pageable);
+            return ResponseEntity.ok(ApiResponse.success(quizzes, "search results retrieved successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to search  quiz list: " + e.getMessage(), 500));
         }
     }
 }

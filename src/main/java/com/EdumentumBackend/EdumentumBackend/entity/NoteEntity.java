@@ -31,6 +31,7 @@ public class NoteEntity extends BaseEntity {
 
     @OneToMany(mappedBy = "note", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<NoteBlockEntity> blocks = new HashSet<>();
+
+    @OneToMany(mappedBy = "note", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<NoteTagEntity> tags = new HashSet<>();
 }
-
-

@@ -14,6 +14,7 @@ public class FlashcardCategoryResponseDto {
     private String name;
     private String description;
     private Boolean isActive;
+    private Long userId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
