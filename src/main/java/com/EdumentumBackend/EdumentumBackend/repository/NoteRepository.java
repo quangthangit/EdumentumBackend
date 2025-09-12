@@ -20,17 +20,14 @@ public interface NoteRepository extends JpaRepository<NoteEntity, Long> {
 
     @Query("SELECT DISTINCT n FROM NoteEntity n " +
             "LEFT JOIN NoteTagEntity nt ON nt.note = n " +
-            "LEFT JOIN TagEntity t ON nt.tag = t " +
             "WHERE n.isDeleted = false " +
             "AND (n.owner = :user OR EXISTS (SELECT 1 FROM NoteCollaboratorEntity c WHERE c.note = n AND c.user = :user)) " +
             "AND (:ownerId IS NULL OR n.owner.userId = :ownerId) " +
             "AND (:query IS NULL OR LOWER(n.title) LIKE LOWER(CONCAT('%', :query, '%'))) " +
-            "AND (:tag IS NULL OR t.name = :tag)")
+            "AND (:tag IS NULL OR nt.tagName = :tag)")
     Page<NoteEntity> searchAccessibleNotes(@Param("user") UserEntity user,
                                            @Param("query") String query,
                                            @Param("ownerId") Long ownerId,
                                            @Param("tag") String tag,
                                            Pageable pageable);
 }
-
-

@@ -31,7 +31,6 @@ public class NoteServiceImpl implements NoteService {
     private final NoteCollaboratorRepository collaboratorRepository;
     private final NoteCommentRepository commentRepository;
     private final NoteTagRepository noteTagRepository;
-    private final TagRepository tagRepository;
     private final UserRepository userRepository;
     private final NoteVersionRepository noteVersionRepository;
     private final ObjectMapper objectMapper;
@@ -41,7 +40,6 @@ public class NoteServiceImpl implements NoteService {
                            NoteCollaboratorRepository collaboratorRepository,
                            NoteCommentRepository commentRepository,
                            NoteTagRepository noteTagRepository,
-                           TagRepository tagRepository,
                            UserRepository userRepository,
                            NoteVersionRepository noteVersionRepository,
                            ObjectMapper objectMapper) {
@@ -50,7 +48,6 @@ public class NoteServiceImpl implements NoteService {
         this.collaboratorRepository = collaboratorRepository;
         this.commentRepository = commentRepository;
         this.noteTagRepository = noteTagRepository;
-        this.tagRepository = tagRepository;
         this.userRepository = userRepository;
         this.noteVersionRepository = noteVersionRepository;
         this.objectMapper = objectMapper;
@@ -81,7 +78,9 @@ public class NoteServiceImpl implements NoteService {
                         .content(b.getContent())
                         .build())
                 .collect(Collectors.toList());
-        List<String> tags = noteTagRepository.findByNote(note).stream().map(nt -> nt.getTag().getName()).toList();
+        List<String> tags = noteTagRepository.findByNote(note).stream()
+                .map(NoteTagEntity::getTagName)
+                .toList();
         return NoteResponseDto.builder()
                 .id(note.getId())
                 .title(note.getTitle())
@@ -142,9 +141,11 @@ public class NoteServiceImpl implements NoteService {
 
         if (dto.getTags() != null) {
             for (String tagName : dto.getTags()) {
-                TagEntity tag = tagRepository.findByName(tagName).orElseGet(() -> tagRepository.save(TagEntity.builder().name(tagName).build()));
-                if (!noteTagRepository.existsByNoteAndTag(note, tag)) {
-                    noteTagRepository.save(NoteTagEntity.builder().note(note).tag(tag).build());
+                if (!noteTagRepository.existsByNoteAndTagName(note, tagName)) {
+                    noteTagRepository.save(NoteTagEntity.builder()
+                            .note(note)
+                            .tagName(tagName)
+                            .build());
                 }
             }
         }
@@ -165,14 +166,16 @@ public class NoteServiceImpl implements NoteService {
         if (dto.getTags() != null) {
             List<NoteTagEntity> existing = noteTagRepository.findByNote(note);
             for (NoteTagEntity e : new ArrayList<>(existing)) {
-                if (!dto.getTags().contains(e.getTag().getName())) {
+                if (!dto.getTags().contains(e.getTagName())) {
                     noteTagRepository.delete(e);
                 }
             }
             for (String tagName : dto.getTags()) {
-                TagEntity tag = tagRepository.findByName(tagName).orElseGet(() -> tagRepository.save(TagEntity.builder().name(tagName).build()));
-                if (!noteTagRepository.existsByNoteAndTag(note, tag)) {
-                    noteTagRepository.save(NoteTagEntity.builder().note(note).tag(tag).build());
+                if (!noteTagRepository.existsByNoteAndTagName(note, tagName)) {
+                    noteTagRepository.save(NoteTagEntity.builder()
+                            .note(note)
+                            .tagName(tagName)
+                            .build());
                 }
             }
         }
