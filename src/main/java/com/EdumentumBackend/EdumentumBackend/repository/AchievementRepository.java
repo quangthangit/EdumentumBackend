@@ -1,6 +1,7 @@
 package com.EdumentumBackend.EdumentumBackend.repository;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.achievement.AchievementResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.achievement.AchievementSummaryResponseDto;
 import com.EdumentumBackend.EdumentumBackend.entity.AchievementEntity;
 import com.EdumentumBackend.EdumentumBackend.enums.Rarity;
 import org.springframework.data.domain.Page;
@@ -31,5 +32,19 @@ public interface AchievementRepository extends JpaRepository<AchievementEntity, 
             @Param("rarity") Rarity rarity,
             @Param("achieved") Boolean achieved,
             Pageable pageable);
+
+    @Query("""
+    SELECT new com.EdumentumBackend.EdumentumBackend.dtos.achievement.AchievementSummaryResponseDto(
+        SUM(CASE WHEN ua.achieved = true THEN 1 ELSE 0 END),
+        COUNT(a),
+        (CASE WHEN COUNT(a) = 0 THEN 0.0
+              ELSE (SUM(CASE WHEN ua.achieved = true THEN 1 ELSE 0 END) * 100.0 / COUNT(a)) END),
+        COALESCE(SUM(CASE WHEN ua.achieved = true THEN a.points ELSE 0 END), 0)
+    )
+    FROM AchievementEntity a
+    LEFT JOIN UserAchievementEntity ua
+        ON a.id = ua.achievement.id AND ua.user.userId = :userId
+    """)
+    AchievementSummaryResponseDto getAchievementSummary(@Param("userId") Long userId);
 }
 
