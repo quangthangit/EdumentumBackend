@@ -26,6 +26,7 @@ import java.util.Map;
 public class AchievementController {
     private final AchievementService achievementService;
 
+
     @GetMapping()
     public ResponseEntity<?> getAllAchievementByUserId(
             @RequestParam(required = false) String keyword,
@@ -46,6 +47,20 @@ public class AchievementController {
             response.put("pagination", result.getPagination());
 
             return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return buildServerError(e);
+        }
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<?> getSummaryAchievementByUserId() {
+        try {
+            Long userId = getCurrentUserId();
+            return ResponseEntity.ok(Map.of(
+                    "message", "Attendance record successfully",
+                    "status" , "susses",
+                    "data" ,  achievementService.summaryAchievementSummaryResponseDto(userId)
+            ));
         } catch (Exception e) {
             return buildServerError(e);
         }
