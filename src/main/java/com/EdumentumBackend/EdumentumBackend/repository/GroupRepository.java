@@ -16,7 +16,7 @@ import java.util.Optional;
 @Repository
 public interface GroupRepository extends JpaRepository<GroupEntity, Long> {
     @Query("SELECT new com.EdumentumBackend.EdumentumBackend.dtos.group.GroupResponseDto(" +
-            "g.id, g.name, g.description, g.isPublic, g.owner.userId, g.owner.username, g.memberCount, g.memberLimit, g.key, g.createdAt, g.contributionPoints, g.tier) " +
+            "g.publicId, g.name, g.description, g.isPublic, g.owner.userId, g.owner.username, g.memberCount, g.memberLimit, g.key, g.createdAt, g.contributionPoints, g.tier) " +
             "FROM GroupEntity g " +
             "LEFT JOIN GroupMemberEntity gm ON gm.group = g AND gm.user.userId = :userId " +
             "WHERE g.isPublic = true AND gm.id IS NULL " +
@@ -27,6 +27,7 @@ public interface GroupRepository extends JpaRepository<GroupEntity, Long> {
             @Param("keyword") String keyword,
             Pageable pageable);
 
+    Optional<GroupEntity> findGroupByPublicId(String publicId);
 
     @Modifying
     @Query("""
@@ -41,7 +42,7 @@ public interface GroupRepository extends JpaRepository<GroupEntity, Long> {
     @Query("UPDATE GroupEntity g SET g.contributionPoints = g.contributionPoints + :points WHERE g.id = :groupId")
     void addContributionPoints(@Param("groupId") Long groupId, @Param("points") int points);
 
-    @Query("SELECT g.owner.id FROM GroupEntity g WHERE g.id = :groupId")
+    @Query("SELECT g.owner.userId FROM GroupEntity g WHERE g.id = :groupId")
     Optional<GroupEntity> findOwnerIdByGroupId(@Param("groupId") Long groupId, Long ownerId);
 
     Optional<GroupEntity> findByIdAndOwnerUserId(Long groupId, Long ownerId);

@@ -20,7 +20,7 @@ import java.util.Map;
 @Controller
 @RequestMapping("/api/v1/user/profile")
 @RequiredArgsConstructor
-public class UserProfileController {
+public class ProfileController {
 
     private final FirebaseStorageService firebaseStorageService;
     private final UserService userService;

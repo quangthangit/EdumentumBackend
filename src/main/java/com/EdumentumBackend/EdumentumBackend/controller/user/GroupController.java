@@ -21,11 +21,11 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/user/groups")
-public class UserGroupController {
+public class GroupController {
 
     private final GroupService groupService;
 
-    public UserGroupController(GroupService groupService) {
+    public GroupController(GroupService groupService) {
         this.groupService = groupService;
     }
 
@@ -46,11 +46,11 @@ public class UserGroupController {
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteGroup(@PathVariable Long id) {
+    @DeleteMapping("/{publicId}")
+    public ResponseEntity<?> deleteGroup(@PathVariable String publicId) {
         try {
             Long userId = getCurrentUserId();
-            groupService.deleteGroup(id, userId);
+            groupService.deleteGroup(publicId, userId);
             return ResponseEntity.ok(Map.of(
                     "status", "success",
                     "message", "Group delete successfully"
@@ -60,15 +60,15 @@ public class UserGroupController {
         }
     }
 
-    @PatchMapping("/{id}")
+    @PatchMapping("/{publicGroupId}")
     public ResponseEntity<?> updateGroup(
-            @PathVariable Long id,
+            @PathVariable String publicGroupId,
             @Valid @RequestBody GroupRequestDto groupRequestDto
     ) {
         try {
             Long userId = getCurrentUserId();
 
-            GroupResponseDto groupResponseDto = groupService.updateGroup(groupRequestDto, id, userId);
+            GroupResponseDto groupResponseDto = groupService.updateGroup(groupRequestDto, publicGroupId, userId);
 
             return ResponseEntity.ok(Map.of(
                     "status", "success",
@@ -80,14 +80,14 @@ public class UserGroupController {
         }
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{publicGroupId}")
     public ResponseEntity<?> getGroupById(
-            @PathVariable Long id
+            @PathVariable String publicGroupId
     ) {
         try {
             Long userId = getCurrentUserId();
 
-            GroupDetailResponse groupDetailResponse = groupService.findGroupById(id, userId);
+            GroupDetailResponse groupDetailResponse = groupService.findGroupById(publicGroupId, userId);
 
             return ResponseEntity.ok(Map.of(
                     "status", "success",
@@ -118,10 +118,10 @@ public class UserGroupController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/{groupId}/join")
-    public ResponseEntity<?> joinGroup(@PathVariable Long groupId) throws BadRequestException {
+    @PostMapping("/{publicGroupId}/join")
+    public ResponseEntity<?> joinGroup(@PathVariable String publicGroupId) throws BadRequestException {
         Long userId = getCurrentUserId();
-        groupService.joinGroup(groupId, userId);
+        groupService.joinGroup(publicGroupId, userId);
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "message", "Join Group successfully"
