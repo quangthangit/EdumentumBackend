@@ -15,7 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GroupDetailResponse {
-    private Long id;
+    private String publicId;
     private Long ownerId;
     private String ownerName;
     private int memberCount;

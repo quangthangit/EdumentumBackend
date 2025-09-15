@@ -14,5 +14,6 @@ public class GroupEntityListener {
         entity.setKey(UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase());
         entity.setTier(GroupTier.BRONZE);
         entity.setMemberCount(1);
+        entity.setPublicId(UUID.randomUUID().toString().replace("-", ""));
     }
 }
