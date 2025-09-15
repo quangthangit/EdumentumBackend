@@ -2,7 +2,6 @@ package com.EdumentumBackend.EdumentumBackend.controller.user;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.file.FileDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.file.FileRequestDto;
-import com.EdumentumBackend.EdumentumBackend.dtos.file.FileResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.folder.FolderRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.folder.FolderResponseDto;
 import com.EdumentumBackend.EdumentumBackend.enums.FileType;
@@ -23,13 +22,13 @@ import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/v1/user/groups")
-public class UserFolderController {
+public class FolderController {
 
     private final FolderService folderService;
     private final FirebaseStorageService firebaseStorageService;
     private final FileService fileService;
 
-    public UserFolderController(FileService fileService, FirebaseStorageService firebaseStorageService, FolderService folderService) {
+    public FolderController(FileService fileService, FirebaseStorageService firebaseStorageService, FolderService folderService) {
         this.folderService = folderService;
         this.firebaseStorageService = firebaseStorageService;
         this.fileService = fileService;

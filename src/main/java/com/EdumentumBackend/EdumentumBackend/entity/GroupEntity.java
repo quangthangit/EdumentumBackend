@@ -13,12 +13,20 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "groups")
+@Table(
+        name = "groups",
+        indexes = {
+                @Index(name = "idx_user_public_id", columnList = "publicId", unique = true)
+        }
+)
 public class GroupEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, unique = true, length = 50)
+    private String publicId;
 
     @Size(min = 6, max = 100)
     @Column(nullable = false)
