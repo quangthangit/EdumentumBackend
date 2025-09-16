@@ -96,27 +96,6 @@ public class StudentQuizzesController extends BaseQuizController {
     public ResponseEntity<ApiResponse<List<QuizSummaryDto>>> searchQuizzes(@RequestParam String title) {
         return doSearchQuizzes(title);
     }
-
-//    @GetMapping("/page")
-//    public ResponseEntity<ApiResponse<Page<QuizSummaryDto>>> getAllQuizzesPaginated(
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "6") int size,
-//            @RequestParam(defaultValue = "createdAt") String sortBy,
-//            @RequestParam(defaultValue = "DESC") String direction) {
-//        return doGetAllQuizzesPaginated(page, size, sortBy, direction);
-//    }
-//
-//    @GetMapping("/search/page")
-//    public ResponseEntity<ApiResponse<Page<QuizSummaryDto>>> searchQuizzesPaginated(
-//            @RequestParam String title,
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "6") int size,
-//            @RequestParam(defaultValue = "createdAt") String sortBy,
-//            @RequestParam(defaultValue = "DESC") String direction) {
-//        return doSearchQuizzesPaginated(title, page, size, sortBy, direction);
-//    }
-
-
     @GetMapping("/page")
     public ResponseEntity<ApiResponse<Page<QuizListDto>>> getAllQuizzes(
             @RequestParam(defaultValue = "0") int page,
