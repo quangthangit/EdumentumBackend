@@ -1,6 +1,7 @@
 package com.EdumentumBackend.EdumentumBackend.controller.attempt;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.attempt.AttemptReviewDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.attempt.QuizAttemptDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.attempt.SubmitAttemptRequest;
 import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.common.ApiResponse;
@@ -11,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/user")
@@ -69,6 +72,23 @@ public class AttemptController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to retrieve latest attempt: " + e.getMessage(), 500));
+        }
+    }
+
+    @GetMapping("/quizzes/{quizId}/attempts")
+    public ResponseEntity<ApiResponse<List<QuizAttemptDto>>> getQuizAttempts(
+            @PathVariable Long quizId,
+            Authentication auth) {
+        try {
+            Long userId = currentUserId(auth);
+            List<QuizAttemptDto> attempts = attemptService.getQuizAttempts(quizId, userId);
+            return ResponseEntity.ok(ApiResponse.success(attempts, "Quiz attempts retrieved successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Quiz not found or no attempts: " + e.getMessage(), 404));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to retrieve quiz attempts: " + e.getMessage(), 500));
         }
     }
 
