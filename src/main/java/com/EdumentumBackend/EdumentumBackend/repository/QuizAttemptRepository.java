@@ -10,6 +10,8 @@ import java.util.Optional;
 public interface QuizAttemptRepository extends JpaRepository<QuizAttemptEntity, Long> {
     Optional<QuizAttemptEntity> findTopByUserIdAndQuizIdOrderByCompletedAtDesc(Long userId, Long quizId);
 
+    List<QuizAttemptEntity> findByUserIdAndQuizIdOrderByCompletedAtDesc(Long userId, Long quizId);
+
     Integer countByUserIdAndQuizId(Long userId, Long quizId);
 
     Optional<QuizAttemptEntity> findByIdAndUserId(Long id, Long userId);
@@ -17,7 +19,6 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttemptEntity, 
     @Query("select coalesce(max(a.attemptNumber),0) from QuizAttemptEntity a where a.quizId = :quizId and a.userId = :userId")
     int findMaxAttemptNumber(Long quizId, Long userId);
 
-    // New queries for quiz attempt statistics
     @Query("""
         SELECT new map(
             a.quizId as quizId,
