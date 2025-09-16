@@ -49,6 +49,33 @@ public class StudentCourseController {
         ));
     }
 
+    // Get public courses
+     @GetMapping("/published")
+    public ResponseEntity<Map<String, Object>> getPublishedCourses(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? 
+                   Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        
+        Page<CourseResponseDto> response = courseService.getPublishedCourses(pageable);
+        
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "data", response.getContent(),
+                "pagination", Map.of(
+                        "currentPage", response.getNumber(),
+                        "totalPages", response.getTotalPages(),
+                        "totalElements", response.getTotalElements(),
+                        "hasNext", response.hasNext(),
+                        "hasPrevious", response.hasPrevious()
+                )
+        ));
+    }
+
     // Get enrolled course detail
     @GetMapping("/{courseId}/enrolled-detail")
     public ResponseEntity<Map<String, Object>> getEnrolledCourseDetail(

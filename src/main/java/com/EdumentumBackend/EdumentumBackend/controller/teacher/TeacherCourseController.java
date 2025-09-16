@@ -151,7 +151,7 @@ public class TeacherCourseController {
     @GetMapping("/published")
     public ResponseEntity<Map<String, Object>> getPublishedCourses(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "6") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         
