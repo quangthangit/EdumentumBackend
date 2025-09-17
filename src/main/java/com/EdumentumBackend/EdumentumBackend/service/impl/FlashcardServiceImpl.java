@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -93,7 +94,7 @@ public class FlashcardServiceImpl implements FlashcardService {
             savedFlashcardSet.getFlashcards().addAll(savedFlashcards);
         }
 
-        return convertToResponseDto(savedFlashcardSet);
+        return convertToResponseDto(savedFlashcardSet, true); // User là owner của flashcard vừa tạo
     }
 
     @Override
@@ -106,56 +107,58 @@ public class FlashcardServiceImpl implements FlashcardService {
         boolean sortByTitle = "title".equalsIgnoreCase(sortBy);
 
         if (search != null && !search.trim().isEmpty()) {
-            // Tìm kiếm theo title only
+            // Find with title only
             if (sortByTitle) {
                 flashcardSetsPage = flashcardSetRepository.findByUserAndTitleContainingIgnoreCaseOrderByTitleAsc(
                     user, search.trim(), pageable);
             } else {
-                // Mặc định hoặc sortBy=recent -> sort theo createdAt desc
+                // Default or sortBy=recent -> sort with createdAt desc
                 flashcardSetsPage = flashcardSetRepository.findByUserAndTitleContainingIgnoreCaseOrderByCreatedAtDesc(
                     user, search.trim(), pageable);
             }
         } else {
-            // Không có search
             if (sortByTitle) {
                 flashcardSetsPage = flashcardSetRepository.findByUserOrderByTitleAsc(user, pageable);
             } else {
-                // Mặc định hoặc sortBy=recent -> sort theo createdAt desc
+                // Default or sortBy=recent -> sort with createdAt desc
                 flashcardSetsPage = flashcardSetRepository.findByUserOrderByCreatedAtDesc(user, pageable);
             }
         }
 
-        Page<FlashcardSetResponseDto> responsePage = flashcardSetsPage.map(this::convertToResponseDto);
+        Page<FlashcardSetResponseDto> responsePage = flashcardSetsPage.map(entity -> convertToResponseDto(entity, true)); // User owns all flashcards trong getAllFlashcardSets
         return PaginatedResponse.fromPage(responsePage);
     }
 
     @Override
-    public PaginatedResponse<FlashcardSetResponseDto> getPublicFlashcardSets(Pageable pageable, String search, String sortBy) {
+    public PaginatedResponse<FlashcardSetResponseDto> getPublicFlashcardSets(Pageable pageable, String search, String sortBy, Long userId) {
         Page<FlashcardSetEntity> publicFlashcardSetsPage;
 
         boolean sortByTitle = "title".equalsIgnoreCase(sortBy);
 
         if (search != null && !search.trim().isEmpty()) {
-            // Tìm kiếm flashcard sets công khai theo title only
+            // Find by flashcard sets public with title only
             if (sortByTitle) {
                 publicFlashcardSetsPage = flashcardSetRepository.findByIsPublicTrueAndTitleContainingIgnoreCaseOrderByTitleAsc(
                     search.trim(), pageable);
             } else {
-                // Mặc định hoặc sortBy=recent -> sort theo createdAt desc
+                // Default or sortBy=recent -> sort with createdAt desc
                 publicFlashcardSetsPage = flashcardSetRepository.findByIsPublicTrueAndTitleContainingIgnoreCaseOrderByCreatedAtDesc(
                     search.trim(), pageable);
             }
         } else {
-            // Không có search
             if (sortByTitle) {
                 publicFlashcardSetsPage = flashcardSetRepository.findByIsPublicTrueOrderByTitleAsc(pageable);
             } else {
-                // Mặc định hoặc sortBy=recent -> sort theo createdAt desc
+                // Default or sortBy=recent -> sort with createdAt desc
                 publicFlashcardSetsPage = flashcardSetRepository.findByIsPublicTrueOrderByCreatedAtDesc(pageable);
             }
         }
 
-        Page<FlashcardSetResponseDto> responsePage = publicFlashcardSetsPage.map(this::convertToResponseDto);
+        // Convert với ownership information
+        Page<FlashcardSetResponseDto> responsePage = publicFlashcardSetsPage.map(entity -> {
+            boolean isOwner = userId != null && entity.getUser().getUserId().equals(userId);
+            return convertToResponseDto(entity, isOwner);
+        });
         return PaginatedResponse.fromPage(responsePage);
     }
 
@@ -164,10 +167,20 @@ public class FlashcardServiceImpl implements FlashcardService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
 
-        FlashcardSetEntity flashcardSet = flashcardSetRepository.findByIdAndUser(flashcardSetId, user)
-                .orElseThrow(() -> new NotFoundException("Flashcard set not found with id: " + flashcardSetId));
-
-        return convertToResponseDto(flashcardSet);
+        // Step 1: Check if the user owns this flashcard
+        Optional<FlashcardSetEntity> ownedFlashcard = flashcardSetRepository.findByIdAndUser(flashcardSetId, user);
+        if (ownedFlashcard.isPresent()) {
+            // If owner, return with full permission
+            return convertToResponseDto(ownedFlashcard.get(), true);
+        }
+        // Step 2: If you don't own it, check if the flashcard is public.
+        Optional<FlashcardSetEntity> publicFlashcard = flashcardSetRepository.findByIdAndIsPublicTrue(flashcardSetId);
+        if (publicFlashcard.isPresent()) {
+            // If public, return with read-only permission
+            return convertToResponseDto(publicFlashcard.get(), false);
+        }
+        // Step 3: If not found or no access
+        throw new NotFoundException("Flashcard set not found or not accessible");
     }
 
     @Override
@@ -175,9 +188,15 @@ public class FlashcardServiceImpl implements FlashcardService {
     public FlashcardSetResponseDto updateFlashcardSet(Long flashcardSetId, FlashcardSetRequestDto flashcardSetRequestDto, Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
-
-        FlashcardSetEntity flashcardSet = flashcardSetRepository.findByIdAndUser(flashcardSetId, user)
+        // Check if flashcard exists
+        FlashcardSetEntity flashcardSet = flashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new NotFoundException("Flashcard set not found with id: " + flashcardSetId));
+        // Security check: Ownership check
+        if (!flashcardSet.getUser().getUserId().equals(userId)) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                "Access denied: You do not have permission to edit this flashcard set. Only the owner can modify their flashcard sets."
+            );
+        }
 
         // Update only provided fields (PATCH behavior)
         if (flashcardSetRequestDto.getTitle() != null && !flashcardSetRequestDto.getTitle().trim().isEmpty()) {
@@ -223,17 +242,27 @@ public class FlashcardServiceImpl implements FlashcardService {
         }
 
         FlashcardSetEntity updatedFlashcardSet = flashcardSetRepository.save(flashcardSet);
-        return convertToResponseDto(updatedFlashcardSet);
+        return convertToResponseDto(updatedFlashcardSet, true); // User là owner của flashcard đang update
     }
 
     @Override
     @Transactional
     public void deleteFlashcardSet(Long flashcardSetId, Long userId) {
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found with id: " + userId));
+        // Validate user exists
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException("User not found with id: " + userId);
+        }
 
-        FlashcardSetEntity flashcardSet = flashcardSetRepository.findByIdAndUser(flashcardSetId, user)
+        //Check if flashcard exists
+        FlashcardSetEntity flashcardSet = flashcardSetRepository.findById(flashcardSetId)
                 .orElseThrow(() -> new NotFoundException("Flashcard set not found with id: " + flashcardSetId));
+
+        // Security check: Ownership check
+        if (!flashcardSet.getUser().getUserId().equals(userId)) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                "Access denied: You do not have permission to delete this flashcard set. Only the owner can delete their flashcard sets."
+            );
+        }
 
         // Delete all flashcards first (if needed due to foreign key constraints)
         flashcardRepository.deleteAll(flashcardSet.getFlashcards());
@@ -277,7 +306,7 @@ public class FlashcardServiceImpl implements FlashcardService {
         }
     }
 
-    private FlashcardSetResponseDto convertToResponseDto(FlashcardSetEntity entity) {
+    private FlashcardSetResponseDto convertToResponseDto(FlashcardSetEntity entity, boolean isOwner) {
         List<FlashcardResponseDto> flashcardDtos = new ArrayList<>();
 
         if (entity.getFlashcards() != null) {
@@ -302,6 +331,8 @@ public class FlashcardServiceImpl implements FlashcardService {
                 .createdAt(entity.getCreatedAt())
                 .user(convertUserToDto(entity.getUser()))
                 .flashcards(flashcardDtos)
+                .isOwner(isOwner)
+                .canEdit(isOwner) // Only owner can edit
                 .build();
     }
 
