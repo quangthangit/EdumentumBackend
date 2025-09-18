@@ -225,6 +225,9 @@ public class AttemptServiceImpl implements AttemptService {
 
             int earnedPoints = isCorrect ? points : 0;
 
+            // Get time spent for this question
+            String timeSpent = getTimeSpentForQuestion(clientAnswer);
+
             // Update counters
             if (isSkipped) {
                 skipped++;
@@ -237,7 +240,7 @@ public class AttemptServiceImpl implements AttemptService {
 
             // Create answer snapshot
             Map<String, Object> snapshot = createAnswerSnapshot(
-                    question, questionId, order++, selectedIds, correctIds, isCorrect, points, earnedPoints);
+                    question, questionId, order++, selectedIds, correctIds, isCorrect, points, earnedPoints, timeSpent);
             answerSnapshots.add(snapshot);
         }
 
@@ -248,9 +251,15 @@ public class AttemptServiceImpl implements AttemptService {
         LocalDateTime startedAt = req.getStartedAt() != null ? req.getStartedAt() : LocalDateTime.now();
         LocalDateTime completedAt = req.getCompletedAt() != null ? req.getCompletedAt() : LocalDateTime.now();
 
-        int timeSpent = req.getTimeSpentSec() != null
-                ? req.getTimeSpentSec()
-                : (int) Math.max(0, Duration.between(startedAt, completedAt).getSeconds());
+        // Use totalTimeSpent from frontend if available, otherwise fallback to timeSpentSec, then calculate from timestamps
+        int timeSpent = 0;
+        if (req.getTotalTimeSpent() != null) {
+            timeSpent = req.getTotalTimeSpent();
+        } else if (req.getTimeSpentSec() != null) {
+            timeSpent = req.getTimeSpentSec();
+        } else {
+            timeSpent = (int) Math.max(0, Duration.between(startedAt, completedAt).getSeconds());
+        }
 
         return new TimingInfo(startedAt, completedAt, timeSpent);
     }
@@ -317,6 +326,13 @@ public class AttemptServiceImpl implements AttemptService {
         return Collections.emptyList();
     }
 
+    private String getTimeSpentForQuestion(SubmitAttemptRequest.AnswerItem clientAnswer) {
+        if (clientAnswer != null && clientAnswer.getTimeSpent() != null) {
+            return clientAnswer.getTimeSpent();
+        }
+        return "0";
+    }
+
     @SuppressWarnings("unchecked")
     private List<Map<String, String>> getQuestionOptions(Map<String, Object> question) {
         Object options = question.get("options");
@@ -328,7 +344,7 @@ public class AttemptServiceImpl implements AttemptService {
 
     private Map<String, Object> createAnswerSnapshot(Map<String, Object> question, String questionId,
                                                    int order, List<String> selectedIds, List<String> correctIds,
-                                                   boolean isCorrect, int points, int earnedPoints) {
+                                                   boolean isCorrect, int points, int earnedPoints, String timeSpent) {
         Map<String, Object> snapshot = new LinkedHashMap<>();
         snapshot.put("questionId", questionId);
         snapshot.put("order", order);
@@ -339,6 +355,7 @@ public class AttemptServiceImpl implements AttemptService {
         snapshot.put("isCorrect", isCorrect);
         snapshot.put("pointsPossible", points);
         snapshot.put("pointsEarned", earnedPoints);
+        snapshot.put("timeSpent", timeSpent);
         snapshot.put("explanation", Objects.toString(question.get("explanation"), null));
         return snapshot;
     }
@@ -452,6 +469,7 @@ public class AttemptServiceImpl implements AttemptService {
                 .correctOptionIds((List<String>) answerData.getOrDefault("correctOptionIds", Collections.emptyList()))
                 .pointsPossible((Integer) answerData.getOrDefault("pointsPossible", 1))
                 .pointsEarned((Integer) answerData.getOrDefault("pointsEarned", 0))
+                .timeSpent(Objects.toString(answerData.getOrDefault("timeSpent", "0"), "0"))
                 .explanation((String) answerData.getOrDefault("explanation", null))
                 .options(options)
                 .build();
