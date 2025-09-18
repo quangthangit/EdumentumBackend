@@ -11,6 +11,7 @@ public class SubmitAttemptRequest {
     private LocalDateTime startedAt;
     private LocalDateTime completedAt;
     private Integer timeSpentSec;
+    private Integer totalTimeSpent;
 
     private List<AnswerItem> answers;
 
@@ -19,5 +20,6 @@ public class SubmitAttemptRequest {
         private String questionId;
         private List<String> selectedOptionIds;
         private String userAnswerText;
+        private String timeSpent;
     }
 }
