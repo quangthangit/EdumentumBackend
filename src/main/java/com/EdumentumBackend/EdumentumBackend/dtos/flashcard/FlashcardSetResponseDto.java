@@ -26,4 +26,6 @@ public class FlashcardSetResponseDto {
     private LocalDateTime createdAt;
     private UserResponseDto user;
     private List<FlashcardResponseDto> flashcards;
+    private Boolean isOwner;
+    private Boolean canEdit;
 }
