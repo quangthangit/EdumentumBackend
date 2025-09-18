@@ -33,6 +33,7 @@ public class AttemptReviewDto {
         private List<String> correctOptionIds;
         private Integer pointsPossible;
         private Integer pointsEarned;
+        private String timeSpent; // Add this field
         private String explanation;
 
         private List<Option> options;
