@@ -24,4 +24,5 @@ public interface FlashcardSetRepository extends JpaRepository<FlashcardSetEntity
     Page<FlashcardSetEntity> findByIsPublicTrueAndTitleContainingIgnoreCaseOrderByTitleAsc(
         String title, Pageable pageable);
     Page<FlashcardSetEntity> findByIsPublicTrueOrderByTitleAsc(Pageable pageable);
+    Optional<FlashcardSetEntity> findByIdAndIsPublicTrue(Long id);
 }
