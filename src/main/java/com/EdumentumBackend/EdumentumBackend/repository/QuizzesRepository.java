@@ -138,4 +138,5 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
       WHERE LOWER(q.title) LIKE LOWER(CONCAT('%', :title, '%'))
         AND (q.userId = :userId OR q.visibility = com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC)
     """)
+    Page<QuizListDto> findQuizListByTitleAndUserOrPublic(String title, Long userId, Pageable pageable);
 }
