@@ -181,4 +181,7 @@ public class QuizzesEntity extends BaseEntity {
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @BatchSize(size = 50)
     private Set<QuizTagEntity> quizTags = new HashSet<>();
+
+    @ManyToMany(mappedBy = "quizzes")
+    private Set<FolderEntity> folders = new HashSet<>();
 }
