@@ -2,12 +2,11 @@ package com.EdumentumBackend.EdumentumBackend.service;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.folder.FolderRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.folder.FolderResponseDto;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 public interface FolderService {
-    FolderResponseDto createFolder(FolderRequestDto folderRequestDto, Long groupId, Long userId);
-    List<FolderResponseDto> getAllFolderByGroup(Long groupId,Long userId);
-    void deleteFolderById(Long folderId, Long userId, Long groupId);
+    FolderResponseDto createFolder(FolderRequestDto folderRequestDto, String publicGroupId, Long userId);
+    List<FolderResponseDto> getAllFolderByGroup(String publicGroupId,Long userId);
+    void deleteFolderById(Long folderId, Long userId, String publicGroupId);
 }

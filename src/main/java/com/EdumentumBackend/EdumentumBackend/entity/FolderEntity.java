@@ -7,7 +7,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "folders")
@@ -37,5 +39,13 @@ public class FolderEntity extends BaseEntity {
 
     @OneToMany(mappedBy = "folder", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FileEntity> files;
+
+    @ManyToMany
+    @JoinTable(
+            name = "folder_quiz",
+            joinColumns = @JoinColumn(name = "folder_id"),
+            inverseJoinColumns = @JoinColumn(name = "quiz_id")
+    )
+    private Set<QuizzesEntity> quizzes = new HashSet<>();
 }
 
