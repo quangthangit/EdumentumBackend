@@ -626,6 +626,13 @@ public class QuizzesServiceImpl implements QuizzesService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<QuizListDto> getPopularPublicQuizzes(String popularityCriteria, Pageable pageable) {
+        Page<QuizListDto> page = quizzesRepository.findPopularPublicQuizList(popularityCriteria, pageable);
+        return page;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public QuizResponseDto getPublicQuizById(Long quizId) {
         Optional<QuizzesEntity> quizOpt = quizzesRepository.findDetailByIdWithAccess(quizId, null);
         if (quizOpt.isEmpty()) {

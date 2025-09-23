@@ -60,6 +60,37 @@ public class PublicQuizzesController {
     }
 
     /**
+     * Get popular public quizzes with pagination
+     * @param page Page number (0-based)
+     * @param size Number of items per page
+     * @param popularityCriteria Criteria to sort by (attemptCount, viewCount, completionCount)
+     * @return Paginated list of popular public quizzes
+     */
+    @GetMapping("/popular")
+    public ResponseEntity<ApiResponse<Page<QuizListDto>>> getPopularPublicQuizzes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "attemptCount") String popularityCriteria) {
+        try {
+            // Validate popularity criteria
+            if (!List.of("attemptCount", "viewCount", "completionCount", "avgScore").contains(popularityCriteria)) {
+                return ResponseEntity.status(400)
+                        .body(ApiResponse.error("Invalid popularity criteria. Must be one of: attemptCount, viewCount, completionCount, avgScore", 400));
+            }
+            
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, popularityCriteria));
+            
+            Page<QuizListDto> quizzes = quizzesService.getPopularPublicQuizzes(popularityCriteria, pageable);
+            
+            return ResponseEntity.ok(ApiResponse.success(quizzes, "Popular public quizzes retrieved successfully"));
+        } catch (Exception e) {
+            log.error("Error retrieving popular public quizzes", e);
+            return ResponseEntity.status(500)
+                    .body(ApiResponse.error("Failed to retrieve popular public quizzes: " + e.getMessage(), 500));
+        }
+    }
+
+    /**
      * Search public quizzes by title with pagination
      * @param title Search term
      * @param page Page number (0-based)
