@@ -29,6 +29,9 @@ public interface QuizzesService {
     Page<QuizListDto> searchPublicQuizzes(String title, Pageable pageable);
 
     Page<QuizListDto> getPublicQuizzesByTags(List<Long> tagIds, Pageable pageable);
+    
+    // New method for popular quizzes
+    Page<QuizListDto> getPopularPublicQuizzes(String popularityCriteria, Pageable pageable);
 
     QuizResponseDto getPublicQuizById(Long quizId);
 
