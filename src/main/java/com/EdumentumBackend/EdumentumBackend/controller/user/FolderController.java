@@ -34,11 +34,11 @@ public class FolderController {
         this.fileService = fileService;
     }
 
-    @PostMapping("/{groupId}/folders")
-    public ResponseEntity<?> createFolder(@Valid @RequestBody FolderRequestDto folderRequestDto, @PathVariable Long groupId) {
+    @PostMapping("/{publicId}/folders")
+    public ResponseEntity<?> createFolder(@Valid @RequestBody FolderRequestDto folderRequestDto, @PathVariable String publicId) {
         try {
             Long userId = getCurrentUserId();
-            FolderResponseDto folderResponseDto = folderService.createFolder(folderRequestDto, groupId, userId);
+            FolderResponseDto folderResponseDto = folderService.createFolder(folderRequestDto, publicId, userId);
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "status", "success",
                     "message", "Folder created successfully",
@@ -49,12 +49,12 @@ public class FolderController {
         }
     }
 
-    @DeleteMapping("{groupId}/folders/{folderId}/")
-    public ResponseEntity<?> deleteFolder(@PathVariable Long groupId,
-                                          @PathVariable Long folderId ) {
+    @DeleteMapping("{publicId}/folders/{folderId}/")
+    public ResponseEntity<?> deleteFolder(@PathVariable String publicId,
+                                          @PathVariable Long folderId) {
         try {
             Long userId = getCurrentUserId();
-            folderService.deleteFolderById(folderId,groupId,userId);
+            folderService.deleteFolderById(folderId, userId, publicId);
             return ResponseEntity.ok(Map.of(
                     "status", "success",
                     "message", "Delete folder successfully"
@@ -64,11 +64,11 @@ public class FolderController {
         }
     }
 
-    @GetMapping("/folders/{groupId}")
-    public ResponseEntity<?> getFolderByGroup(@PathVariable Long groupId) {
+    @GetMapping("/folders/{publicId}")
+    public ResponseEntity<?> getFolderByGroup(@PathVariable String publicId) {
         try {
             Long userId = getCurrentUserId();
-            List<FolderResponseDto> folderResponseDtos = folderService.getAllFolderByGroup(groupId, userId);
+            List<FolderResponseDto> folderResponseDtos = folderService.getAllFolderByGroup(publicId, userId);
             return ResponseEntity.ok(Map.of(
                     "status", "success",
                     "message", "Folders retrieved successfully",
@@ -88,7 +88,8 @@ public class FolderController {
             List<CompletableFuture<FileDto>> futures = files.stream()
                     .map(file -> firebaseStorageService.uploadFileAsync(file)
                             .thenApply(url -> {
-                                if (url == null) throw new RuntimeException("Upload failed for file: " + file.getOriginalFilename());
+                                if (url == null)
+                                    throw new RuntimeException("Upload failed for file: " + file.getOriginalFilename());
                                 FileDto dto = new FileDto();
                                 dto.setFilename(file.getOriginalFilename());
                                 dto.setFileSize(file.getSize());
@@ -106,7 +107,7 @@ public class FolderController {
 
             List<FileDto> responseDto = fileService.uploadFileResponseDto(fileRequestDto, userId, folderId);
             return ResponseEntity.ok(Map.of(
-                    "data",responseDto
+                    "data", responseDto
             ));
 
         } catch (Exception e) {
@@ -123,7 +124,7 @@ public class FolderController {
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "message", "Delete file successfully"
-                ));
+        ));
     }
 
     private FileType getFileType(MultipartFile file) {

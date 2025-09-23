@@ -139,4 +139,38 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
         AND (q.userId = :userId OR q.visibility = com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC)
     """)
     Page<QuizListDto> findQuizListByTitleAndUserOrPublic(String title, Long userId, Pageable pageable);
+
+    // New methods for public quizzes
+    @Query("""
+      SELECT new com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizListDto(
+        q.id, q.title, q.slug, q.description, q.difficulty, q.maxAttempts, q.keywords,
+        q.createdAt, q.publishedAt, q.totalQuestions
+      )
+      FROM QuizzesEntity q
+      WHERE q.visibility = com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC
+    """)
+    Page<QuizListDto> findPublicQuizList(Pageable pageable);
+
+    @Query("""
+      SELECT new com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizListDto(
+        q.id, q.title, q.slug, q.description, q.difficulty, q.maxAttempts, q.keywords,
+        q.createdAt, q.publishedAt, q.totalQuestions
+      )
+      FROM QuizzesEntity q
+      WHERE LOWER(q.title) LIKE LOWER(CONCAT('%', :title, '%'))
+        AND q.visibility = com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC
+    """)
+    Page<QuizListDto> findPublicQuizListByTitle(String title, Pageable pageable);
+
+    @Query("""
+      SELECT DISTINCT new com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizListDto(
+        q.id, q.title, q.slug, q.description, q.difficulty, q.maxAttempts, q.keywords,
+        q.createdAt, q.publishedAt, q.totalQuestions
+      )
+      FROM QuizzesEntity q JOIN q.quizTags qt
+      WHERE qt.tag.id IN :tagIds
+        AND q.visibility = com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC
+    """)
+    Page<QuizListDto> findPublicQuizListByTags(@Param("tagIds") List<Long> tagIds, Pageable pageable);
+
 }
