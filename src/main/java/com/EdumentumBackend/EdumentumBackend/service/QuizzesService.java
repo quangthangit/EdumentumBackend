@@ -23,6 +23,15 @@ public interface QuizzesService {
 
     Page<QuizListDto> searchQuizzes(String title, Long userId, Pageable pageable);
 
+    // New methods for public quizzes
+    Page<QuizListDto> getPublicQuizzes(Pageable pageable);
+
+    Page<QuizListDto> searchPublicQuizzes(String title, Pageable pageable);
+
+    Page<QuizListDto> getPublicQuizzesByTags(List<Long> tagIds, Pageable pageable);
+
+    QuizResponseDto getPublicQuizById(Long quizId);
+
     QuizResponseDto getQuizById(Long quizId, Long userId);
 
     QuizResponseDto updateQuiz(Long quizId, QuizRequestDto quizRequestDto, Long userId);
