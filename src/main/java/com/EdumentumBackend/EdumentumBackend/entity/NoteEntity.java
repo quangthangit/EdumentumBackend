@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.entity;
 
+import com.EdumentumBackend.EdumentumBackend.enums.NoteType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,6 +22,14 @@ public class NoteEntity extends BaseEntity {
 
     @Column(nullable = false)
     private String title;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private NoteType type = NoteType.BLOCK;
+
+    @Column(columnDefinition = "TEXT")
+    private String content; // Dùng cho markdown
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)

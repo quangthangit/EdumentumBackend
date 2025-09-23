@@ -5,8 +5,10 @@ import com.EdumentumBackend.EdumentumBackend.dtos.note.*;
 import com.EdumentumBackend.EdumentumBackend.entity.*;
 import com.EdumentumBackend.EdumentumBackend.enums.NoteAction;
 import com.EdumentumBackend.EdumentumBackend.enums.NotePermission;
+import com.EdumentumBackend.EdumentumBackend.enums.NoteType;
 import com.EdumentumBackend.EdumentumBackend.exception.BadRequestException;
 import com.EdumentumBackend.EdumentumBackend.exception.NotFoundException;
+import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
 import com.EdumentumBackend.EdumentumBackend.repository.*;
 import com.EdumentumBackend.EdumentumBackend.service.NoteService;
 import jakarta.transaction.Transactional;
@@ -60,8 +62,18 @@ public class NoteServiceImpl implements NoteService {
     }
 
     private boolean hasEditPermission(NoteEntity note, UserEntity user) {
-        if (Objects.equals(note.getOwner().getUserId(), user.getUserId())) return true;
-        return collaboratorRepository.existsByNoteAndUserAndPermissionIn(note, user, List.of(NotePermission.OWNER, NotePermission.EDITOR));
+        System.out.println("👤 Current user ID from token: " + user.getEmail() + " (ID: " + user.getUserId() + ")");
+        System.out.println("🏠 Note owner ID: " + note.getOwner().getUserId());
+
+        boolean isOwner = Objects.equals(note.getOwner().getUserId(), user.getUserId());
+        System.out.println("✅ Is owner? " + isOwner);
+
+        if (isOwner) return true;
+
+        boolean hasCollaboratorPermission = collaboratorRepository.existsByNoteAndUserAndPermissionIn(note, user, List.of(NotePermission.OWNER, NotePermission.EDITOR));
+        System.out.println("🤝 Has collaborator permission? " + hasCollaboratorPermission);
+
+        return hasCollaboratorPermission;
     }
 
     private boolean hasViewPermission(NoteEntity note, UserEntity user) {
@@ -70,24 +82,35 @@ public class NoteServiceImpl implements NoteService {
     }
 
     private NoteResponseDto mapNote(NoteEntity note) {
-        List<BlockResponseDto> blocks = noteBlockRepository.findByNoteAndIsDeletedFalseOrderByOrderIndexAsc(note).stream()
-                .map(b -> BlockResponseDto.builder()
-                        .id(b.getId())
-                        .type(b.getType())
-                        .orderIndex(b.getOrderIndex())
-                        .content(b.getContent())
-                        .build())
-                .collect(Collectors.toList());
+        List<BlockResponseDto> blocks = null;
+
+        // Chỉ load blocks nếu note là loại BLOCK
+        if (note.getType() == NoteType.BLOCK) {
+            blocks = noteBlockRepository.findByNoteAndIsDeletedFalseOrderByOrderIndexAsc(note).stream()
+                    .map(b -> BlockResponseDto.builder()
+                            .id(b.getId())
+                            .type(b.getType())
+                            .orderIndex(b.getOrderIndex())
+                            .content(b.getContent())
+                            .build())
+                    .collect(Collectors.toList());
+        }
+
         List<String> tags = noteTagRepository.findByNote(note).stream()
                 .map(NoteTagEntity::getTagName)
                 .toList();
+
         return NoteResponseDto.builder()
                 .id(note.getId())
                 .title(note.getTitle())
+                .type(note.getType())
+                .content(note.getContent()) // Cho markdown
                 .ownerId(note.getOwner().getUserId())
                 .isDeleted(note.getIsDeleted())
-                .blocks(blocks)
+                .blocks(blocks) // Cho block
                 .tags(tags)
+                .createdAt(note.getCreatedAt())
+                .updatedAt(note.getUpdatedAt())
                 .build();
     }
 
@@ -133,12 +156,15 @@ public class NoteServiceImpl implements NoteService {
         UserEntity current = getCurrentUser();
         NoteEntity note = NoteEntity.builder()
                 .title(dto.getTitle())
+                .type(dto.getType() != null ? dto.getType() : NoteType.BLOCK)
+                .content(dto.getContent()) // Cho markdown
                 .owner(current)
                 .isDeleted(false)
                 .build();
         note = noteRepository.save(note);
         saveVersion(note, current, NoteAction.CREATE_NOTE, "{}");
 
+        // Xử lý tags
         if (dto.getTags() != null) {
             for (String tagName : dto.getTags()) {
                 if (!noteTagRepository.existsByNoteAndTagName(note, tagName)) {
@@ -147,6 +173,21 @@ public class NoteServiceImpl implements NoteService {
                             .tagName(tagName)
                             .build());
                 }
+            }
+        }
+
+        // Xử lý blocks nếu là loại BLOCK
+        if (note.getType() == NoteType.BLOCK && dto.getBlocks() != null) {
+            for (int i = 0; i < dto.getBlocks().size(); i++) {
+                BlockRequestDto blockDto = dto.getBlocks().get(i);
+                NoteBlockEntity block = NoteBlockEntity.builder()
+                        .note(note)
+                        .type(blockDto.getType())
+                        .content(blockDto.getContent())
+                        .orderIndex(i)
+                        .isDeleted(false)
+                        .build();
+                noteBlockRepository.save(block);
             }
         }
 
@@ -159,10 +200,24 @@ public class NoteServiceImpl implements NoteService {
         UserEntity current = getCurrentUser();
         NoteEntity note = noteRepository.findActiveById(id).orElseThrow(() -> new NotFoundException("Note not found"));
         if (!hasEditPermission(note, current)) throw new BadRequestException("No permission");
+
+        // Cập nhật title và content
         note.setTitle(dto.getTitle());
+
+        // Nếu có type trong request, cập nhật type (chuyển đổi giữa markdown và block)
+        if (dto.getType() != null) {
+            note.setType(dto.getType());
+        }
+
+        // Cập nhật content cho markdown
+        if (note.getType() == NoteType.MARKDOWN) {
+            note.setContent(dto.getContent());
+        }
+
         note = noteRepository.save(note);
         saveVersion(note, current, NoteAction.UPDATE_NOTE, "{}");
 
+        // Xử lý tags
         if (dto.getTags() != null) {
             List<NoteTagEntity> existing = noteTagRepository.findByNote(note);
             for (NoteTagEntity e : new ArrayList<>(existing)) {
@@ -179,6 +234,30 @@ public class NoteServiceImpl implements NoteService {
                 }
             }
         }
+
+        // Xử lý blocks nếu chuyển sang loại BLOCK và có blocks trong request
+        if (note.getType() == NoteType.BLOCK && dto.getBlocks() != null) {
+            // Xóa tất cả blocks cũ
+            List<NoteBlockEntity> existingBlocks = noteBlockRepository.findByNoteAndIsDeletedFalseOrderByOrderIndexAsc(note);
+            for (NoteBlockEntity block : existingBlocks) {
+                block.setIsDeleted(true);
+            }
+            noteBlockRepository.saveAll(existingBlocks);
+
+            // Tạo blocks mới
+            for (int i = 0; i < dto.getBlocks().size(); i++) {
+                BlockRequestDto blockDto = dto.getBlocks().get(i);
+                NoteBlockEntity block = NoteBlockEntity.builder()
+                        .note(note)
+                        .type(blockDto.getType())
+                        .content(blockDto.getContent())
+                        .orderIndex(i)
+                        .isDeleted(false)
+                        .build();
+                noteBlockRepository.save(block);
+            }
+        }
+
         return mapNote(note);
     }
 
