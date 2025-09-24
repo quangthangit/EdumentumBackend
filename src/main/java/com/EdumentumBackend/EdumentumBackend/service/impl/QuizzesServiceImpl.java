@@ -175,9 +175,15 @@ public class QuizzesServiceImpl implements QuizzesService {
     }
 
     @Override
+    @Transactional
     public boolean deleteQuiz(Long quizId, Long userId) {
         try {
             QuizzesEntity quiz = findQuizAndVerifyUserAccess(quizId, userId);
+
+            // Delete all quiz attempts associated with this quiz first to avoid foreign key constraint
+            quizAttemptRepository.deleteByQuizId(quizId);
+
+            // Then delete the quiz
             quizzesRepository.delete(quiz);
             return true;
         } catch (RuntimeException e) {

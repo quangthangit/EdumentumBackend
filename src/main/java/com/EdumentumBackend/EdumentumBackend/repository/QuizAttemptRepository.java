@@ -2,6 +2,7 @@ package com.EdumentumBackend.EdumentumBackend.repository;
 
 import com.EdumentumBackend.EdumentumBackend.entity.QuizAttemptEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -68,4 +69,8 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttemptEntity, 
 
     @Query("SELECT SUM(a.correctAnswers + a.wrongAnswers + a.skippedAnswers + a.partialAnswers) FROM QuizAttemptEntity a")
     Integer sumAllTotalQuestions();
+
+    @Modifying
+    @Query("DELETE FROM QuizAttemptEntity a WHERE a.quizId = :quizId")
+    void deleteByQuizId(@Param("quizId") Long quizId);
 }
