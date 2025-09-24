@@ -16,7 +16,19 @@ import java.util.Map;
         indexes = {
                 @Index(name = "idx_attempts_user_quiz", columnList = "user_id,quiz_id"),
                 @Index(name = "idx_attempts_status", columnList = "status"),
-                @Index(name = "idx_attempts_completed_at", columnList = "completed_at")
+                @Index(name = "idx_attempts_completed_at", columnList = "completed_at"),
+
+                // Index cho thống kê
+                @Index(name = "idx_quiz_attempts_user_stats", columnList = "user_id"),
+                @Index(name = "idx_quiz_attempts_quiz_stats", columnList = "quiz_id"),
+                @Index(name = "idx_quiz_attempts_completed_at_stats", columnList = "completed_at"),
+                @Index(name = "idx_quiz_attempts_percentage_score", columnList = "percentage_score"),
+                @Index(name = "idx_quiz_attempts_total_time_spent", columnList = "total_time_spent"),
+                @Index(name = "idx_quiz_attempts_user_completed_composite", columnList = "user_id,completed_at"),
+                @Index(name = "idx_quiz_attempts_correct_answers", columnList = "correct_answers"),
+                @Index(name = "idx_quiz_attempts_wrong_answers", columnList = "wrong_answers"),
+                @Index(name = "idx_quiz_attempts_skipped_answers", columnList = "skipped_answers"),
+                @Index(name = "idx_quiz_attempts_partial_answers", columnList = "partial_answers")
         }
 )
 @Getter @Setter
