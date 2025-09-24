@@ -189,4 +189,10 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
     """)
     Page<QuizListDto> findPopularPublicQuizList(@Param("popularityCriteria") String popularityCriteria, Pageable pageable);
 
+    // Statistics methods
+    @Query("SELECT COUNT(q) FROM QuizzesEntity q WHERE q.userId = :userId")
+    Integer countQuizzesByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT COUNT(q) FROM QuizzesEntity q")
+    Integer countAllQuizzes();
 }
