@@ -21,7 +21,11 @@ import java.util.Set;
                 @Index(name = "idx_quizzes_status",     columnList = "status"),
                 @Index(name = "idx_quizzes_visibility", columnList = "visibility"),
                 @Index(name = "idx_quizzes_published",  columnList = "published_at"),
-                @Index(name = "idx_quizzes_created",    columnList = "created_at")
+                @Index(name = "idx_quizzes_created",    columnList = "created_at"),
+
+                // Index cho thống kê
+                @Index(name = "idx_quizzes_user_stats", columnList = "user_id"),
+                @Index(name = "idx_quizzes_created_at_stats", columnList = "created_at")
         }
 )
 @Getter
