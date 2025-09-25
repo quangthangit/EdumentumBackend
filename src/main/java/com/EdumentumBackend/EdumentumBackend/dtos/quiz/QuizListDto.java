@@ -28,6 +28,10 @@ public class QuizListDto {
     private Integer totalAttempts;
     private Integer bestCorrectAnswers;
     private Integer totalQuestions;
+    
+    // Popularity metrics
+    private Integer viewCount;
+    private Integer completionCount;
 
     public QuizListDto(Long id, String title, String slug, String description,
                        DifficultyLevel difficulty, Integer maxAttempts, String[] keywords,
@@ -42,6 +46,31 @@ public class QuizListDto {
         this.createdAt = createdAt;
         this.publishedAt = publishedAt;
         this.totalQuestions = totalQuestions;
+
+        // Initialize attempt stats to default values
+        this.totalAttempts = 0;
+        this.bestCorrectAnswers = 0;
+        this.viewCount = 0;
+        this.completionCount = 0;
+    }
+
+    // Constructor that matches the repository queries
+    public QuizListDto(Long id, String title, String slug, String description,
+                       DifficultyLevel difficulty, Integer maxAttempts, String[] keywords,
+                       LocalDateTime createdAt, LocalDateTime publishedAt, Integer totalQuestions,
+                       Integer viewCount, Integer completionCount) {
+        this.id = id;
+        this.title = title;
+        this.slug = slug;
+        this.description = description;
+        this.difficulty = difficulty;
+        this.maxAttempts = maxAttempts;
+        this.keywords = keywords != null ? List.of(keywords) : List.of();
+        this.createdAt = createdAt;
+        this.publishedAt = publishedAt;
+        this.totalQuestions = totalQuestions;
+        this.viewCount = viewCount != null ? viewCount : 0;
+        this.completionCount = completionCount != null ? completionCount : 0;
 
         // Initialize attempt stats to default values
         this.totalAttempts = 0;

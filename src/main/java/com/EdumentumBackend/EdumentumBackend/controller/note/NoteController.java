@@ -2,13 +2,12 @@ package com.EdumentumBackend.EdumentumBackend.controller.note;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.PaginatedResponse;
 import com.EdumentumBackend.EdumentumBackend.dtos.note.*;
-import com.EdumentumBackend.EdumentumBackend.entity.NoteCollaboratorEntity;
-import com.EdumentumBackend.EdumentumBackend.entity.NoteCommentEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.NoteEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.UserEntity;
 import com.EdumentumBackend.EdumentumBackend.enums.NotePermission;
 import com.EdumentumBackend.EdumentumBackend.exception.BadRequestException;
 import com.EdumentumBackend.EdumentumBackend.exception.NotFoundException;
+import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
 import com.EdumentumBackend.EdumentumBackend.repository.NoteCollaboratorRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.NoteCommentRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.NoteRepository;
@@ -18,6 +17,8 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -93,8 +94,6 @@ public class NoteController {
         return ResponseEntity.noContent().build();
     }
 
-    // Collaborators list could be implemented later if needed as public DTO list
-
     @PostMapping("/{id}/collaborators")
     public ResponseEntity<CollaboratorResponseDto> addCollaborator(@PathVariable Long id, @Valid @RequestBody CollaboratorRequestDto dto) {
         return ResponseEntity.ok(noteService.addCollaborator(id, dto));
@@ -128,7 +127,18 @@ public class NoteController {
         noteService.deleteComment(commentId);
         return ResponseEntity.noContent().build();
     }
+    private UserEntity getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getName() == null) throw new BadRequestException("Unauthenticated");
 
+        // Lấy userId trực tiếp từ JWT token thay vì query database
+        if (auth.getPrincipal() instanceof CustomUserDetails) {
+            CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+            Long userId = userDetails.getId();
+            return userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
+        }
+
+        // Fallback: lấy qua email (không nên xảy ra)
+        return userRepository.findByEmail(auth.getName()).orElseThrow(() -> new NotFoundException("User not found"));
+    }
 }
-
-

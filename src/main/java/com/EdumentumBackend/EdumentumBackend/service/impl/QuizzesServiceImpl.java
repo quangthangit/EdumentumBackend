@@ -4,6 +4,7 @@ import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.*;
 import com.EdumentumBackend.EdumentumBackend.entity.*;
 import com.EdumentumBackend.EdumentumBackend.enums.QuizStatus;
+import com.EdumentumBackend.EdumentumBackend.enums.VisibilityType;
 import com.EdumentumBackend.EdumentumBackend.event.QuizCreatedEvent;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizAttemptRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizTagRepository;
@@ -110,10 +111,7 @@ public class QuizzesServiceImpl implements QuizzesService {
     @Override
     @Transactional(readOnly = true)
     public List<QuizSummaryDto> getAllQuizzes(Long userId) {
-
-        List<QuizSummaryDto> quizzes = quizzesRepository.findSummariesByUserId(userId);
-
-        return quizzes;
+        return quizzesRepository.findSummariesByUserId(userId);
     }
 
     @Override
@@ -170,7 +168,7 @@ public class QuizzesServiceImpl implements QuizzesService {
         }
 
         // Refresh the quiz to get the associated tags with a single query
-        savedQuiz = Optional.ofNullable(quizzesRepository.findByIdWithTags(savedQuiz.getId()))
+        savedQuiz = quizzesRepository.findDetailByIdAndUserId(savedQuiz.getId(), userId)
                 .orElseThrow(() -> new RuntimeException("Failed to retrieve saved quiz"));
 
         return mapToResponseDto(savedQuiz);
@@ -194,9 +192,7 @@ public class QuizzesServiceImpl implements QuizzesService {
     @Transactional(readOnly = true)
     public List<QuizSummaryDto> searchQuizzes(String title, Long userId) {
         Pageable defaultPage = PageRequest.of(0, 20, Sort.by("createdAt").descending());
-        var page = quizzesRepository.findSummariesByTitleAndUserOrPublic(title, userId, defaultPage);
-        List<QuizSummaryDto> result = page.getContent();
-        return result;
+        return quizzesRepository.findSummariesByTitleAndUserOrPublic(title, userId, defaultPage).getContent();
     }
     @Override
     @Transactional
@@ -244,10 +240,8 @@ public class QuizzesServiceImpl implements QuizzesService {
             processQuizTags(savedQuiz, quizRequestDto.getTags());
         }
 
-        savedQuiz = quizzesRepository.findByIdWithTags(savedQuiz.getId());
-        if (savedQuiz == null) {
-            throw new RuntimeException("Failed to retrieve saved quiz");
-        }
+        savedQuiz = quizzesRepository.findDetailByIdAndUserId(savedQuiz.getId(), userId)
+                .orElseThrow(() -> new RuntimeException("Failed to retrieve saved quiz"));
 
         return mapToResponseDto(savedQuiz);
     }
@@ -343,7 +337,7 @@ public class QuizzesServiceImpl implements QuizzesService {
             }
         }
 
-        savedQuiz = Optional.ofNullable(quizzesRepository.findByIdWithTags(savedQuiz.getId()))
+        savedQuiz = quizzesRepository.findDetailByIdAndUserId(savedQuiz.getId(), userId)
                 .orElseThrow(() -> new RuntimeException("Failed to retrieve saved quiz"));
 
         return mapToResponseDto(savedQuiz);
@@ -607,7 +601,52 @@ public class QuizzesServiceImpl implements QuizzesService {
 
         });
     }
-    
+
+    // New methods for public quizzes
+    @Override
+    @Transactional(readOnly = true)
+    public Page<QuizListDto> getPublicQuizzes(Pageable pageable) {
+        Page<QuizListDto> page = quizzesRepository.findPublicQuizList(pageable);
+        return page;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<QuizListDto> searchPublicQuizzes(String title, Pageable pageable) {
+        Page<QuizListDto> page = quizzesRepository.findPublicQuizListByTitle(title, pageable);
+        return page;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<QuizListDto> getPublicQuizzesByTags(List<Long> tagIds, Pageable pageable) {
+        Page<QuizListDto> page = quizzesRepository.findPublicQuizListByTags(tagIds, pageable);
+        return page;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<QuizListDto> getPopularPublicQuizzes(String popularityCriteria, Pageable pageable) {
+        Page<QuizListDto> page = quizzesRepository.findPopularPublicQuizList(popularityCriteria, pageable);
+        return page;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public QuizResponseDto getPublicQuizById(Long quizId) {
+        Optional<QuizzesEntity> quizOpt = quizzesRepository.findDetailByIdWithAccess(quizId, null);
+        if (quizOpt.isEmpty()) {
+            throw new RuntimeException("Public quiz not found with id: " + quizId);
+        }
+
+        QuizzesEntity quiz = quizOpt.get();
+        if (quiz.getVisibility() != VisibilityType.PUBLIC) {
+            throw new RuntimeException("Quiz is not public: " + quizId);
+        }
+        
+        return mapToResponseDto(quiz);
+    }
+
     private QuizzesEntity findQuizAndVerifyUserAccess(Long quizId, Long userId) {
         Optional<QuizzesEntity> quizOpt = quizzesRepository.findDetailByIdAndUserId(quizId, userId);
         if (quizOpt.isEmpty()) {

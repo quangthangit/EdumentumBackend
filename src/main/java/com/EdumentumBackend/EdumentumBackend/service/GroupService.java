@@ -12,11 +12,11 @@ import java.util.List;
 
 public interface GroupService {
     GroupResponseDto createGroup(GroupRequestDto groupRequestDto, Long ownerId);
-    GroupResponseDto updateGroup(GroupRequestDto groupRequestDto, Long groupId, Long ownerId);
+    GroupResponseDto updateGroup(GroupRequestDto groupRequestDto, String publicGroupId, Long ownerId);
     PaginatedResponse<GroupResponseDto> findAllPublicGroups(Long userId,Pageable pageable,String keyword);
-    void joinGroup(Long groupId, Long userId) throws BadRequestException;
+    void joinGroup(String publicGroupId, Long userId) throws BadRequestException;
     List<GroupResponseDto> findByUEntities(Long userId);
-    GroupDetailResponse findGroupById(Long groupId, Long userId);
+    GroupDetailResponse findGroupById(String publicGroupId, Long userId);
     void contributeToGroup(ContributionHistoryRequestDto contributionRequestDto, Long userId);
-    void deleteGroup(Long groupId, Long userId);
+    void deleteGroup(String publicGroupId, Long userId);
 }

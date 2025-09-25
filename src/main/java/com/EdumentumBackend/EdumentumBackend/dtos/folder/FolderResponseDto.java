@@ -2,6 +2,8 @@ package com.EdumentumBackend.EdumentumBackend.dtos.folder;
 
 
 import com.EdumentumBackend.EdumentumBackend.dtos.file.FileDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizListDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,4 +23,5 @@ public class FolderResponseDto {
     private String ownerName;
     private LocalDateTime createdAt;
     private List<FileDto> files;
+    private List<QuizListDto> quiz;
 }

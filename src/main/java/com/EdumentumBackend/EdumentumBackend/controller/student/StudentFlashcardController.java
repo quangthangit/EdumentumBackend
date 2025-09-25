@@ -76,9 +76,17 @@ public class StudentFlashcardController {
             @RequestParam(required = false) String sortBy
     ) {
         try {
+            // Get userId if user is logged in (optional)
+            Long userId = null;
+            try {
+                userId = getCurrentUserId();
+            } catch (Exception e) {
+                // User is not logged in, set userId = null
+            }
+
             Pageable pageable = PageRequest.of(page, size);
 
-            var result = flashcardService.getPublicFlashcardSets(pageable, search, sortBy);
+            var result = flashcardService.getPublicFlashcardSets(pageable, search, sortBy, userId);
 
             Map<String, Object> response = new HashMap<>();
             response.put("status", "success");

@@ -27,7 +27,7 @@ public interface GroupMemberRepository extends JpaRepository<GroupMemberEntity, 
     boolean existsByGroup_IdAndUser_UserId(Long groupId, Long userId);
 
     @Query("SELECT new com.EdumentumBackend.EdumentumBackend.dtos.group.UserGroupResponse(gm.user.userId, gm.user.username, gm.user.imageUrl) " +
-            "FROM GroupMemberEntity gm WHERE gm.group = :group")
-    List<UserGroupResponse> findAllUsersByGroupDto(@Param("group") GroupEntity group);
+            "FROM GroupMemberEntity gm WHERE gm.group.id = :groupId")
+    List<UserGroupResponse> findAllUsersByGroupDto(@Param("groupId") Long groupId);
 
 }

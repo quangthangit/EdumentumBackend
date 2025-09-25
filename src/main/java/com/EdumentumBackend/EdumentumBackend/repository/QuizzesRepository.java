@@ -58,7 +58,6 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
     Optional<QuizzesEntity> findDetailByIdWithAccess(@Param("id") Long id, @Param("userId") Long userId);
 
 
-    @Deprecated
     @Query("""
         SELECT q FROM QuizzesEntity q
         LEFT JOIN FETCH q.quizTags qt
@@ -122,7 +121,7 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
     @Query("""
       SELECT new com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizListDto(
         q.id, q.title, q.slug, q.description, q.difficulty, q.maxAttempts, q.keywords,
-        q.createdAt, q.publishedAt, q.totalQuestions
+        q.createdAt, q.publishedAt, q.totalQuestions, q.viewCount, q.completionCount
       )
       FROM QuizzesEntity q
       WHERE q.userId = :userId
@@ -132,11 +131,68 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
     @Query("""
       SELECT new com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizListDto(
         q.id, q.title, q.slug, q.description, q.difficulty, q.maxAttempts, q.keywords,
-        q.createdAt, q.publishedAt, q.totalQuestions
+        q.createdAt, q.publishedAt, q.totalQuestions, q.viewCount, q.completionCount
       )
       FROM QuizzesEntity q
       WHERE LOWER(q.title) LIKE LOWER(CONCAT('%', :title, '%'))
         AND (q.userId = :userId OR q.visibility = com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC)
     """)
     Page<QuizListDto> findQuizListByTitleAndUserOrPublic(String title, Long userId, Pageable pageable);
+
+    // New methods for public quizzes
+    @Query("""
+      SELECT new com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizListDto(
+        q.id, q.title, q.slug, q.description, q.difficulty, q.maxAttempts, q.keywords,
+        q.createdAt, q.publishedAt, q.totalQuestions, q.viewCount, q.completionCount
+      )
+      FROM QuizzesEntity q
+      WHERE q.visibility = com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC
+    """)
+    Page<QuizListDto> findPublicQuizList(Pageable pageable);
+
+    @Query("""
+      SELECT new com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizListDto(
+        q.id, q.title, q.slug, q.description, q.difficulty, q.maxAttempts, q.keywords,
+        q.createdAt, q.publishedAt, q.totalQuestions, q.viewCount, q.completionCount
+      )
+      FROM QuizzesEntity q
+      WHERE LOWER(q.title) LIKE LOWER(CONCAT('%', :title, '%'))
+        AND q.visibility = com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC
+    """)
+    Page<QuizListDto> findPublicQuizListByTitle(String title, Pageable pageable);
+
+    @Query("""
+      SELECT DISTINCT new com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizListDto(
+        q.id, q.title, q.slug, q.description, q.difficulty, q.maxAttempts, q.keywords,
+        q.createdAt, q.publishedAt, q.totalQuestions, q.viewCount, q.completionCount
+      )
+      FROM QuizzesEntity q JOIN q.quizTags qt
+      WHERE qt.tag.id IN :tagIds
+        AND q.visibility = com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC
+    """)
+    Page<QuizListDto> findPublicQuizListByTags(@Param("tagIds") List<Long> tagIds, Pageable pageable);
+    
+    @Query("""
+      SELECT new com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizListDto(
+        q.id, q.title, q.slug, q.description, q.difficulty, q.maxAttempts, q.keywords,
+        q.createdAt, q.publishedAt, q.totalQuestions, q.viewCount, q.completionCount
+      )
+      FROM QuizzesEntity q
+      WHERE q.visibility = com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC
+      ORDER BY CASE 
+        WHEN :popularityCriteria = 'attemptCount' THEN q.attemptCount
+        WHEN :popularityCriteria = 'viewCount' THEN q.viewCount
+        WHEN :popularityCriteria = 'completionCount' THEN q.completionCount
+        WHEN :popularityCriteria = 'avgScore' THEN CAST(q.avgScore AS integer)
+        ELSE q.attemptCount
+      END DESC
+    """)
+    Page<QuizListDto> findPopularPublicQuizList(@Param("popularityCriteria") String popularityCriteria, Pageable pageable);
+
+    // Statistics methods
+    @Query("SELECT COUNT(q) FROM QuizzesEntity q WHERE q.userId = :userId")
+    Integer countQuizzesByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT COUNT(q) FROM QuizzesEntity q")
+    Integer countAllQuizzes();
 }

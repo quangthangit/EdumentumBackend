@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GroupResponseDto {
-    private Long id;
+    private String publicId;
     private String name;
     private String description;
     private boolean isPublic;

@@ -34,7 +34,7 @@ public class GroupServiceImpl implements GroupService {
 
     private GroupResponseDto mapGroup(GroupEntity entity) {
         return GroupResponseDto.builder()
-                .id(entity.getId())
+                .publicId(entity.getPublicId())
                 .name(entity.getName())
                 .description(entity.getDescription())
                 .isPublic(entity.isPublic())
@@ -51,7 +51,7 @@ public class GroupServiceImpl implements GroupService {
 
     private GroupDetailResponse mapGroupDetail(GroupEntity entity, List<UserGroupResponse> userGroupResponse) {
         return GroupDetailResponse.builder()
-                .id(entity.getId())
+                .publicId(entity.getPublicId())
                 .name(entity.getName())
                 .description(entity.getDescription())
                 .contributionPoints(entity.getContributionPoints())
@@ -96,8 +96,11 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    public GroupResponseDto updateGroup(GroupRequestDto dto, Long groupId, Long ownerId) {
-        GroupEntity group = groupRepository.findByIdAndOwnerUserId(groupId, ownerId)
+    public GroupResponseDto updateGroup(GroupRequestDto dto, String publicId, Long ownerId) {
+        GroupEntity gr = groupRepository.findGroupByPublicId(publicId)
+                .orElseThrow(() -> new NotFoundException("Group not found"));
+
+        GroupEntity group = groupRepository.findByIdAndOwnerUserId(gr.getId(), ownerId)
                 .orElseThrow(() -> new AccessDeniedException("Only the group owner can update the group"));
 
         group.setName(dto.getName());
@@ -116,17 +119,20 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    public void joinGroup(Long groupId, Long userId) {
-        if (groupMemberRepository.existsByGroup_IdAndUser_UserId(groupId, userId)) {
+    public void joinGroup(String publicId, Long userId) {
+        GroupEntity gr = groupRepository.findGroupByPublicId(publicId)
+                .orElseThrow(() -> new NotFoundException("Group not found"));
+
+        if (groupMemberRepository.existsByGroup_IdAndUser_UserId(gr.getId(), userId)) {
             throw new BadRequestException("User has already joined the group");
         }
 
-        int updated = groupRepository.incrementMemberCountIfJoinable(groupId);
+        int updated = groupRepository.incrementMemberCountIfJoinable(gr.getId());
         if (updated == 0) {
             throw new BadRequestException("Group is full or private");
         }
         groupMemberRepository.save(GroupMemberEntity.builder()
-                .group(GroupEntity.builder().id(groupId).build())
+                .group(GroupEntity.builder().id(gr.getId()).build())
                 .user(UserEntity.builder().userId(userId).build())
                 .roleGroup(RoleGroup.MEMBER)
                 .build());
@@ -141,10 +147,10 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public GroupDetailResponse findGroupById(Long groupId, Long userId) {
-        GroupEntity group = groupRepository.findById(groupId)
+    public GroupDetailResponse findGroupById(String publicId, Long userId) {
+        GroupEntity group = groupRepository.findGroupByPublicId(publicId)
                 .orElseThrow(() -> new NotFoundException("Group not found"));
-        List<UserGroupResponse> userGroupResponses = groupMemberRepository.findAllUsersByGroupDto(group);
+        List<UserGroupResponse> userGroupResponses = groupMemberRepository.findAllUsersByGroupDto(group.getId());
         return mapGroupDetail(group,userGroupResponses);
     }
 
@@ -182,19 +188,19 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    public void deleteGroup(Long groupId, Long userId) {
+    public void deleteGroup(String publicId, Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        GroupEntity group = groupRepository.findById(groupId)
+        GroupEntity group = groupRepository.findGroupByPublicId(publicId)
                 .orElseThrow(() -> new NotFoundException("Group not found"));
 
         if (!group.getOwner().getUserId().equals(user.getUserId())) {
             throw new AccessDeniedException("Only the group owner can update the group");
         }
         groupMemberRepository.deleteAllByGroup(group);
-        folderRepository.deleteAllByGroupId(groupId);
-        groupRepository.deleteById(groupId);
+        folderRepository.deleteAllByGroupId(group.getId());
+        groupRepository.deleteById(group.getId());
     }
 
 }
