@@ -12,6 +12,7 @@ import com.EdumentumBackend.EdumentumBackend.repository.QuizzesRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.UserRepository;
 import com.EdumentumBackend.EdumentumBackend.service.QuizzesService;
 import com.EdumentumBackend.EdumentumBackend.service.TagsService;
+import com.EdumentumBackend.EdumentumBackend.service.PermissionService;
 import com.EdumentumBackend.EdumentumBackend.utils.SlugUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -37,6 +38,7 @@ public class QuizzesServiceImpl implements QuizzesService {
     private final QuizTagRepository quizTagRepository;
     private final QuizAttemptRepository quizAttemptRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final PermissionService permissionService;
 
     private QuizResponseDto mapToResponseDto(QuizzesEntity entity) {
         List<TagResponseDto> tags = entity.getQuizTags() == null ?
@@ -208,10 +210,13 @@ public class QuizzesServiceImpl implements QuizzesService {
         if (userOpt.isEmpty()) {
             throw new RuntimeException("User not found with id: " + userId);
         }
+        
+        // Check if user can create quizzes (using the new permission system)
+        if (!permissionService.canUseFeature(userId, "CREATE_QUIZ")) {
+            throw new RuntimeException("Quiz creation limit reached or feature not available in your plan.");
+        }
 
-        String uniqueSlug = SlugUtil.generateUniqueSlugWithRetry(
-                quizRequestDto.getTitle()
-        );
+        String uniqueSlug = generateUniqueSlug(quizRequestDto.getTitle());
         QuizzesEntity quizEntity = QuizzesEntity.builder()
                 .title(quizRequestDto.getTitle())
                 .slug(uniqueSlug)
@@ -242,6 +247,9 @@ public class QuizzesServiceImpl implements QuizzesService {
         QuizzesEntity savedQuiz = quizzesRepository.save(quizEntity);
         eventPublisher.publishEvent(new QuizCreatedEvent(this, userId));
 
+        // After successfully saving the quiz, increment usage
+        permissionService.incrementUsage(userId, "CREATE_QUIZ");
+
         if (quizRequestDto.getTags() != null && !quizRequestDto.getTags().isEmpty()) {
             processQuizTags(savedQuiz, quizRequestDto.getTags());
         }
@@ -250,6 +258,24 @@ public class QuizzesServiceImpl implements QuizzesService {
                 .orElseThrow(() -> new RuntimeException("Failed to retrieve saved quiz"));
 
         return mapToResponseDto(savedQuiz);
+    }
+
+    private String generateUniqueSlug(String title) {
+        String baseSlug = SlugUtil.toSlugNoRandom(title);
+        if (baseSlug.trim().isEmpty()) {
+            baseSlug = "quiz-" + System.currentTimeMillis();
+        }
+
+        String candidateSlug = baseSlug;
+        int counter = 1;
+
+        // Keep checking until we find a unique slug
+        while (quizzesRepository.existsBySlug(candidateSlug)) {
+            candidateSlug = baseSlug + "-" + counter;
+            counter++;
+        }
+
+        return candidateSlug;
     }
 
     private void processQuizTags(QuizzesEntity quiz, List<TagRequestDto> tagRequests) {
