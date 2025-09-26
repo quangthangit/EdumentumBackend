@@ -556,15 +556,13 @@ public class QuizzesServiceImpl implements QuizzesService {
     @Override
     @Transactional(readOnly = true)
     public Page<QuizSummaryDto> getAllQuizzesPaginated(Long userId, Pageable pageable) {
-        Page<QuizSummaryDto> page = quizzesRepository.findSummariesByUserId(userId, pageable);
-        return page;
+        return quizzesRepository.findSummariesByUserId(userId, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<QuizSummaryDto> searchQuizzesPaginated(String title, Long userId, Pageable pageable) {
-        Page<QuizSummaryDto> pageList = quizzesRepository.findSummariesByTitleAndUserOrPublic(title, userId, pageable);
-        return pageList;
+        return quizzesRepository.findSummariesByTitleAndUserOrPublic(title, userId, pageable);
     }
 
     // New optimized methods for quiz listing with attempt statistics
@@ -612,29 +610,25 @@ public class QuizzesServiceImpl implements QuizzesService {
     @Override
     @Transactional(readOnly = true)
     public Page<QuizListDto> getPublicQuizzes(Pageable pageable) {
-        Page<QuizListDto> page = quizzesRepository.findPublicQuizList(pageable);
-        return page;
+        return quizzesRepository.findPublicQuizList(pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<QuizListDto> searchPublicQuizzes(String title, Pageable pageable) {
-        Page<QuizListDto> page = quizzesRepository.findPublicQuizListByTitle(title, pageable);
-        return page;
+        return quizzesRepository.findPublicQuizListByTitle(title, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<QuizListDto> getPublicQuizzesByTags(List<Long> tagIds, Pageable pageable) {
-        Page<QuizListDto> page = quizzesRepository.findPublicQuizListByTags(tagIds, pageable);
-        return page;
+        return quizzesRepository.findPublicQuizListByTags(tagIds, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<QuizListDto> getPopularPublicQuizzes(String popularityCriteria, Pageable pageable) {
-        Page<QuizListDto> page = quizzesRepository.findPopularPublicQuizList(popularityCriteria, pageable);
-        return page;
+        return quizzesRepository.findPopularPublicQuizList(popularityCriteria, pageable);
     }
 
     @Override
