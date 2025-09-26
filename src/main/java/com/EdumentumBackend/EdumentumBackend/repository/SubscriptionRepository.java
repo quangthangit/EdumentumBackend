@@ -13,8 +13,13 @@ import java.util.Optional;
 public interface SubscriptionRepository extends JpaRepository<SubscriptionEntity, Long> {
     List<SubscriptionEntity> findByUserId(Long userId);
     
-    @Query("SELECT s FROM SubscriptionEntity s WHERE s.userId = :userId AND s.isActive = true")
-    Optional<SubscriptionEntity> findActiveSubscriptionByUserId(Long userId);
+    @Query("SELECT s FROM SubscriptionEntity s WHERE s.userId = :userId AND s.isActive = true ORDER BY s.startDate DESC")
+    List<SubscriptionEntity> findActiveSubscriptionsByUserId(Long userId);
+    
+    default Optional<SubscriptionEntity> findActiveSubscriptionByUserId(Long userId) {
+        List<SubscriptionEntity> activeSubscriptions = findActiveSubscriptionsByUserId(userId);
+        return activeSubscriptions.isEmpty() ? Optional.empty() : Optional.of(activeSubscriptions.get(0));
+    }
     
     List<SubscriptionEntity> findByPlanTypeAndIsActive(SubscriptionPlan planType, Boolean isActive);
 }
