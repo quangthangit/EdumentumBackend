@@ -34,15 +34,15 @@ public class StudentQuizzesController extends BaseQuizController {
 
     private static final String BASE_PATH = "/api/v1/student/quizzes";
     private final UserService userService;
-    private final UsageTrackingRepository usageTrackingRepository; // Add this line
-    private final FeatureRepository featureRepository; // Add this line
+    private final UsageTrackingRepository usageTrackingRepository;
+    private final FeatureRepository featureRepository;
 
     public StudentQuizzesController(QuizzesService quizzesService, UserService userService, PermissionService permissionService, 
-                                  UsageTrackingRepository usageTrackingRepository, FeatureRepository featureRepository) { // Update constructor
+                                  UsageTrackingRepository usageTrackingRepository, FeatureRepository featureRepository) {
         super(quizzesService, permissionService);
         this.userService = userService;
-        this.usageTrackingRepository = usageTrackingRepository; // Add this line
-        this.featureRepository = featureRepository; // Add this line
+        this.usageTrackingRepository = usageTrackingRepository;
+        this.featureRepository = featureRepository;
     }
 
     @Override
