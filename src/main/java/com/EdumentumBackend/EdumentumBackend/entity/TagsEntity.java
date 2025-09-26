@@ -34,16 +34,6 @@ public class TagsEntity extends BaseEntity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    // Display properties
-//    @Column(name = "icon", length = 50)
-//    private String icon = "tag";
-//
-//    @Column(name = "color", length = 7)
-//    private String color = "#6B7280";
-//
-//    @Column(name = "background_color", length = 7)
-//    private String backgroundColor;
-
     // Statistics & Analytics
     @Column(name = "usage_count")
     private Integer usageCount = 0;
