@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/student/subscription")
@@ -69,11 +69,10 @@ public class StudentSubscriptionController extends BaseController {
             }
             
             // Deactivate any existing active subscriptions for this user
-            Optional<SubscriptionEntity> existingSubscription = subscriptionRepository.findActiveSubscriptionByUserId(userId);
-            if (existingSubscription.isPresent()) {
-                SubscriptionEntity existing = existingSubscription.get();
-                existing.setIsActive(false);
-                subscriptionRepository.save(existing);
+            List<SubscriptionEntity> activeSubscriptions = subscriptionRepository.findActiveSubscriptionsByUserId(userId);
+            for (SubscriptionEntity subscription : activeSubscriptions) {
+                subscription.setIsActive(false);
+                subscriptionRepository.save(subscription);
             }
             
             // Create new subscription
@@ -109,11 +108,12 @@ public class StudentSubscriptionController extends BaseController {
             Long userId = getCurrentUserId();
             
             // Get user's active subscription
-            Optional<SubscriptionEntity> subscriptionOpt = subscriptionRepository.findActiveSubscriptionByUserId(userId);
+            List<SubscriptionEntity> activeSubscriptions = subscriptionRepository.findActiveSubscriptionsByUserId(userId);
             
             Map<String, Object> result = new HashMap<>();
-            if (subscriptionOpt.isPresent()) {
-                SubscriptionEntity subscription = subscriptionOpt.get();
+            if (!activeSubscriptions.isEmpty()) {
+                // Use the most recent active subscription
+                SubscriptionEntity subscription = activeSubscriptions.get(0);
                 result.put("hasActiveSubscription", true);
                 result.put("planType", subscription.getPlanType());
                 result.put("startDate", subscription.getStartDate());
