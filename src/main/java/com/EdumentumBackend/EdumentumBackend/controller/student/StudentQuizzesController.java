@@ -146,8 +146,7 @@ public class StudentQuizzesController extends BaseQuizController {
                 .withMinute(0)
                 .withSecond(0)
                 .withNano(0);
-            
-            // Get usage count for this week
+
             Integer usageCount = usageTrackingRepository.getWeeklyUsageCount(userId, featureId, weekStart);
             
             boolean canCreateQuiz = permissionService.canUseFeature(userId, "CREATE_QUIZ");

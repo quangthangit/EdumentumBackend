@@ -1,6 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.service.student;
 
-import com.EdumentumBackend.EdumentumBackend.dto.response.QuizStatsResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizStatsResponseDto;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizAttemptRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizzesRepository;
 import lombok.RequiredArgsConstructor;
