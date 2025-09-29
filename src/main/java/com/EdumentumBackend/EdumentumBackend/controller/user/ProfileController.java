@@ -2,6 +2,7 @@ package com.EdumentumBackend.EdumentumBackend.controller.user;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.user.UserProfileRequestDto;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
+import com.EdumentumBackend.EdumentumBackend.repository.QuizAttemptRepository;
 import com.EdumentumBackend.EdumentumBackend.service.FirebaseStorageService;
 import com.EdumentumBackend.EdumentumBackend.service.UserProfileService;
 import com.EdumentumBackend.EdumentumBackend.service.UserService;
@@ -25,6 +26,7 @@ public class ProfileController {
     private final FirebaseStorageService firebaseStorageService;
     private final UserService userService;
     private final UserProfileService userProfileService;
+    private final QuizAttemptRepository quizAttemptRepository;
 
     @GetMapping()
     public ResponseEntity<?> getUserProfileById() {
@@ -48,6 +50,20 @@ public class ProfileController {
                     "status", "success",
                     "message", "Get attandence Profile successfully",
                     "data", userProfileService.findAllByUserId(userId)
+            ));
+        } catch (Exception e) {
+            return buildServerError(e);
+        }
+    }
+
+    @GetMapping("/daily-quiz")
+    public ResponseEntity<?> dailyQuizStats() {
+        try {
+            Long userId = getCurrentUserId();
+            return ResponseEntity.ok(Map.of(
+                    "status", "success",
+                    "message", "Get attandence Profile successfully",
+                    "data", quizAttemptRepository.findDailyStatsLast7Days(userId)
             ));
         } catch (Exception e) {
             return buildServerError(e);

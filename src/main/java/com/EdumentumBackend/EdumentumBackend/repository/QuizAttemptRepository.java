@@ -1,5 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.repository;
 
+import com.EdumentumBackend.EdumentumBackend.dtos.attempt.DailyQuizDtos;
 import com.EdumentumBackend.EdumentumBackend.entity.QuizAttemptEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -68,4 +69,22 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttemptEntity, 
 
     @Query("SELECT SUM(a.correctAnswers + a.wrongAnswers + a.skippedAnswers + a.partialAnswers) FROM QuizAttemptEntity a")
     Integer sumAllTotalQuestions();
+
+    @Query(value = """
+    WITH days AS (
+        SELECT generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, INTERVAL '1 day')::date AS day
+    )
+    SELECT d.day AS day,
+           COALESCE(COUNT(q.id), 0) AS attempts,
+           COALESCE(AVG(q.percentage_score), 0) AS avgScore
+    FROM days d
+    LEFT JOIN quiz_attempts q
+           ON DATE(q.completed_at) = d.day
+          AND q.user_id = :userId
+          AND q.status = 'COMPLETED'
+    GROUP BY d.day
+    ORDER BY d.day
+    """, nativeQuery = true)
+    List<DailyQuizDtos> findDailyStatsLast7Days(@Param("userId") Long userId);
+
 }
