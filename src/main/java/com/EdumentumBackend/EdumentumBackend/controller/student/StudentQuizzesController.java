@@ -9,9 +9,14 @@ import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto;
 import com.EdumentumBackend.EdumentumBackend.service.QuizzesService;
 import com.EdumentumBackend.EdumentumBackend.service.UserService;
+import com.EdumentumBackend.EdumentumBackend.service.PermissionService;
+import com.EdumentumBackend.EdumentumBackend.repository.UsageTrackingRepository;
+import com.EdumentumBackend.EdumentumBackend.repository.FeatureRepository;
+import java.time.LocalDateTime;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,10 +34,15 @@ public class StudentQuizzesController extends BaseQuizController {
 
     private static final String BASE_PATH = "/api/v1/student/quizzes";
     private final UserService userService;
+    private final UsageTrackingRepository usageTrackingRepository;
+    private final FeatureRepository featureRepository;
 
-    public StudentQuizzesController(QuizzesService quizzesService, UserService userService) {
-        super(quizzesService);
+    public StudentQuizzesController(QuizzesService quizzesService, UserService userService, PermissionService permissionService, 
+                                  UsageTrackingRepository usageTrackingRepository, FeatureRepository featureRepository) {
+        super(quizzesService, permissionService);
         this.userService = userService;
+        this.usageTrackingRepository = usageTrackingRepository;
+        this.featureRepository = featureRepository;
     }
 
     @Override
@@ -116,4 +126,42 @@ public class StudentQuizzesController extends BaseQuizController {
             @RequestParam(defaultValue = "DESC") String direction) {
         return doSearchQuizzes(title, page, size, sortBy, direction);
     }
+    
+    @GetMapping("/limit")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getQuizLimit() {
+        try {
+            Long userId = getCurrentUserId();
+            
+            // Get the CREATE_QUIZ feature
+            var featureOpt = featureRepository.findByFeatureKey("CREATE_QUIZ");
+            if (featureOpt.isEmpty()) {
+                throw new RuntimeException("CREATE_QUIZ feature not found");
+            }
+            
+            Long featureId = featureOpt.get().getId();
+
+            LocalDateTime weekStart = LocalDateTime.now()
+                .with(java.time.DayOfWeek.MONDAY)
+                .withHour(0)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0);
+            
+            // Get usage count for this week
+            Integer usageCount = usageTrackingRepository.getWeeklyUsageCount(userId, featureId, weekStart);
+            
+            boolean canCreateQuiz = permissionService.canUseFeature(userId, "CREATE_QUIZ");
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("canCreateQuiz", canCreateQuiz);
+            result.put("quizzesCreatedThisWeek", usageCount);
+            result.put("weeklyLimit", 3); // This should come from plan configuration
+            
+            return ResponseEntity.ok(ApiResponse.success(result, "Quiz limit information retrieved successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to retrieve quiz limit: " + e.getMessage(), 500));
+        }
+    }
+    
 }
