@@ -1,17 +1,21 @@
 package com.EdumentumBackend.EdumentumBackend.service.impl;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.attempt.AttemptReviewDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.attempt.DailyQuizDtos;
 import com.EdumentumBackend.EdumentumBackend.dtos.attempt.QuizAttemptDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.attempt.SubmitAttemptRequest;
 import com.EdumentumBackend.EdumentumBackend.entity.QuizAttemptEntity;
 import com.EdumentumBackend.EdumentumBackend.entity.QuizzesEntity;
 import com.EdumentumBackend.EdumentumBackend.enums.AttemptStatus;
+import com.EdumentumBackend.EdumentumBackend.event.QuizCompletedEvent;
+import com.EdumentumBackend.EdumentumBackend.event.QuizCreatedEvent;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizAttemptRepository;
 import com.EdumentumBackend.EdumentumBackend.repository.QuizzesRepository;
 import com.EdumentumBackend.EdumentumBackend.service.AttemptService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +33,7 @@ public class AttemptServiceImpl implements AttemptService {
 
     private final QuizzesRepository quizzesRepository;
     private final QuizAttemptRepository quizAttemptRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -66,7 +71,7 @@ public class AttemptServiceImpl implements AttemptService {
                 quizId, userId, attemptNumber, result, timing, gradeInfo, answersData);
 
         attempt = quizAttemptRepository.save(attempt);
-
+        eventPublisher.publishEvent(new QuizCompletedEvent(this, userId));
         return toReviewDto(attempt, result.answerSnapshots);
     }
 
@@ -97,6 +102,12 @@ public class AttemptServiceImpl implements AttemptService {
                 .map(this::toQuizAttemptDto)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<DailyQuizDtos> dailyQuizStats(Long userId) {
+        return quizAttemptRepository.findDailyStatsLast7Days(userId);
+    }
+
 
 
     private record AttemptResult(
