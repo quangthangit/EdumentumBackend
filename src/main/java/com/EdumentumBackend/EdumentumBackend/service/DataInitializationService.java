@@ -41,6 +41,7 @@ public class DataInitializationService {
 
         List<FeatureData> defaultFeatures = Arrays.asList(
             new FeatureData("CREATE_QUIZ", "Create Quiz", "Ability to create quizzes", true),
+            new FeatureData("CREATE_FLASHCARD", "Create Flashcard", "Ability to create flashcards", false),
             new FeatureData("CREATE_MINDMAP", "Create Mindmap", "Ability to create mindmaps", true),
             new FeatureData("UNLIMITED_STORAGE", "Unlimited Storage", "Unlimited file storage", true),
             new FeatureData("PRIORITY_SUPPORT", "Priority Support", "24/7 priority customer support", true)
@@ -68,11 +69,12 @@ public class DataInitializationService {
 
         // Get all features by their keys
         FeatureEntity createQuizFeature = featureRepository.findByFeatureKey("CREATE_QUIZ").orElse(null);
+        FeatureEntity createFlashcardFeature = featureRepository.findByFeatureKey("CREATE_FLASHCARD").orElse(null);
         FeatureEntity createMindmapFeature = featureRepository.findByFeatureKey("CREATE_MINDMAP").orElse(null);
         FeatureEntity unlimitedStorageFeature = featureRepository.findByFeatureKey("UNLIMITED_STORAGE").orElse(null);
         FeatureEntity prioritySupportFeature = featureRepository.findByFeatureKey("PRIORITY_SUPPORT").orElse(null);
 
-        if (createQuizFeature == null || createMindmapFeature == null ||
+        if (createQuizFeature == null || createFlashcardFeature == null || createMindmapFeature == null ||
             unlimitedStorageFeature == null || prioritySupportFeature == null) {
             log.error("Some features are missing. Cannot initialize plan configurations.");
             return;
@@ -80,18 +82,21 @@ public class DataInitializationService {
 
         // FREE plan configurations
         createPlanConfigIfNotExists(SubscriptionPlan.FREE, createQuizFeature.getId(), 3, "WEEKLY", true);
+        createPlanConfigIfNotExists(SubscriptionPlan.FREE, createFlashcardFeature.getId(), 1, "WEEKLY", true);
         createPlanConfigIfNotExists(SubscriptionPlan.FREE, createMindmapFeature.getId(), 5, "WEEKLY", true);
         createPlanConfigIfNotExists(SubscriptionPlan.FREE, unlimitedStorageFeature.getId(), 100, null, true); // 100MB
         createPlanConfigIfNotExists(SubscriptionPlan.FREE, prioritySupportFeature.getId(), null, null, false);
 
         // PRO_MONTHLY plan configurations
         createPlanConfigIfNotExists(SubscriptionPlan.PRO_MONTHLY, createQuizFeature.getId(), null, null, true);
+        createPlanConfigIfNotExists(SubscriptionPlan.PRO_MONTHLY, createFlashcardFeature.getId(), null, null, true);
         createPlanConfigIfNotExists(SubscriptionPlan.PRO_MONTHLY, createMindmapFeature.getId(), null, null, true);
         createPlanConfigIfNotExists(SubscriptionPlan.PRO_MONTHLY, unlimitedStorageFeature.getId(), 10000, null, true); // 10GB
         createPlanConfigIfNotExists(SubscriptionPlan.PRO_MONTHLY, prioritySupportFeature.getId(), null, null, true);
 
         // PRO_YEARLY plan configurations
         createPlanConfigIfNotExists(SubscriptionPlan.PRO_YEARLY, createQuizFeature.getId(), null, null, true);
+        createPlanConfigIfNotExists(SubscriptionPlan.PRO_YEARLY, createFlashcardFeature.getId(), null, null, true);
         createPlanConfigIfNotExists(SubscriptionPlan.PRO_YEARLY, createMindmapFeature.getId(), null, null, true);
         createPlanConfigIfNotExists(SubscriptionPlan.PRO_YEARLY, unlimitedStorageFeature.getId(), 10000, null, true); // 10GB
         createPlanConfigIfNotExists(SubscriptionPlan.PRO_YEARLY, prioritySupportFeature.getId(), null, null, true);
