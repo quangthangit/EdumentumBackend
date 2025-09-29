@@ -1,6 +1,7 @@
 package com.EdumentumBackend.EdumentumBackend.service;
 
 import org.springframework.stereotype.Service;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
@@ -11,32 +12,28 @@ import java.util.*;
 
 @Service
 public class VNPayService {
-    
+
+
     private final String vnp_PayUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-    private final String vnp_TmnCode = "VY1Z922S"; // Your TMN Code from VNPay
-    private final String vnp_HashSecret = "SEW8GW9OQP3TUMPG30K8A3JH1B7RQY60"; // Your Hash Secret from VNPay
+    private final String vnp_TmnCode = "VY1Z922S"; // TMN Code
+    private final String vnp_HashSecret = "14QLIZGFXIQLSHJIY7E7NDJEUZ4QU8T8"; // Hash Secret
+
+    private static final String VNP_VERSION = "2.1.0";
+    private static final String VNP_COMMAND = "pay";
 
     public String createOrder(long total, String orderInfor, String baseUrl) {
-        String vnp_Version = "2.1.0";
-        String vnp_Command = "pay";
-        String vnp_OrderInfo = orderInfor;
+        String vnp_TxnRef = getRandomNumber(8);
+        String vnp_IpAddr = "127.0.0.1";
         String orderType = "other";
 
-        // VNPay expects amount in VND (smallest unit without decimals)
-        long amount = total;
-        String bankCode = "NCB"; // Default bank code
-
-        String vnp_TxnRef = VNPayService.getRandomNumber(8);
-        String vnp_IpAddr = "127.0.0.1";
-
         Map<String, String> vnp_Params = new HashMap<>();
-        vnp_Params.put("vnp_Version", vnp_Version);
-        vnp_Params.put("vnp_Command", vnp_Command);
+        vnp_Params.put("vnp_Version", VNP_VERSION);
+        vnp_Params.put("vnp_Command", VNP_COMMAND);
         vnp_Params.put("vnp_TmnCode", this.vnp_TmnCode);
-        vnp_Params.put("vnp_Amount", String.valueOf(amount));
+        vnp_Params.put("vnp_Amount", String.valueOf(total * 100));
         vnp_Params.put("vnp_CurrCode", "VND");
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
-        vnp_Params.put("vnp_OrderInfo", vnp_OrderInfo);
+        vnp_Params.put("vnp_OrderInfo", orderInfor);
         vnp_Params.put("vnp_OrderType", orderType);
         vnp_Params.put("vnp_Locale", "vn");
         vnp_Params.put("vnp_ReturnUrl", baseUrl + "/api/v1/student/subscription/payment/vnpay/callback");
@@ -51,148 +48,124 @@ public class VNPayService {
         String vnp_ExpireDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
 
-        vnp_Params.put("vnp_BankCode", bankCode);
-
-        // Remove any null or empty values
-        vnp_Params.entrySet().removeIf(entry -> entry.getValue() == null || entry.getValue().isEmpty());
-
-        // Build data to hash and query - CRITICAL: Sort by key name
+        // Sắp xếp và build hash data + query như code mẫu
         List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
         Collections.sort(fieldNames);
-        
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
-        
-        for (int i = 0; i < fieldNames.size(); i++) {
-            String fieldName = fieldNames.get(i);
+
+        Iterator<String> itr = fieldNames.iterator();
+        while (itr.hasNext()) {
+            String fieldName = itr.next();
             String fieldValue = vnp_Params.get(fieldName);
-            
             if ((fieldValue != null) && (fieldValue.length() > 0)) {
+                // Build hash data
+                hashData.append(fieldName);
+                hashData.append('=');
                 try {
-                    // CRITICAL: Both hash data AND query parameters must be URL encoded consistently
-                    String encodedFieldName = URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString());
-                    String encodedFieldValue = URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString());
-                    
-                    // Hash data must use URL encoded values to match query parameters
-                    hashData.append(encodedFieldName);
-                    hashData.append('=');
-                    hashData.append(encodedFieldValue);
-                    
-                    // Query parameters are also URL encoded
-                    query.append(encodedFieldName);
+                    // Sử dụng US_ASCII encoding như code mẫu
+                    hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
+                    // Build query
+                    query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString()));
                     query.append('=');
-                    query.append(encodedFieldValue);
+                    query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
-                
-                if (i != fieldNames.size() - 1) {
+                if (itr.hasNext()) {
                     query.append('&');
                     hashData.append('&');
                 }
             }
         }
-        
+
         String queryUrl = query.toString();
-        // CRITICAL: Use the correct hash secret and data
         String vnp_SecureHash = hmacSHA512(this.vnp_HashSecret, hashData.toString());
         queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
         String paymentUrl = this.vnp_PayUrl + "?" + queryUrl;
-        
-        // Log for debugging
+
+        // Log debug
         System.out.println("VNPay Payment URL: " + paymentUrl);
-        System.out.println("Hash Data: " + hashData.toString());
-        System.out.println("Secure Hash: " + vnp_SecureHash);
-        
+        System.out.println("Hash Data (request): " + hashData);
+        System.out.println("Secure Hash (request): " + vnp_SecureHash);
+
         return paymentUrl;
     }
 
     public int orderReturn(Map<String, String> fields) {
-        // Extract the secure hash from the fields
         String vnp_SecureHash = fields.get("vnp_SecureHash");
-        
-        if (vnp_SecureHash == null) {
+        if (vnp_SecureHash == null || vnp_SecureHash.isEmpty()) {
             System.out.println("No vnp_SecureHash found in callback");
-            return -1; // Invalid signature
+            return -1;
         }
-        
-        // Remove hash fields from the data to be validated
-        Map<String, String> dataToHash = new HashMap<>(fields);
-        dataToHash.remove("vnp_SecureHash");
-        dataToHash.remove("vnp_SecureHashType");
-        
-        // Create the hash data string (with URL encoding to match what was sent)
-        List<String> fieldNames = new ArrayList<>(dataToHash.keySet());
+
+        // Tạo bản sao để xử lý - không encode ở đây vì đã được encode từ request
+        Map<String, String> fieldsToHash = new HashMap<>();
+
+        // Chỉ loại trừ vnp_SecureHash và vnp_SecureHashType
+        for (Map.Entry<String, String> entry : fields.entrySet()) {
+            String fieldName = entry.getKey();
+            String fieldValue = entry.getValue();
+
+            if (!fieldName.equals("vnp_SecureHash") && !fieldName.equals("vnp_SecureHashType")) {
+                if ((fieldValue != null) && (fieldValue.length() > 0)) {
+                    fieldsToHash.put(fieldName, fieldValue);
+                }
+            }
+        }
+
+        // Sử dụng hashAllFields như code mẫu
+        String signValue = hashAllFields(fieldsToHash);
+
+        // Log debug
+        System.out.println("Expected Signature (from VNPay): " + vnp_SecureHash);
+        System.out.println("Generated Signature (server):   " + signValue);
+
+        if (signValue.equals(vnp_SecureHash)) {
+            // Chữ ký ok -> check trạng thái giao dịch
+            return "00".equals(fields.get("vnp_TransactionStatus")) ? 1 : 0;
+        } else {
+            System.out.println("Signature mismatch!");
+            return -1;
+        }
+    }
+
+    public String hashAllFields(Map<String, String> fields) {
+        List<String> fieldNames = new ArrayList<>(fields.keySet());
         Collections.sort(fieldNames);
-        
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < fieldNames.size(); i++) {
-            String fieldName = fieldNames.get(i);
-            String fieldValue = dataToHash.get(fieldName);
-            
+        Iterator<String> itr = fieldNames.iterator();
+        while (itr.hasNext()) {
+            String fieldName = itr.next();
+            String fieldValue = fields.get(fieldName);
             if ((fieldValue != null) && (fieldValue.length() > 0)) {
                 try {
-                    // CRITICAL: URL encode both field name and value to match the original request
-                    String encodedFieldName = URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString());
-                    String encodedFieldValue = URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString());
-                    
-                    sb.append(encodedFieldName);
-                    sb.append('=');
-                    sb.append(encodedFieldValue);
+                    sb.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString()));
+                    sb.append("=");
+                    sb.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
-                    sb.append(fieldName);
-                    sb.append('=');
-                    sb.append(fieldValue);
-                }
-                
-                if (i != fieldNames.size() - 1) {
-                    sb.append('&');
                 }
             }
-        }
-        
-        String hashData = sb.toString();
-        
-        // Generate the hash using our secret
-        String signValue = hmacSHA512(this.vnp_HashSecret, hashData);
-        
-        // Log for debugging
-        System.out.println("Callback Hash Data: " + hashData);
-        System.out.println("Expected Signature: " + vnp_SecureHash);
-        System.out.println("Generated Signature: " + signValue);
-        
-        // Compare the hashes (case insensitive)
-        if (signValue.equalsIgnoreCase(vnp_SecureHash)) {
-            if ("00".equals(fields.get("vnp_TransactionStatus"))) {
-                return 1; // Success
-            } else {
-                return 0; // Failed
+            if (itr.hasNext()) {
+                sb.append("&");
             }
-        } else {
-            System.out.println("Signature mismatch:");
-            System.out.println("Expected: " + vnp_SecureHash);
-            System.out.println("Actual: " + signValue);
-            System.out.println("HashData: " + hashData);
-            return -1; // Invalid signature
         }
+        return hmacSHA512(this.vnp_HashSecret, sb.toString());
     }
 
     public static String hmacSHA512(final String key, final String data) {
         try {
-            if (key == null || data == null) {
-                throw new NullPointerException();
-            }
+            if (key == null || data == null) throw new NullPointerException();
             final Mac hmac512 = Mac.getInstance("HmacSHA512");
-            byte[] hmacKeyBytes = key.getBytes(StandardCharsets.UTF_8);
+            // Sử dụng getBytes() thay vì getBytes(StandardCharsets.UTF_8) như code mẫu
+            byte[] hmacKeyBytes = key.getBytes();
             final SecretKeySpec secretKey = new SecretKeySpec(hmacKeyBytes, "HmacSHA512");
             hmac512.init(secretKey);
             byte[] dataBytes = data.getBytes(StandardCharsets.UTF_8);
             byte[] result = hmac512.doFinal(dataBytes);
             StringBuilder sb = new StringBuilder(2 * result.length);
-            for (byte b : result) {
-                sb.append(String.format("%02x", b & 0xff));
-            }
+            for (byte b : result) sb.append(String.format("%02x", b & 0xff));
             return sb.toString();
         } catch (Exception ex) {
             ex.printStackTrace();
