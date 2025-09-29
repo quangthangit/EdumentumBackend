@@ -1,6 +1,6 @@
 package com.EdumentumBackend.EdumentumBackend.controller.student;
 
-import com.EdumentumBackend.EdumentumBackend.dto.response.QuizStatsResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizStatsResponseDto;
 import com.EdumentumBackend.EdumentumBackend.service.student.StudentQuizStatsService;
 import com.EdumentumBackend.EdumentumBackend.dtos.common.ApiResponse;
 import com.EdumentumBackend.EdumentumBackend.dtos.auth.UserResponseDto;
@@ -8,7 +8,6 @@ import com.EdumentumBackend.EdumentumBackend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;

@@ -660,16 +660,12 @@ public class QuizzesServiceImpl implements QuizzesService {
     @Override
     @Transactional(readOnly = true)
     public QuizResponseDto getPublicQuizById(Long quizId) {
-        Optional<QuizzesEntity> quizOpt = quizzesRepository.findDetailByIdWithAccess(quizId, null);
+        Optional<QuizzesEntity> quizOpt = quizzesRepository.findPublicQuizById(quizId);
         if (quizOpt.isEmpty()) {
             throw new RuntimeException("Public quiz not found with id: " + quizId);
         }
 
         QuizzesEntity quiz = quizOpt.get();
-        if (quiz.getVisibility() != VisibilityType.PUBLIC) {
-            throw new RuntimeException("Quiz is not public: " + quizId);
-        }
-        
         return mapToResponseDto(quiz);
     }
 

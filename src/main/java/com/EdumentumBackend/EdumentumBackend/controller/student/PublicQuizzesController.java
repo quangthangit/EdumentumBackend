@@ -58,14 +58,7 @@ public class PublicQuizzesController {
                     .body(ApiResponse.error("Failed to retrieve public quizzes: " + e.getMessage(), 500));
         }
     }
-
-    /**
-     * Get popular public quizzes with pagination
-     * @param page Page number (0-based)
-     * @param size Number of items per page
-     * @param popularityCriteria Criteria to sort by (attemptCount, viewCount, completionCount)
-     * @return Paginated list of popular public quizzes
-     */
+    
     @GetMapping("/popular")
     public ResponseEntity<ApiResponse<Page<QuizListDto>>> getPopularPublicQuizzes(
             @RequestParam(defaultValue = "0") int page,
@@ -90,15 +83,6 @@ public class PublicQuizzesController {
         }
     }
 
-    /**
-     * Search public quizzes by title with pagination
-     * @param title Search term
-     * @param page Page number (0-based)
-     * @param size Number of items per page
-     * @param sortBy Field to sort by
-     * @param direction Sort direction (ASC or DESC)
-     * @return Paginated list of public quizzes matching the search term
-     */
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<Page<QuizListDto>>> searchPublicQuizzes(
             @RequestParam String title,
@@ -120,15 +104,6 @@ public class PublicQuizzesController {
         }
     }
 
-    /**
-     * Get public quizzes filtered by tag IDs
-     * @param tagIds Comma-separated list of tag IDs
-     * @param page Page number (0-based)
-     * @param size Number of items per page
-     * @param sortBy Field to sort by
-     * @param direction Sort direction (ASC or DESC)
-     * @return Paginated list of public quizzes filtered by tags
-     */
     @GetMapping("/by-tags")
     public ResponseEntity<ApiResponse<Page<QuizListDto>>> getPublicQuizzesByTags(
             @RequestParam String tagIds,
@@ -160,11 +135,6 @@ public class PublicQuizzesController {
         }
     }
 
-    /**
-     * Get a single public quiz by ID
-     * @param quizId Quiz ID
-     * @return Public quiz details
-     */
     @GetMapping("/{quizId}")
     public ResponseEntity<ApiResponse<QuizResponseDto>> getPublicQuizById(@PathVariable Long quizId) {
         try {
@@ -180,10 +150,6 @@ public class PublicQuizzesController {
         }
     }
 
-    /**
-     * Get all available tags for filtering
-     * @return List of all tags
-     */
     @GetMapping("/tags")
     public ResponseEntity<ApiResponse<List<?>>> getAllTags() {
         try {
