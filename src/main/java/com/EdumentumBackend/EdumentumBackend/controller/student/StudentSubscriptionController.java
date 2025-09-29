@@ -214,15 +214,11 @@ public class StudentSubscriptionController extends BaseController {
                         endDate = startDate.plusMonths(1);
                         break;
                 }
-                
-                // Deactivate any existing active subscriptions for this user
                 List<SubscriptionEntity> activeSubscriptions = subscriptionRepository.findActiveSubscriptionsByUserId(userId);
                 for (SubscriptionEntity subscription : activeSubscriptions) {
                     subscription.setIsActive(false);
                     subscriptionRepository.save(subscription);
                 }
-                
-                // Create new subscription
                 SubscriptionEntity subscription = SubscriptionEntity.builder()
                     .userId(userId)
                     .planType(planType)
