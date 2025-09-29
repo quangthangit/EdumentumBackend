@@ -69,15 +69,19 @@ public class VNPayService {
             
             if ((fieldValue != null) && (fieldValue.length() > 0)) {
                 try {
-                    // CRITICAL: Hash data must NOT be URL encoded
-                    hashData.append(fieldName);
-                    hashData.append('=');
-                    hashData.append(fieldValue);
+                    // CRITICAL: Both hash data AND query parameters must be URL encoded consistently
+                    String encodedFieldName = URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString());
+                    String encodedFieldValue = URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString());
                     
-                    // Query parameters MUST be URL encoded
-                    query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString()));
+                    // Hash data must use URL encoded values to match query parameters
+                    hashData.append(encodedFieldName);
+                    hashData.append('=');
+                    hashData.append(encodedFieldValue);
+                    
+                    // Query parameters are also URL encoded
+                    query.append(encodedFieldName);
                     query.append('=');
-                    query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
+                    query.append(encodedFieldValue);
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
@@ -117,7 +121,7 @@ public class VNPayService {
         dataToHash.remove("vnp_SecureHash");
         dataToHash.remove("vnp_SecureHashType");
         
-        // Create the hash data string (without URL encoding)
+        // Create the hash data string (with URL encoding to match what was sent)
         List<String> fieldNames = new ArrayList<>(dataToHash.keySet());
         Collections.sort(fieldNames);
         
@@ -127,9 +131,20 @@ public class VNPayService {
             String fieldValue = dataToHash.get(fieldName);
             
             if ((fieldValue != null) && (fieldValue.length() > 0)) {
-                sb.append(fieldName);
-                sb.append('=');
-                sb.append(fieldValue);
+                try {
+                    // CRITICAL: URL encode both field name and value to match the original request
+                    String encodedFieldName = URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString());
+                    String encodedFieldValue = URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString());
+                    
+                    sb.append(encodedFieldName);
+                    sb.append('=');
+                    sb.append(encodedFieldValue);
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                    sb.append(fieldName);
+                    sb.append('=');
+                    sb.append(fieldValue);
+                }
                 
                 if (i != fieldNames.size() - 1) {
                     sb.append('&');
