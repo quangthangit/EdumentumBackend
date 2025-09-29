@@ -137,7 +137,7 @@ public class PermissionService {
         }
     }
     
-    private SubscriptionPlan getUserPlan(Long userId) {
+    public SubscriptionPlan getUserPlan(Long userId) {
         Optional<SubscriptionEntity> subscriptionOpt = subscriptionRepository.findActiveSubscriptionByUserId(userId);
         return subscriptionOpt.isPresent() ? subscriptionOpt.get().getPlanType() : SubscriptionPlan.FREE;
     }

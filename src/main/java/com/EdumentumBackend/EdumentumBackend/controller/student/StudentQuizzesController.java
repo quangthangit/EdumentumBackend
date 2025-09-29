@@ -7,6 +7,9 @@ import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizListDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto;
+import com.EdumentumBackend.EdumentumBackend.entity.PlanConfigurationEntity;
+import com.EdumentumBackend.EdumentumBackend.enums.SubscriptionPlan;
+import com.EdumentumBackend.EdumentumBackend.repository.PlanConfigurationRepository;
 import com.EdumentumBackend.EdumentumBackend.service.QuizzesService;
 import com.EdumentumBackend.EdumentumBackend.service.UserService;
 import com.EdumentumBackend.EdumentumBackend.service.PermissionService;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -36,13 +40,16 @@ public class StudentQuizzesController extends BaseQuizController {
     private final UserService userService;
     private final UsageTrackingRepository usageTrackingRepository;
     private final FeatureRepository featureRepository;
+    private final PlanConfigurationRepository planConfigurationRepository;
 
     public StudentQuizzesController(QuizzesService quizzesService, UserService userService, PermissionService permissionService, 
-                                  UsageTrackingRepository usageTrackingRepository, FeatureRepository featureRepository) {
+                                  UsageTrackingRepository usageTrackingRepository, FeatureRepository featureRepository,
+                                  PlanConfigurationRepository planConfigurationRepository) {
         super(quizzesService, permissionService);
         this.userService = userService;
         this.usageTrackingRepository = usageTrackingRepository;
         this.featureRepository = featureRepository;
+        this.planConfigurationRepository = planConfigurationRepository;
     }
 
     @Override
@@ -148,13 +155,22 @@ public class StudentQuizzesController extends BaseQuizController {
                 .withNano(0);
 
             Integer usageCount = usageTrackingRepository.getWeeklyUsageCount(userId, featureId, weekStart);
-            
-            boolean canCreateQuiz = permissionService.canUseFeature(userId, "CREATE_QUIZ");
+
+            SubscriptionPlan userPlan = permissionService.getUserPlan(userId);
+            int weeklyLimit;
+            boolean canCreateQuiz;
+            if (userPlan == SubscriptionPlan.PRO_MONTHLY || userPlan == SubscriptionPlan.PRO_YEARLY) {
+                weeklyLimit = 1000;
+                canCreateQuiz = true;
+            } else {
+                weeklyLimit = 3;
+                canCreateQuiz = usageCount < weeklyLimit;
+            }
             
             Map<String, Object> result = new HashMap<>();
             result.put("canCreateQuiz", canCreateQuiz);
             result.put("quizzesCreatedThisWeek", usageCount);
-            result.put("weeklyLimit", 3); // This should come from plan configuration
+            result.put("weeklyLimit", weeklyLimit);
             
             return ResponseEntity.ok(ApiResponse.success(result, "Quiz limit information retrieved successfully"));
         } catch (Exception e) {
@@ -162,5 +178,4 @@ public class StudentQuizzesController extends BaseQuizController {
                     .body(ApiResponse.error("Failed to retrieve quiz limit: " + e.getMessage(), 500));
         }
     }
-    
 }
