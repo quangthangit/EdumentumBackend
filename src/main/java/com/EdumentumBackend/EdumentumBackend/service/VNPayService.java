@@ -21,8 +21,9 @@ public class VNPayService {
     private static final String VNP_VERSION = "2.1.0";
     private static final String VNP_COMMAND = "pay";
 
-    public String createOrder(long total, String orderInfor, String baseUrl) {
-        String vnp_TxnRef = getRandomNumber(8);
+    public String createOrder(long total, String orderInfor, String baseUrl, String userId) {
+        // Encode userId in the transaction reference
+        String vnp_TxnRef = getRandomNumber(8) + "_" + userId;
         String vnp_IpAddr = "127.0.0.1";
         String orderType = "other";
 
@@ -36,7 +37,7 @@ public class VNPayService {
         vnp_Params.put("vnp_OrderInfo", orderInfor);
         vnp_Params.put("vnp_OrderType", orderType);
         vnp_Params.put("vnp_Locale", "vn");
-        vnp_Params.put("vnp_ReturnUrl", baseUrl + "/api/v1/student/subscription/payment/vnpay/callback");
+        vnp_Params.put("vnp_ReturnUrl", "https://edumentumbackend-production.up.railway.app/api/v1/student/subscription/payment/vnpay/callback");
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
 
         Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
@@ -88,8 +89,14 @@ public class VNPayService {
         System.out.println("VNPay Payment URL: " + paymentUrl);
         System.out.println("Hash Data (request): " + hashData);
         System.out.println("Secure Hash (request): " + vnp_SecureHash);
+        System.out.println("Transaction Ref (with userId): " + vnp_TxnRef);
 
         return paymentUrl;
+    }
+
+    // Overloaded method for backward compatibility
+    public String createOrder(long total, String orderInfor, String baseUrl) {
+        return createOrder(total, orderInfor, baseUrl, "1");
     }
 
     public int orderReturn(Map<String, String> fields) {
