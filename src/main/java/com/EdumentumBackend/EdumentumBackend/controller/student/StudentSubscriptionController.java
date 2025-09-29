@@ -237,7 +237,7 @@ public class StudentSubscriptionController extends BaseController {
                 System.out.println("Subscription created with ID: " + savedSubscription.getId() + " for user ID: " + userId);
                 
                 // Redirect to frontend success page
-                return new RedirectView("https://edumentum.vercel.app/vi/en/payment/success?vnpay=success&packageId=" + packageId + "&transactionId=" + fullTransactionId);
+                return new RedirectView("https://edumentum.vercel.app/en/payment/success?vnpay=success&packageId=" + packageId + "&transactionId=" + fullTransactionId);
             } else {
                 // Payment failed - redirect to failure page
                 System.out.println("VNPay payment failed with status: " + paymentStatus);
@@ -250,12 +250,12 @@ public class StudentSubscriptionController extends BaseController {
                 if (params.containsKey("vnp_TransactionStatus")) {
                     failureParams.append("&transactionStatus=").append(params.get("vnp_TransactionStatus"));
                 }
-                return new RedirectView("https://edumentum.vercel.app/vi/payment/failure?" + failureParams.toString());
+                return new RedirectView("https://edumentum.vercel.app/en/payment/failure?" + failureParams.toString());
             }
         } catch (Exception e) {
             System.err.println("Error processing VNPay callback: " + e.getMessage());
             e.printStackTrace();
-            return new RedirectView("https://edumentum.vercel.app/vi/payment/failure?vnpay=error&message=" + e.getMessage());
+            return new RedirectView("https://edumentum.vercel.app/en/payment/failure?vnpay=error&message=" + e.getMessage());
         }
     }
     
