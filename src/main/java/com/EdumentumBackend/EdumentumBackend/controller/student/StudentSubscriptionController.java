@@ -6,13 +6,15 @@ import com.EdumentumBackend.EdumentumBackend.entity.SubscriptionEntity;
 import com.EdumentumBackend.EdumentumBackend.enums.SubscriptionPlan;
 import com.EdumentumBackend.EdumentumBackend.repository.SubscriptionRepository;
 import com.EdumentumBackend.EdumentumBackend.service.UserService;
+import com.EdumentumBackend.EdumentumBackend.service.VNPayService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +28,7 @@ public class StudentSubscriptionController extends BaseController {
 
     private final SubscriptionRepository subscriptionRepository;
     private final UserService userService;
+    private final VNPayService vnPayService;
 
     @Override
     protected Long getCurrentUserId() {
@@ -99,6 +102,97 @@ public class StudentSubscriptionController extends BaseController {
             return successResponse(result, "Payment confirmed and subscription activated successfully");
         } catch (Exception e) {
             return errorResponse("Failed to process payment: " + e.getMessage(), 500);
+        }
+    }
+    
+    @PostMapping("/payment/vnpay/create")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> createVNPayPayment(@RequestBody Map<String, Object> paymentData, HttpServletRequest request) {
+        try {
+            Long userId = getCurrentUserId();
+            String packageId = (String) paymentData.get("packageId");
+
+            if (packageId == null) {
+                return errorResponse("Missing required payment information", 400);
+            }
+            String origin = request.getHeader("Origin");
+            if (origin == null || origin.isEmpty()) {
+                origin = "http://localhost:3000";
+            }
+            
+            System.out.println("Request Origin: " + origin);
+            long amount = 0;
+            String orderInfo = "";
+            
+            switch (packageId) {
+                case "PRO_MONTHLY":
+                    amount = 50000; // 50,000 VND for monthly
+                    orderInfo = "Thanh toan goi Pro thang";
+                    break;
+                case "PRO_YEARLY":
+                    amount = 300000; // 300,000 VND for yearly
+                    orderInfo = "Thanh toan goi Pro nam";
+                    break;
+                default:
+                    return errorResponse("Invalid package ID: " + packageId, 400);
+            }
+            
+            System.out.println("Creating VNPay payment for user " + userId + " with amount: " + amount);
+            
+            // Create VNPay payment URL
+            String paymentUrl = vnPayService.createOrder(amount, orderInfo, origin);
+            
+            System.out.println("Generated payment URL: " + paymentUrl);
+            
+            // Prepare response
+            Map<String, Object> result = new HashMap<>();
+            result.put("paymentUrl", paymentUrl);
+            result.put("packageId", packageId);
+            
+            return successResponse(result, "VNPay payment URL created successfully");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return errorResponse("Failed to create VNPay payment: " + e.getMessage(), 500);
+        }
+    }
+    
+    @GetMapping("/payment/vnpay/callback")
+    public RedirectView handleVNPayCallback(@RequestParam Map<String, String> params) {
+        try {
+            System.out.println("VNPay callback received with params: " + params);
+            
+            // Log all parameters for debugging
+            for (Map.Entry<String, String> entry : params.entrySet()) {
+                System.out.println("Param: " + entry.getKey() + " = " + entry.getValue());
+            }
+            
+            // Process the callback
+            int paymentStatus = vnPayService.orderReturn(params);
+            
+            String packageId = params.get("vnp_OrderInfo") != null && params.get("vnp_OrderInfo").contains("nam") ? "PRO_YEARLY" : "PRO_MONTHLY";
+            
+            if (paymentStatus == 1) {
+                // Payment successful - redirect to success page
+                System.out.println("VNPay payment successful");
+                return new RedirectView("http://localhost:3000/payment/success?vnpay=success&packageId=" + packageId);
+            } else {
+                // Payment failed - redirect to failure page
+                System.out.println("VNPay payment failed with status: " + paymentStatus);
+                // Add more details to the failure redirect for debugging
+                StringBuilder failureParams = new StringBuilder();
+                failureParams.append("vnpay=failed");
+                failureParams.append("&status=").append(paymentStatus);
+                if (params.containsKey("vnp_ResponseCode")) {
+                    failureParams.append("&responseCode=").append(params.get("vnp_ResponseCode"));
+                }
+                if (params.containsKey("vnp_TransactionStatus")) {
+                    failureParams.append("&transactionStatus=").append(params.get("vnp_TransactionStatus"));
+                }
+                return new RedirectView("http://localhost:3000/payment/failure?" + failureParams.toString());
+            }
+        } catch (Exception e) {
+            System.err.println("Error processing VNPay callback: " + e.getMessage());
+            e.printStackTrace();
+            return new RedirectView("http://localhost:3000/payment/failure?vnpay=error&message=" + e.getMessage());
         }
     }
     
