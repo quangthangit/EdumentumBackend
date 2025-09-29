@@ -2,8 +2,13 @@ package com.EdumentumBackend.EdumentumBackend.controller.student;
 
 import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardSetRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.flashcard.FlashcardSetResponseDto;
+import com.EdumentumBackend.EdumentumBackend.dtos.common.ApiResponse;
 import com.EdumentumBackend.EdumentumBackend.jwt.CustomUserDetails;
 import com.EdumentumBackend.EdumentumBackend.service.FlashcardService;
+import com.EdumentumBackend.EdumentumBackend.service.PermissionService;
+import com.EdumentumBackend.EdumentumBackend.repository.UsageTrackingRepository;
+import com.EdumentumBackend.EdumentumBackend.repository.FeatureRepository;
+import com.EdumentumBackend.EdumentumBackend.enums.SubscriptionPlan;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,9 +27,15 @@ import java.util.Map;
 public class StudentFlashcardController {
 
     private final FlashcardService flashcardService;
+    private final PermissionService permissionService;
+    private final UsageTrackingRepository usageTrackingRepository;
+    private final FeatureRepository featureRepository;
 
-    public StudentFlashcardController(FlashcardService flashcardService) {
+    public StudentFlashcardController(FlashcardService flashcardService, PermissionService permissionService, UsageTrackingRepository usageTrackingRepository, FeatureRepository featureRepository) {
         this.flashcardService = flashcardService;
+        this.permissionService = permissionService;
+        this.usageTrackingRepository = usageTrackingRepository;
+        this.featureRepository = featureRepository;
     }
 
     @PostMapping
@@ -31,7 +43,18 @@ public class StudentFlashcardController {
         try {
             Long userId = getCurrentUserId();
 
+            // Check if user has permission to create flashcards
+            if (!permissionService.canUseFeature(userId, "CREATE_FLASHCARD")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                        "status", "error",
+                        "message", "You don't have permission to create flashcard sets. Please upgrade your plan."
+                ));
+            }
+
             FlashcardSetResponseDto createdSet = flashcardService.createFlashcardSet(flashcardSetRequestDto, userId);
+
+            // Track usage for the CREATE_FLASHCARD feature
+            permissionService.incrementUsage(userId, "CREATE_FLASHCARD");
 
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "status", "success",
@@ -150,6 +173,52 @@ public class StudentFlashcardController {
             ));
         } catch (Exception e) {
             return buildServerError(e);
+        }
+    }
+
+    @GetMapping("/limit")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getFlashcardLimit() {
+        try {
+            Long userId = getCurrentUserId();
+
+            // Get the CREATE_FLASHCARD feature
+            var featureOpt = featureRepository.findByFeatureKey("CREATE_FLASHCARD");
+            if (featureOpt.isEmpty()) {
+                throw new RuntimeException("CREATE_FLASHCARD feature not found");
+            }
+
+            Long featureId = featureOpt.get().getId();
+
+            LocalDateTime weekStart = LocalDateTime.now()
+                .with(java.time.DayOfWeek.MONDAY)
+                .withHour(0)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0);
+
+            // Get usage count for this week
+            Integer usageCount = usageTrackingRepository.getWeeklyUsageCount(userId, featureId, weekStart);
+
+            SubscriptionPlan userPlan = permissionService.getUserPlan(userId);
+            int weeklyLimit;
+            boolean canCreateFlashcard;
+            if (userPlan == SubscriptionPlan.PRO_MONTHLY || userPlan == SubscriptionPlan.PRO_YEARLY) {
+                weeklyLimit = 1000;
+                canCreateFlashcard = true;
+            } else {
+                weeklyLimit = 3;
+                canCreateFlashcard = usageCount < weeklyLimit;
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("canCreateFlashcard", canCreateFlashcard);
+            result.put("flashcardSetsCreatedThisWeek", usageCount);
+            result.put("weeklyLimit", weeklyLimit);
+
+            return ResponseEntity.ok(ApiResponse.success(result, "Flashcard limit information retrieved successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to retrieve flashcard limit: " + e.getMessage(), 500));
         }
     }
 
