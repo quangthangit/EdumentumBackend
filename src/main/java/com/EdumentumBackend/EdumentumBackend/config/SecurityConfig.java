@@ -36,7 +36,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
         return http
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf
+                    .disable() // Disable CSRF completely
+                )
                 .cors(cors -> cors.configurationSource(corsConfig()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -46,6 +48,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/api/v1/test/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/student/subscription/payment/vnpay/callback").permitAll() // Allow VNPay callback without authentication
                         .requestMatchers("/ws-chat/**").permitAll()
                         .requestMatchers("/api/v1/chat/**").hasAnyRole("STUDENT","TEACHER")
                         .requestMatchers("/api/v1/teacher/**").hasAnyRole("TEACHER")

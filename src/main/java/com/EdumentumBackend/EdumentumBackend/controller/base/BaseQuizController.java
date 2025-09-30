@@ -6,6 +6,7 @@ import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizResponseDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizSummaryDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.quiz.QuizListDto;
 import com.EdumentumBackend.EdumentumBackend.service.QuizzesService;
+import com.EdumentumBackend.EdumentumBackend.service.PermissionService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,9 +22,11 @@ import java.util.Map;
 public abstract class BaseQuizController {
 
     protected final QuizzesService quizzesService;
+    protected final PermissionService permissionService;
 
-    protected BaseQuizController(QuizzesService quizzesService) {
+    protected BaseQuizController(QuizzesService quizzesService, PermissionService permissionService) {
         this.quizzesService = quizzesService;
+        this.permissionService = permissionService;
     }
 
     /**

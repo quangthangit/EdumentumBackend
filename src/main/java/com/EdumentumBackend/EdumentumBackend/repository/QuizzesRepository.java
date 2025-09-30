@@ -57,6 +57,13 @@ public interface QuizzesRepository extends JpaRepository<QuizzesEntity, Long> {
     """)
     Optional<QuizzesEntity> findDetailByIdWithAccess(@Param("id") Long id, @Param("userId") Long userId);
 
+    @EntityGraph(attributePaths = {"quizTags", "quizTags.tag", "user"})
+    @Query("""
+        SELECT q FROM QuizzesEntity q
+        WHERE q.id = :id 
+        AND q.visibility = com.EdumentumBackend.EdumentumBackend.enums.VisibilityType.PUBLIC
+    """)
+    Optional<QuizzesEntity> findPublicQuizById(@Param("id") Long id);
 
     @Query("""
         SELECT q FROM QuizzesEntity q
