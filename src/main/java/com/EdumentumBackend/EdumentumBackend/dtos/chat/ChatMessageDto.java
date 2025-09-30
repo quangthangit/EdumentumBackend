@@ -9,7 +9,8 @@ import lombok.*;
 @Getter
 @Setter
 public class ChatMessageDto {
-    private Long roomId;
+    private String roomId;
+    private String channelId;
     private Long senderId;
     private String senderName;
     private String imageUrl;
