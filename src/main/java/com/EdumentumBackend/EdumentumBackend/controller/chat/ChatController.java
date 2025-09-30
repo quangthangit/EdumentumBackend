@@ -20,7 +20,8 @@ public class ChatController {
 
     @MessageMapping("/chat.send")
     public void sendMessage(@Payload ChatMessageDto message) {
-        String destination = "/topic/room/" + message.getRoomId();
+        System.out.println(message);
+        String destination = "/topic/room/" + message.getRoomId() + "/" +message.getChannelId();
         chatRedisService.saveMessage(message.getRoomId(),message);
         messagingTemplate.convertAndSend(destination, message);
     }

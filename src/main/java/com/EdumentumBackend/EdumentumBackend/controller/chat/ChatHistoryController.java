@@ -1,14 +1,12 @@
 package com.EdumentumBackend.EdumentumBackend.controller.chat;
 
+import com.EdumentumBackend.EdumentumBackend.dtos.chat.ChanelRequestDto;
 import com.EdumentumBackend.EdumentumBackend.dtos.chat.ChatMessageDto;
 import com.EdumentumBackend.EdumentumBackend.service.redis.ChatRedisService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -25,15 +23,33 @@ public class ChatHistoryController {
         this.chatRedisService = chatRedisService;
     }
 
-    @GetMapping("/groups/{groupId}/messages")
+    @PostMapping("/chanel/{groupId}")
+    public ResponseEntity<?> createChanel(@PathVariable String groupId,
+                                          @RequestBody String name
+                                          ) {
+        return ResponseEntity.ok(Map.of(
+                "data", chatRedisService.createChanel(groupId,name)
+        ));
+    }
+
+    @GetMapping("/chanel/{groupId}")
+    public ResponseEntity<?> getChanel(@PathVariable String groupId) {
+        return ResponseEntity.ok(Map.of(
+                "data", chatRedisService.getChannel(groupId)
+        ));
+    }
+
+    @GetMapping("/groups/{groupId}/{channelId}/messages")
     public ResponseEntity<?> getMessages(
-            @PathVariable Long groupId,
+            @PathVariable String groupId,
+            @PathVariable String channelId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
 
-        List<ChatMessageDto> pagedMessages = chatRedisService.getRecentMessages(groupId, page, size);
+        List<ChatMessageDto> pagedMessages = chatRedisService.getRecentMessages(groupId, channelId, page, size);
 
-        Long totalRecords = redisTemplate.opsForList().size("chat:group:" + groupId);
+        String messageKey = "chat:group:" + groupId + ":messages:" + channelId;
+        Long totalRecords = redisTemplate.opsForList().size(messageKey);
         int totalPage = (int) Math.ceil((double) totalRecords / size);
 
         return ResponseEntity.ok(Map.of(
