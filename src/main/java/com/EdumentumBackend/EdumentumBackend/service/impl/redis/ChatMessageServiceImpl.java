@@ -109,7 +109,6 @@ public class ChatMessageServiceImpl implements ChatRedisService {
                 .build();
     }
 
-    @Override
     public List<ChanelDto> getChannel(String groupId) {
         String pattern = CHAT_KEY_PREFIX + groupId + ":channel:*";
         Set<String> keys = redisTemplate.keys(pattern);
@@ -128,10 +127,27 @@ public class ChatMessageServiceImpl implements ChatRedisService {
                         channelName = channelName.substring(1, channelName.length() - 1);
                     }
 
+                    String messagesKey = getMessageKey(groupId, channelId);
+                    String latestMessageJson = (String) redisTemplate.opsForList().index(messagesKey, 0);
+
+                    String lastMessage = null;
+                    String lastTimestamp = null;
+                    if (latestMessageJson != null) {
+                        try {
+                            ChatMessageDto latestMessage = objectMapper.readValue(latestMessageJson, ChatMessageDto.class);
+                            lastMessage = latestMessage.getContent();
+                            lastTimestamp = latestMessage.getTimestamp();
+                        } catch (Exception e) {
+                            System.err.println("Error deserializing latest message: " + e.getMessage());
+                        }
+                    }
+
                     return ChanelDto.builder()
                             .groupId(groupId)
                             .id(channelId)
                             .name(channelName)
+                            .lastMessage(lastMessage)
+                            .time(lastTimestamp)
                             .build();
                 })
                 .collect(Collectors.toList());
