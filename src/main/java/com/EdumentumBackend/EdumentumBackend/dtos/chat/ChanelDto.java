@@ -10,6 +10,8 @@ import lombok.*;
 @Setter
 public class ChanelDto {
     private String id;
+    private String time;
     private String name;
     private String groupId;
+    private String lastMessage;
 }
